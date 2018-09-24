@@ -1,0 +1,84 @@
+WEST.LONGITUDE = -63.500                    ! West edge of this block
+EAST.LONGITUDE = -63.000                    ! East edge of this block
+SOUTH.LATITUDE = -10.000                    ! South edge of this block
+NORTH.LATITUDE = -9.500                     ! North edge of this block
+BLOCK.AREA     = 3046418045.20204           ! Area (m2) of this block
+FIRST.LUYEAR   = 2010                       ! First year with land use transition
+LAST.LUYEAR    = 2035                       ! Last year with land use transition
+N.PFT.HARVEST  =   3                        ! Number of PFTs that may be harvested
+HARVEST.PFT    =  2  3  4                   ! PFTs that may be harvested
+MINDBH.SLOG    =   50.000   50.000   50.000 ! Minimum DBH for selective logging
+HARVPROB.SLOG  =    1.000    1.000    1.000 ! Percentage of trees that will be selectively logged (set this to one, the demand will adjust the disturbance rate)
+MINDBH.FPLT    =   50.000   50.000   50.000 ! Minimum DBH for forest plantation logging
+HARVPROB.FPLT  =    1.000    1.000    1.000 ! Percentage of trees that will be logged in forest plantation (set this to one, the demand will adjust the disturbance rate)
+YEAR      CPL_PST      PST_CPL      PST_VEG      VEG_PST      VEG_CLP      CPL_VEG      SEC_CPL      CPL_SEC      SEC_PST      PST_SEC      VEG_SEC   BT_MAT_SEC   FL_MAT_SEC    BT_MAT_VEG   FL_MAT_VEG   BT_YNG_SEC   FL_YNG_SEC   BT_YNG_VEG   FL_YNG_VEG
+2010            0 0.000000e+00            0   0.11124664 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2011            0 0.000000e+00            0   0.13354895 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.133483599           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2012            0 0.000000e+00            0   0.13360743 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.287674180           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2013            0 0.000000e+00            0   0.31009976 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.143114937           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2014            0 0.000000e+00            0   0.11772094 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.117720937           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2015            0 0.000000e+00            0   0.15404424 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.154259245           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2016            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.510636830           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2017            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.405052803           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2018            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2019            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000 36.043653389           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2020            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2021            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2022            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2023            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2024            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2025            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2026            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2027            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2028            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2029            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2030            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2031            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2032            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2033            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2034            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+2035            0 0.000000e+00            0   0.00000000 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0  0.000000e+00     0.001393            0            0            0            0
+! Delete this line and all lines below.  Column description, these are based on George Hurtt's LU transition matrix from 2006
+!-------------------------------------------------------------------------------------!
+!      Transition rates are based on the input file, formatted as the original        !
+! data set from George Hurtt et al. (2006).  This will be eventually replaced         !
+! by the most current version.                                                        !
+!                                                                                     !
+! Hurtt, G. et al., 2006: The underpinnings of land-use history: three                !
+!    centuries of global gridded land-use transitions, wood-harvest activity,         !
+!    and resulting secondary forests.  Glob. Change Biol., 12(7), 1208-1229,          !
+!    doi:10.1111/j.1365-2486.2006.01150.x                                             !
+!                                                                                     !
+! The elements of the table are:                                                      !
+! YEAR - Year for disturbance.                                                        !
+! ..... Disturbance rates ........................................................... !
+! CPL_PST    - Cropland to pasture                                            [1/yr]  !
+! PST_CPL    - Pasture to cropland                                            [1/yr]  !
+! PST_VEG    - Pasture to primary forest (in ED this goes to abandonment)     [1/yr]  !
+! VEG_PST    - Primary forest to pasture                                      [1/yr]  !
+! VEG_CLP    - Primary forest to cropland                                     [1/yr]  !
+! CPL_VEG    - Cropland to primary forest (in ED this goes to abandonment)    [1/yr]  !
+! SEC_CPL    - Secondary forest to cropland                                   [1/yr]  !
+! CPL_SEC    - Cropland to secondary forest (in ED this goes to abandonment)  [1/yr]  !
+! SEC_PST    - Secondary forest to pasture                                    [1/yr]  !
+! PST_SEC    - Pasture to secondary forest (in ED this goes to abandonment)   [1/yr]  !
+! VEG_SEC    - Primary forest to secondary forest (assumed logging in ED)     [1/yr]  !
+! ..... Harvested area .............................................................. !
+! BT_MAT_SEC - Wood harvest on mature secondary forest land          [          kgC]  !
+! FL_MAT_SEC - Wood harvest on mature secondary forest land          [grid fraction]  !
+! BT_MAT_VEG - Wood harvest on primary forest land                   [          kgC]  !
+! FL_MAT_VEG - Wood harvest on primary forest land                   [grid fraction]  !
+! BT_YNG_SEC - Wood harvest on young secondary forest land           [          kgC]  !
+! FL_YNG_SEC - Wood harvest on young secondary forest land           [grid fraction]  !
+! BT_YNG_VEG - Wood harvest on primary non-forest land               [          kgC]  !
+! FL_YNG_VEG - Wood harvest on primary non-forest land               [grid fraction]  !
+! ....................................................................................!
+!                                                                                     !
+!   The definition of primary and secondary forests can be quite confusing.           !
+! For ED purposes, we assume that patches previously disturbed by treefall            !
+! are primary, whereas patches previously generated by fire, abandonment, and         !
+! logging are considered secondary.  Fire is the one that may be the hardest          !
+! to reconcile: in tropical forests fires are almost exclusively                      !
+! anthropogenic, but they can be mostly natural in boreal forests, for                !
+! example.                                                                            !
+!-------------------------------------------------------------------------------------!
