@@ -7,33 +7,21 @@ source(file.path(path.pecan, "base/utils/R/days_in_year.R"))
 source(file.path(path.pecan, "modules/data.atmosphere/R/solar_angle.R"))
 source(file.path(path.pecan, "models/ed/R/write_ed_metheader.R"))
 source(file.path(path.pecan, "models/ed/R/check_ed_metheader.R"))
+# source(file.path(path.pecan, "models/ed/R/met2model.ED2.R"))
 source("pecan_met_conversion/met2model.ED2.R")
 
 
-in.base="/Volumes/GoogleDrive/My Drive/Temporal Downscaling Group/Analyses/data/Raw_Inputs/WILLOWCREEK/"
-outfolder="../ED_MET.v2/"
-met.base="/home/models/ED_MET/WILLOWCREEK.v2"
+in.base="../met_raw/WILLOWCREEK/"
+outfolder="../ED_MET/"
+# met.base="~/Desktop/Research/MANDIFORE_modeling/ForestryTest_US-WCr/ED_MET/"
+met.base="/mnt/data/crollinson/MANDIFORE_modeling/ForestryTest_US-WCr/ED_MET/"
 if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
 
-# Convert LDAS Raw
-met2model.ED2(in.path=file.path(in.base, "NLDAS"), 
-              in.prefix="NLDAS", 
-              outfolder=file.path(outfolder, "NLDAS_raw"), 
-              header_folder = file.path(met.base, "NLDAS_raw"),
-              start_date="1999-01-01", 
-              end_date="2014-12-31")
+gcm.convert <- c("GFDL_CM3_rcp45_r1i1p1")
 
-# Convert Ameriflux 1 hr raw -- have to break up because no 2009
-met2model.ED2(in.path=file.path(in.base, "Ameriflux_WCr"), 
-              in.prefix="WCr_1hr", 
-              outfolder=file.path(outfolder, "Ameriflux_raw"), 
-              header_folder = file.path(met.base, "Ameriflux_raw"),
-              start_date="1999-01-01", 
-              end_date="2008-12-31")
-
-met2model.ED2(in.path=file.path(in.base, "Ameriflux_WCr"), 
-              in.prefix="WCr_1hr", 
-              outfolder=file.path(outfolder, "Ameriflux_raw"), 
-              header_folder = file.path(met.base, "Ameriflux_raw"),
-              start_date="2010-01-01", 
-              end_date="2014-12-31")
+met2model.ED2(in.path=file.path(in.base, gcm.convert[1]), 
+              in.prefix=gsub("_", ".", gcm.convert[1]), 
+              outfolder=file.path(outfolder, gcm.convert[1]), 
+              header_folder = file.path(met.base, gcm.convert[1]),
+              start_date="2006-01-01", 
+              end_date="2100-12-31")
