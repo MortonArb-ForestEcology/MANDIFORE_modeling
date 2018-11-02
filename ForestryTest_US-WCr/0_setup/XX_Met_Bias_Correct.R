@@ -101,7 +101,7 @@ if(!"wind_speed" %in% names(met.out$dat.train)){
 }
 
 # 2. Pass the training & source met data into the bias-correction functions; this will get written to the ensemble
-debias.met.regression(train.data=met.out$dat.train, source.data=met.out$dat.source, n.ens=1, 
+debias.met.regression(train.data=met.out$dat.train, source.data=met.out$dat.source, n.ens=3, 
                       vars.debias=NULL, CRUNCEP=FALSE,
                       pair.anoms = FALSE, pair.ens = FALSE, uncert.prop="mean", resids = FALSE, seed=Sys.Date(),
                       outfolder=file.path(out.base, ens.ID), 
