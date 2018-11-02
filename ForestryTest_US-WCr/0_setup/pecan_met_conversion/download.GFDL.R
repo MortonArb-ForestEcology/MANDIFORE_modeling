@@ -16,7 +16,8 @@
 #' @author James Simkins, Alexey Shiklomanov, Ankur Desai
 download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
                           overwrite = FALSE, verbose = FALSE,
-                          model = "CM3", scenario = "rcp45", ensemble_member = "r1i1p1", ...) {
+                          model = "CM3", scenario = "rcp45", ensemble_member = "r1i1p1",
+                          add.co2 = FALSE, ...) {
 
   if(is.null(model))           model <- "CM3"
   if(is.null(scenario))        scenario <- "rcp45"
@@ -25,12 +26,13 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
   start_year <- lubridate::year(start_date)
   end_year   <- lubridate::year(end_date)
   obs_per_year <- 365 * 24 /3 # 3-hr intervals, leap days ignored
+  dpm <- lubridate::days_in_month(1:12)
 
   #Fix Outfolder to include model and scenario
   folder_name <- paste0("GFDL_", model, "_", scenario, "_", ensemble_member)
-  source_id_foldername <- basename(outfolder)
-  source_all_foldername <- gsub("GFDL", folder_name, source_id_foldername)
-  outfolder <- file.path(paste0(outfolder, source_all_foldername))
+  # source_id_foldername <- basename(outfolder)
+  # source_all_foldername <- gsub("GFDL", folder_name, source_id_foldername)
+  outfolder <- file.path(outfolder, folder_name)
 
   lat.in     <- as.numeric(lat.in)
   lat_floor  <- floor(lat.in)
@@ -71,8 +73,11 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
     "uas", "eastward_wind", "m/s",
     "vas", "northward_wind", "m/s",
     "huss", "specific_humidity", "g/g",
-    "pr", "precipitation_flux", "kg/m2/s"
+    "pr", "precipitation_flux", "kg/m2/s",
+    "co2", "mole_fraction_of_carbon_dioxide_in_air", "1e-6"
   )
+  
+  if(add.co2==F) var <- var[1:8,]
 
   for (i in seq_len(rows)) {
     year <- ylist[i]
@@ -106,8 +111,6 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
     met_start <- 2006
     met_block <- 5
     url_year  <- met_start + floor((year - met_start) / met_block) * met_block
-    start_url <- paste0(url_year, "0101")
-    end_url   <- paste0(url_year + met_block - 1, "1231")
 
     ## Create dimensions
     lat <- ncdf4::ncdim_def(name = "latitude", units = "degree_north", vals = lat.in, create_dimvar = TRUE)
@@ -132,52 +135,135 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
           var$DAP.name[j], j, nrow(var)
         )
       )
-      dap_end <- paste0(
-        "-", model, "/",
-        scenario, "/3hr/atmos/3hr/",
-        ensemble_member, "/v20110601/",
-        var$DAP.name[j], "/",
-        var$DAP.name[j], "_3hr_GFDL-",
-        model, "_",
-        scenario, "_",
-        ensemble_member, "_",
-        start_url, "00-", end_url, "23.nc"
-      )
-      dap_file <- paste0(dap_base, dap_end)
-      dap <- ncdf4::nc_open(dap_file, suppress_dimvals = TRUE)
+      if(var[j]=="co2"){
+        start_url <- paste0(url_year, "01")
+        end_url   <- paste0(url_year + met_block - 1, "12")
+        
+        dap_end <- paste0(
+          "-", model, "/",
+          scenario, "/mon/atmos/Amon/",
+          ensemble_member, "/v20110601/",
+          "co2mass", "/",
+          "co2mass", "_Amon_GFDL-",
+          model, "_",
+          scenario, "_",
+          ensemble_member, "_",
+          start_url, "-", end_url, ".nc"
+        )
+        dap_file <- paste0(dap_base, dap_end)
+        dap <- ncdf4::nc_open(dap_file, suppress_dimvals = TRUE)
+        # summary(dap$var)
+        
+        # --------- 
+        # Convert total atmospheric weight of carbon to molar fraction (CF units = 1e-6)
+        # Rely on the following assumptions from here & Wikipedia: 
+        # https://micpohling.wordpress.com/2007/03/30/math-how-much-co2-by-weight-in-the-atmosphere/
+        # https://en.wikipedia.org/wiki/Carbon_dioxide#Atmospheric_concentration
+        # https://en.wikipedia.org/wiki/Atmosphere_of_Earth
+        # --------- 
+        # Contants
+        co2.molmass <- 44.01 # g/mol https://en.wikipedia.org/wiki/Carbon_dioxide#Atmospheric_concentration
+        atm.molmass <- 28.97 # g/mol https://en.wikipedia.org/wiki/Density_of_air
+        atm.masstot <- 5.1480e18 # kg https://journals.ametsoc.org/doi/10.1175/JCLI-3299.1
+        
+        co2.mass <- ncdf4::ncvar_get(dap, "co2mass") # in kg
+        co2.mol <- co2.mass/co2.molmass # kg co2
+        
+        atm.mol <- atm.masstot/atm.molmass
+        
+        co2.ppm.mo <- co2.mol/atm.mol*1e6 # kmol/kmol * 1e6 to be in CF units (ppm)
+        # --------- 
+        
+        # convert monthly CO2 into timestep of everything else
+        co2.ppm <- vector(length=obs_per_year)
+        co2.ppm[1:(dpm[1]*8)] <- rep(co2.ppm.mo[1], dpm[1]*8)
+        for(i in 2:length(dpm)){
+          dstart <- sum(dpm[1:(i-1)])*8
+          co2.ppm[(dstart+1):(dstart+dpm[i]*8)] <- rep(co2.ppm.mo[i], dpm[i]*8)
+        }
 
-      # Sanity check:
-      # We're saving the data with timestamps at the end of the interval,
-      # while GFDL-supplied timestamps vary slightly -- some vars are
-      # timestamped in middle of interval, others at end.
-      # But if these disagree by more than 3 hours, we have a problem.
-      raw_time <- ncdf4::ncvar_get(dap, "time", start = time_offset, count = obs_per_year)
-      converted_time <- udunits2::ud.convert(raw_time, dap$dim$time$units, dim$time$units)
-      if(!all(diff(converted_time) == 3 * 60 * 60)){
-        PEcAn.logger::logger.error(
-          "Expected timestamps at 3-hour intervals, got",
-          paste(range(diff(converted_time)), collapse = "-"),
-          "seconds")
-      }
-      if(!all(abs(dim$time$vals - converted_time) < (3 * 60 * 60))){
-        PEcAn.logger::logger.error(
-          "Timestamps in GFDL source file differ from expected by more than 3 hours:",
-          "Expected", paste(range(dim$time$vals), collapse = "-"),
-          dim$time$units,
-          ", got", paste(range(converted_time), collapse = "-"),
-          ". Greatest difference from expected:",
+        # Sanity check:
+        # We're saving the data with timestamps at the end of the interval,
+        # while GFDL-supplied timestamps vary slightly -- some vars are
+        # timestamped in middle of interval, others at end.
+        # But if these disagree by more than 3 hours, we have a problem.
+        raw_time <- ncdf4::ncvar_get(dap, "time", start = time_offset, count = obs_per_year)
+        converted_time <- udunits2::ud.convert(raw_time, dap$dim$time$units, dim$time$units)
+        if(!all(diff(converted_time) == 3 * 60 * 60)){
+          PEcAn.logger::logger.error(
+            "Expected timestamps at 3-hour intervals, got",
+            paste(range(diff(converted_time)), collapse = "-"),
+            "seconds")
+        }
+        if(!all(abs(dim$time$vals - converted_time) < (3 * 60 * 60))){
+          PEcAn.logger::logger.error(
+            "Timestamps in GFDL source file differ from expected by more than 3 hours:",
+            "Expected", paste(range(dim$time$vals), collapse = "-"),
+            dim$time$units,
+            ", got", paste(range(converted_time), collapse = "-"),
+            ". Greatest difference from expected:",
             max(abs(dim$time$vals - converted_time)), "seconds")
+        }
+        
+        dat.list[[j]] <- co2.ppm
+        var.list[[j]] <- ncdf4::ncvar_def(name = as.character(var$CF.name[j]),
+                                          units = as.character(var$units[j]),
+                                          dim = dim,
+                                          missval = -999,
+                                          verbose = verbose)
+        ncdf4::nc_close(dap)
+        
+      } else {
+        start_url <- paste0(url_year, "0101")
+        end_url   <- paste0(url_year + met_block - 1, "1231")
+        
+        dap_end <- paste0(
+          "-", model, "/",
+          scenario, "/3hr/atmos/3hr/",
+          ensemble_member, "/v20110601/",
+          var$DAP.name[j], "/",
+          var$DAP.name[j], "_3hr_GFDL-",
+          model, "_",
+          scenario, "_",
+          ensemble_member, "_",
+          start_url, "00-", end_url, "23.nc"
+        )
+        dap_file <- paste0(dap_base, dap_end)
+        dap <- ncdf4::nc_open(dap_file, suppress_dimvals = TRUE)
+        
+        # Sanity check:
+        # We're saving the data with timestamps at the end of the interval,
+        # while GFDL-supplied timestamps vary slightly -- some vars are
+        # timestamped in middle of interval, others at end.
+        # But if these disagree by more than 3 hours, we have a problem.
+        raw_time <- ncdf4::ncvar_get(dap, "time", start = time_offset, count = obs_per_year)
+        converted_time <- udunits2::ud.convert(raw_time, dap$dim$time$units, dim$time$units)
+        if(!all(diff(converted_time) == 3 * 60 * 60)){
+          PEcAn.logger::logger.error(
+            "Expected timestamps at 3-hour intervals, got",
+            paste(range(diff(converted_time)), collapse = "-"),
+            "seconds")
+        }
+        if(!all(abs(dim$time$vals - converted_time) < (3 * 60 * 60))){
+          PEcAn.logger::logger.error(
+            "Timestamps in GFDL source file differ from expected by more than 3 hours:",
+            "Expected", paste(range(dim$time$vals), collapse = "-"),
+            dim$time$units,
+            ", got", paste(range(converted_time), collapse = "-"),
+            ". Greatest difference from expected:",
+            max(abs(dim$time$vals - converted_time)), "seconds")
+        }
+        
+        dat.list[[j]] <- ncdf4::ncvar_get(dap, as.character(var$DAP.name[j]),
+                                          start = c(lon_GFDL, lat_GFDL, time_offset),
+                                          count = c(1, 1, obs_per_year))
+        var.list[[j]] <- ncdf4::ncvar_def(name = as.character(var$CF.name[j]),
+                                          units = as.character(var$units[j]),
+                                          dim = dim,
+                                          missval = -999,
+                                          verbose = verbose)
+        ncdf4::nc_close(dap)
       }
-
-      dat.list[[j]] <- ncdf4::ncvar_get(dap, as.character(var$DAP.name[j]),
-                                 start = c(lon_GFDL, lat_GFDL, time_offset),
-                                 count = c(1, 1, obs_per_year))
-      var.list[[j]] <- ncdf4::ncvar_def(name = as.character(var$CF.name[j]),
-                                 units = as.character(var$units[j]),
-                                 dim = dim,
-                                 missval = -999,
-                                 verbose = verbose)
-      ncdf4::nc_close(dap)
     }
 
 
