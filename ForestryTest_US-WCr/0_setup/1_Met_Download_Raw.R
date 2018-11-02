@@ -162,7 +162,9 @@ for(i in 1:length(files.train)){
 # -------------------------------
 # Future met from GFDL
 # -------------------------------
-source(file.path(path.pecan, "modules/data.atmosphere/R", "download.GFDL.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "download.GFDL.R"))
+source("pecan_met_conversion/download.GFDL.R")
+
 # ------------
 # Using the default GCM
 # ------------
@@ -171,11 +173,11 @@ download.GFDL(outfolder=file.path(path.out, site.name),
               start_date="2006-01-01", end_date="2100-12-31", 
               lat.in=site.lat, lon.in=site.lon,
               overwrite = FALSE, verbose = FALSE,
-              model = "CM3", scenario = "rcp45", ensemble_member = "r1i1p1")
+              model = "CM3", scenario = "rcp45", ensemble_member = "r1i1p1", add.co2=TRUE)
 
 download.GFDL(outfolder=file.path(path.out, site.name), 
               start_date="2006-01-01", end_date="2100-12-31", 
               lat.in=site.lat, lon.in=site.lon,
               overwrite = FALSE, verbose = FALSE,
-              model = "CM3", scenario = "rcp85", ensemble_member = "r1i1p1")
+              model = "CM3", scenario = "rcp85", ensemble_member = "r1i1p1", add.co2=TRUE)
 # -------------------------------

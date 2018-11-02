@@ -135,7 +135,7 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
           var$DAP.name[j], j, nrow(var)
         )
       )
-      if(var[j]=="co2"){
+      if(var$DAP.name[j]=="co2"){
         start_url <- paste0(url_year, "01")
         end_url   <- paste0(url_year + met_block - 1, "12")
         
@@ -180,29 +180,6 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
         for(i in 2:length(dpm)){
           dstart <- sum(dpm[1:(i-1)])*8
           co2.ppm[(dstart+1):(dstart+dpm[i]*8)] <- rep(co2.ppm.mo[i], dpm[i]*8)
-        }
-
-        # Sanity check:
-        # We're saving the data with timestamps at the end of the interval,
-        # while GFDL-supplied timestamps vary slightly -- some vars are
-        # timestamped in middle of interval, others at end.
-        # But if these disagree by more than 3 hours, we have a problem.
-        raw_time <- ncdf4::ncvar_get(dap, "time", start = time_offset, count = obs_per_year)
-        converted_time <- udunits2::ud.convert(raw_time, dap$dim$time$units, dim$time$units)
-        if(!all(diff(converted_time) == 3 * 60 * 60)){
-          PEcAn.logger::logger.error(
-            "Expected timestamps at 3-hour intervals, got",
-            paste(range(diff(converted_time)), collapse = "-"),
-            "seconds")
-        }
-        if(!all(abs(dim$time$vals - converted_time) < (3 * 60 * 60))){
-          PEcAn.logger::logger.error(
-            "Timestamps in GFDL source file differ from expected by more than 3 hours:",
-            "Expected", paste(range(dim$time$vals), collapse = "-"),
-            dim$time$units,
-            ", got", paste(range(converted_time), collapse = "-"),
-            ". Greatest difference from expected:",
-            max(abs(dim$time$vals - converted_time)), "seconds")
         }
         
         dat.list[[j]] <- co2.ppm
