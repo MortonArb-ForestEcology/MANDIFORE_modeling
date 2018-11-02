@@ -78,22 +78,18 @@ if(!dir.exists(out.base)) dir.create(out.base, recursive=T)
 source(file.path(path.pecan, "modules/data.atmosphere/R", "align_met.R"))
 source(file.path(path.pecan, "modules/data.atmosphere/R", "debias_met_regression.R"))
 
-
-
 # --------------------------
 # 1. Debias 
 # --------------------------
-# ens.all=c("CCSM4_rcp45", "CCSM4_rcp85")
-ens.all=c("IPSL_CM5A-LR_rcp45", "IPSL_CM5A-LR_rcp85")
-ens.ID=ens.all[1]
+ens.ID="GFDL_CM3_rcp45_r1i1p1"
 
 # 1. Align daily aggregated NLDAS with Ameriflux 1 hr
-train.path <- file.path(raw.base, "NLDAS_day")
-source.path <- file.path(raw.base, "MACA", ens.ID)
+path.nldas <- file.path(raw.base, "NLDAS_3hr")
+path.GCM <- file.path(raw.base, ens.ID)
 
 # We're now pulling an ensemble because we've set up the file paths and copied LDAS over 
 # (even though all ensemble members will be identical here)
-met.out <- align.met(train.path, source.path, yrs.train=1999:2016, yrs.source=NULL, n.ens=n.ens, seed=201811, pair.mems = FALSE, mems.train=paste(ens.ID, ens.mems, sep="_"))
+met.out <- align.met(train.path=path.nldas, source.path=path.GCM, yrs.train=NULL, yrs.source=NULL, n.ens=n.ens, seed=201811, pair.mems = FALSE, mems.train=paste(ens.ID, ens.mems, sep="_"))
 
 # Calculate wind speed if it's not already there
 # Note: right now only set up to do total windspeed and not north/east components
@@ -104,11 +100,9 @@ if(!"wind_speed" %in% names(met.out$dat.train)){
   met.out$dat.train$wind_speed <- sqrt(met.out$dat.train$eastward_wind^2 + met.out$dat.train$northward_wind^2)
 }
 
-names(met.out$dat.source)[which(names(met.out$dat.source)=="air_temperature_max")] <- "air_temperature_maximum"
-names(met.out$dat.source)[which(names(met.out$dat.source)=="air_temperature_min")] <- "air_temperature_minimum"
-
 # 2. Pass the training & source met data into the bias-correction functions; this will get written to the ensemble
-debias.met.regression(train.data=met.out$dat.train, source.data=met.out$dat.source, n.ens=1, vars.debias=NULL, CRUNCEP=FALSE,
+debias.met.regression(train.data=met.out$dat.train, source.data=met.out$dat.source, n.ens=1, 
+                      vars.debias=NULL, CRUNCEP=FALSE,
                       pair.anoms = FALSE, pair.ens = FALSE, uncert.prop="mean", resids = FALSE, seed=Sys.Date(),
                       outfolder=file.path(out.base, ens.ID), 
                       yrs.save=NULL, ens.name=ens.ID, ens.mems=ens.mems, lat.in=site.lat, lon.in=site.lon,
