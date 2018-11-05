@@ -2,6 +2,9 @@
 <!DOCTYPE config SYSTEM "ed.dtd">
 <!-- Modifications based on Pecan meta analysis unless otherwise noted -->
  <config>
+   <disturbance>
+   	  <mature_harvest_age> 60 </mature_harvest_age> 
+   </disturbance>
 
    <pft>
       <num>       		5      </num>

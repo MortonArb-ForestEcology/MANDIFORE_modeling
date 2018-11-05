@@ -16,24 +16,25 @@ HARVPROB.2ARY  = 0.2 0.2  0.2  0.2
 ! HARVPROB.SLOG  =    1.000    1.000    1.000 ! Percentage of trees that will be selectively logged (set this to one, the demand will adjust the disturbance rate)
 ! MINDBH.FPLT    =   50.000   50.000   50.000 ! Minimum DBH for forest plantation logging
 ! HARVPROB.FPLT  =    1.000    1.000    1.000 ! Percentage of trees that will be logged in forest plantation (set this to one, the demand will adjust the disturbance rate)
-year           cp           pc           pv           vp            vc          cv           sc           cs           sp           ps           vs          sbh        f_sbh           vbh        f_vbh         sbh2       f_sbh2         vbh2       f_vbh2 s
+				1			 2			  3            4            5            6            7            8            9           10           11           12           13            14           15           16           17           18           19        
+year           cp           pc           pv           vp           vc           cv           sc           cs           sp           ps           vs          sbh        f_sbh           vbh        f_vbh         sbh2       f_sbh2         vbh2       f_vbh2
 YEAR      CPL_PST      PST_CPL      PST_VEG      VEG_PST      VEG_CLP      CPL_VEG      SEC_CPL      CPL_SEC      SEC_PST      PST_SEC      VEG_SEC   BT_MAT_SEC   FL_MAT_SEC    BT_MAT_VEG   FL_MAT_VEG   BT_YNG_SEC   FL_YNG_SEC   BT_YNG_VEG   FL_YNG_VEG
-2000            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2001            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2002            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2003            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2004            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2005            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2006            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2007            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2008            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2009            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2010            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.054071822           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2011            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.133483599           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2012            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.287674180           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2013            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.143114937           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2014            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.117720937           -1            0 -1.000000e+00     0.001393            0            0            0            0
-2015            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.154259245           -1            0 -1.000000e+00     0.001393            0            0            0            0
+2000            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2001            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2002            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2003            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2004            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2005            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2006            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2007            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2008            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2009            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2010            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2011            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2012            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2013            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2014            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
+2015            0 0.000000e+00            0            0 0.000000e+00            0            0 0.000000e+00            0  0.000000000  0.000000000           -1            0            -1     0.001393            0            0            0            0
 
 ! Delete this line and all lines below.  Column description, these are based on George Hurtt's LU transition matrix from 2006
 !-------------------------------------------------------------------------------------!
@@ -47,28 +48,28 @@ YEAR      CPL_PST      PST_CPL      PST_VEG      VEG_PST      VEG_CLP      CPL_V
 !    doi:10.1111/j.1365-2486.2006.01150.x                                             !
 !                                                                                     !
 ! The elements of the table are:                                                      !
-! YEAR - Year for disturbance.                                                        !
+!  1. YEAR  - Year for disturbance.                                                        !
 ! ..... Disturbance rates ........................................................... !
-! CPL_PST    - Cropland to pasture                                            [1/yr]  !
-! PST_CPL    - Pasture to cropland                                            [1/yr]  !
-! PST_VEG    - Pasture to primary forest (in ED this goes to abandonment)     [1/yr]  !
-! VEG_PST    - Primary forest to pasture                                      [1/yr]  !
-! VEG_CLP    - Primary forest to cropland                                     [1/yr]  !
-! CPL_VEG    - Cropland to primary forest (in ED this goes to abandonment)    [1/yr]  !
-! SEC_CPL    - Secondary forest to cropland                                   [1/yr]  !
-! CPL_SEC    - Cropland to secondary forest (in ED this goes to abandonment)  [1/yr]  !
-! SEC_PST    - Secondary forest to pasture                                    [1/yr]  !
-! PST_SEC    - Pasture to secondary forest (in ED this goes to abandonment)   [1/yr]  !
-! VEG_SEC    - Primary forest to secondary forest (assumed logging in ED)     [1/yr]  !
+!  2. CPL_PST    - Cropland to pasture                                            [1/yr]  !
+!  3. PST_CPL    - Pasture to cropland                                            [1/yr]  !
+!  4. PST_VEG    - Pasture to primary forest (in ED this goes to abandonment)     [1/yr]  !
+!  5. VEG_PST    - Primary forest to pasture                                      [1/yr]  !
+!  6. VEG_CLP    - Primary forest to cropland                                     [1/yr]  !
+!  7. CPL_VEG    - Cropland to primary forest (in ED this goes to abandonment)    [1/yr]  !
+!  8. SEC_CPL    - Secondary forest to cropland                                   [1/yr]  !
+!  9. CPL_SEC    - Cropland to secondary forest (in ED this goes to abandonment)  [1/yr]  !
+! 10. SEC_PST    - Secondary forest to pasture                                    [1/yr]  !
+! 11. PST_SEC    - Pasture to secondary forest (in ED this goes to abandonment)   [1/yr]  !
+! 12. VEG_SEC    - Primary forest to secondary forest (assumed logging in ED)     [1/yr]  !
 ! ..... Harvested area .............................................................. !
-! BT_MAT_SEC - Wood harvest on mature secondary forest land          [          kgC]  !
-! FL_MAT_SEC - Wood harvest on mature secondary forest land          [grid fraction]  !
-! BT_MAT_VEG - Wood harvest on primary forest land                   [          kgC]  !
-! FL_MAT_VEG - Wood harvest on primary forest land                   [grid fraction]  !
-! BT_YNG_SEC - Wood harvest on young secondary forest land           [          kgC]  !
-! FL_YNG_SEC - Wood harvest on young secondary forest land           [grid fraction]  !
-! BT_YNG_VEG - Wood harvest on primary non-forest land               [          kgC]  !
-! FL_YNG_VEG - Wood harvest on primary non-forest land               [grid fraction]  !
+! 13. BT_MAT_SEC - Wood harvest on mature secondary forest land          [          kgC]  !
+! 14. FL_MAT_SEC - Wood harvest on mature secondary forest land          [grid fraction]  !
+! 15. BT_MAT_VEG - Wood harvest on primary forest land                   [          kgC]  !
+! 16. FL_MAT_VEG - Wood harvest on primary forest land                   [grid fraction]  !
+! 17. BT_YNG_SEC - Wood harvest on young secondary forest land           [          kgC]  !
+! 18. FL_YNG_SEC - Wood harvest on young secondary forest land           [grid fraction]  !
+! 19. BT_YNG_VEG - Wood harvest on primary non-forest land               [          kgC]  !
+! 20. FL_YNG_VEG - Wood harvest on primary non-forest land               [grid fraction]  !
 ! ....................................................................................!
 !                                                                                     !
 !   The definition of primary and secondary forests can be quite confusing.           !
