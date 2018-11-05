@@ -168,16 +168,19 @@ source("pecan_met_conversion/download.GFDL.R")
 # ------------
 # Using the default GCM
 # ------------
-# ------------
-download.GFDL(outfolder=file.path(path.out, site.name), 
-              start_date="2006-01-01", end_date="2100-12-31", 
-              lat.in=site.lat, lon.in=site.lon,
-              overwrite = FALSE, verbose = FALSE,
-              model = "CM3", scenario = "rcp45", ensemble_member = "r1i1p1", add.co2=TRUE)
+ENS.all <- c("CM3", "ESM2M", "ESM2G")
 
-download.GFDL(outfolder=file.path(path.out, site.name), 
-              start_date="2006-01-01", end_date="2100-12-31", 
-              lat.in=site.lat, lon.in=site.lon,
-              overwrite = FALSE, verbose = FALSE,
-              model = "CM3", scenario = "rcp85", ensemble_member = "r1i1p1", add.co2=TRUE)
+for(ENS in ENS.all){
+  download.GFDL(outfolder=file.path(path.out, site.name), 
+                start_date="2006-01-01", end_date="2100-12-31", 
+                lat.in=site.lat, lon.in=site.lon,
+                overwrite = FALSE, verbose = FALSE,
+                model = ENS, scenario = "rcp45", ensemble_member = "r1i1p1", add.co2=TRUE)
+  
+  download.GFDL(outfolder=file.path(path.out, site.name), 
+                start_date="2006-01-01", end_date="2100-12-31", 
+                lat.in=site.lat, lon.in=site.lon,
+                overwrite = FALSE, verbose = FALSE,
+                model = ENS, scenario = "rcp85", ensemble_member = "r1i1p1", add.co2=TRUE)
+}
 # -------------------------------
