@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "ed.dtd">
+<!-- Modifications based on Pecan meta analysis unless otherwise noted -->
+ <config>
+
+   <pft>
+      <num>       		5      </num>
+      <include_pft_ag>  1      </include_pft_ag>
+      <include_pft>     1      </include_pft>
+
+
+	  <!-- Leaf Params -->	
+      <phenology>
+                   2      			</phenology> <!-- Cold Deciduous -->
+   </pft>
+  
+   <pft>
+      <num>				 9      </num>
+      <include_pft_ag>	 0      </include_pft_ag>
+      <include_pft>		 1      </include_pft>
+
+
+	  <!-- Leaf Params -->	
+      <phenology>
+                   2      </phenology>
+
+      <!-- Mortality Params -->
+      <plant_min_temp>
+               193.00000      </plant_min_temp> <!-- Modified -->
+      
+   </pft>
+
+   <pft>
+      <num>				10      </num>
+      <include_pft_ag>	 0      </include_pft_ag>
+      <include_pft>		 1      </include_pft>
+
+
+	  <!-- Leaf Params -->	
+      <phenology>
+                   2      </phenology>
+
+      <!-- Mortality Params -->
+      <plant_min_temp>
+               193.00000      </plant_min_temp> <!-- Modified -->
+      
+   </pft>
+
+   <pft>
+      <num>				11      </num>
+      <include_pft_ag>	 0      </include_pft_ag>
+      <include_pft>		 1      </include_pft>
+
+
+	  <!-- Leaf Params -->	
+      <phenology>
+                   2      </phenology>
+
+      <!-- Mortality Params -->
+      <plant_min_temp>
+               193.00000      </plant_min_temp> <!-- Modified -->
+      
+   </pft>
+
+</config>
