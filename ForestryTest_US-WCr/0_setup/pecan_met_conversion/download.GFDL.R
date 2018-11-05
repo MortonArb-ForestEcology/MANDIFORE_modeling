@@ -13,11 +13,13 @@
 #' @param model Which GFDL model to run (options are CM3, ESM2M, ESM2G)
 #' @param scenario Which scenario to run (options are rcp26, rcp45, rcp60, rcp85)
 #' @param ensemble_member Which ensemble_member to initialize the run (options are r1i1p1, r3i1p1, r5i1p1)
+#' @param add.co2 Whether to extract and convert atmospheric mass of CO2 into a driver variable (logical T/F)
+#' @param FTP option for when the opendap doesn't seem to be working.  If DAP doesn't work, can connect to FTP (roundabout through here: http://nomads.gfdl.noaa.gov:8080/DataPortal/cmip5.jsp)
 #' @author James Simkins, Alexey Shiklomanov, Ankur Desai
 download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
                           overwrite = FALSE, verbose = FALSE,
                           model = "CM3", scenario = "rcp45", ensemble_member = "r1i1p1",
-                          add.co2 = FALSE, ...) {
+                          add.co2 = FALSE, FTP=FALSE, ...) {
 
   if(is.null(model))           model <- "CM3"
   if(is.null(scenario))        scenario <- "rcp45"
@@ -46,7 +48,12 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
   lon_GFDL <- lon_floor / 2.5
   lon_GFDL <- floor(lon_GFDL) + 1
 
-  dap_base <- "http://nomads.gfdl.noaa.gov:9192/opendap/CMIP5/output1/NOAA-GFDL/GFDL"
+  if(FTP) {
+    dap_base <- "/Volumes/NOAA-GFDL/GFDL"
+  } else {
+    dap_base <- "http://nomads.gfdl.noaa.gov:9192/opendap/CMIP5/output1/NOAA-GFDL/GFDL"
+  }
+  
 
   dir.create(outfolder, showWarnings = FALSE, recursive = TRUE)
 
