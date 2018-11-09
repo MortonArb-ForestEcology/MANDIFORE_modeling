@@ -171,7 +171,7 @@ source("pecan_met_conversion/download.GFDL.R")
 ENS.all <- c("CM3", "ESM2M", "ESM2G")
 # CM3: https://www.gfdl.noaa.gov/coupled-physical-model-cm3/
 
-for(ENS in ENS.all[2:3]){
+for(ENS in ENS.all[3]){
   download.GFDL(outfolder=file.path(path.out, site.name), 
                 start_date="2006-01-01", end_date="2100-12-31", 
                 lat.in=site.lat, lon.in=site.lon,
