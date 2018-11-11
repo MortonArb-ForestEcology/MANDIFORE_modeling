@@ -1,61 +1,77 @@
 #!bin/bash
-# This file starts the next runID from the PalEON Regional ED Runs
-# Christy Rollinson, crollinson@gmail.com
+# This file sets up runs based on a common table of settings
+# Christy Rollinson, crollinson@mortonarb.org
 
-# Things to specify
-# n          = Number of sites to start
-# ED2IN_Base = template ED2IN to be modified
-# file.dir   = spininit directory; used to find what sites have been done
-# soil.path  = path of percent clay and percent sand to query for
-#              SLXCLAY & SLXSAND, respectively
-# grid.order = .csv file with the order sites should be run in to determine 
-#              what sites should be done next
-
-
-# Order of Operations
-# 1) Sync file with order sites & status/location 
-# 2) Add file directories for any sites that are remote so we don't repeat them
-# 3) loop through the next n runID and adjust base ED2IN for specific characters
-#    Things to be Modified per site:
-#     -  NL%POI_LAT  =  
-#     -  NL%POI_LON  = 
-#     -  NL%FFILOUT = '~/ED_PalEON/MIP2_Region/1_spin_initial/phase2_spininit.v1/XXXXX/analy/XXXXX'
-#     -  NL%SFILOUT = '~/ED_PalEON/MIP2_Region/1_spin_initial/phase2_spininit.v1/XXXXX/histo/XXXXX'
-#     -  NL%SFILIN  = '~/ED_PalEON/MIP2_Region/1_spin_initial/phase2_spininit.v1/XXXXX/histo/XXXXX'
-#     -  NL%SLXCLAY = 
-#     -  NL%SLXSAND = 
-
-
-## Load the necessary hdf5 library
-# module load hdf5/1.6.10
-# module load nco/4.3.4
 
 # Define constants & file paths for the scripts
-file_base=~/MetDownscaling_Manuscript/ED_runs/ # whatever you want the base output file path to be
+file_base=/mnt/data/crollinson/MANDIFORE_modeling/ForestryTest_US-WCr/ # whatever you want the base output file path to be
 EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
-met_base=/home/models/ED_MET/WILLOWCREEK.v2
+met_base=${file_base}ED_MET/
 
-ed_exec=/home/models/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/4_runs/ed_runs.v1/ # Where everything will go
-setup_dir=${file_base}/0_setup/ # Where some constant setup files are
-site_file=${setup_dir}/ED_Run_Priority.csv # # Path to list of ED sites w/ status
+ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
+file_dir=${file_base}/1_runs/ed_runs.v1/ # Where everything will go
+setup_dir=${file_base}/0_setup # Where some constant setup files are
+site_file=${setup_dir}/ExperimentalDesign_AGU2018.csv # # Path to list of ED sites w/ status
 
-# # Lets double check and make sure the order status file is up to date
-# # Note: need to make sure you don't have to enter a password for this to work right
-# git fetch --all
-# git checkout origin/master -- $site_file
-
-finalyear=2015
-finalfull=2014
+# Some more constatns
+finalyear=2032
+finalfull=2031
 n=2
 
 # Making the file directory if it doesn't already exist
 mkdir -p $file_dir
 
 # Extract the file names of sites that haven't been started yet
-sites_done=($(awk -F ',' 'NR>1 && $6!="" {print $3}' ${site_file})) # Get sites that have a location
-runID=($(awk -F ',' 'NR>1 && $6=="" {print $3}' ${site_file}))
-met=($(awk -F ',' 'NR>1 && $6=="" {print $2}' ${site_file}))
+runs_all=($(awk -F ',' 'NR>1 {print $1}' ${site_file}))
+lat_all=($(awk -F ',' 'NR>1 {print $2}' ${site_file}))
+lon_all=($(awk -F ',' 'NR>1 {print $3}' ${site_file}))
+
+GCM_all=($(awk -F ',' 'NR>1 {print $7}' ${site_file}))
+scenario_all=($(awk -F ',' 'NR>1 {print $8}' ${site_file}))
+
+fire_all=($(awk -F ',' 'NR>1 {print $12}' ${site_file}))
+ianth_all=($(awk -F ',' 'NR>1 {print $10}' ${site_file}))
+mgmt_all=($(awk -F ',' 'NR>1 {print $11}' ${site_file}))
+
+# Get the list of what grid runs have already finished spinups
+pushd $file_dir
+	file_done=(*-*)
+popd
+file_done=(${file_done[@]/"*-*"/})
+
+# Because we want to preserve the order of runs, I can't find away around doing a loop
+# - This is slower than other options, but makes sure we still do our controls first
+# - DO NOT imitate this with a large array
+runs=()
+lat=()
+lon=()
+GCM=()
+scenario=()
+fire=()
+ianth=()
+mgmt=()
+
+for((i=0;i<${#runs_all[@]};i++)); do 
+	RUN=${runs_all[i]}
+    TEST=( ${file_done[@]/$RUN/} ) # Remove element from array
+
+	# If the length of TEST is still the same, we haven't done it yet
+    if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
+		runs+=("$RUN")
+		lat+=("${lat_all[i]}")
+		lon_=("${lon_all[i]}")
+		GCM+=("${GCM_all[i]}")
+		scenario+=("${scenario_all[i]}")
+		fire+=("${fire_all[i]}")
+		ianth+=("${ianth_all[i]}")
+		mgmt+=("${mgmt_all[i]}")
+	fi    
+
+done
+
+
+
+n=$(($n<${#runs[@]}?$n:${#runs[@]}))
 
 
 # for FILE in $(seq 0 (($n-1)))
@@ -65,6 +81,8 @@ do
 	SITE=${runID[FILE]}
 	echo $SITE
 
+	GCM_now=${GCM[FILE]}
+	GCM_now=${GCM_now/"-"/"_"}
 	# -----------------------------------------------------------------------------
 	# What needs to change:
 	# 1. Met Header -- needs to go to specific GCM
@@ -81,7 +99,7 @@ do
     newbase=${file_dir}/$SITE
     oldbase=${file_dir}/TEST
 	oldname=TESTinit
-	met_path=${met_base}/${SITE}
+	met_path=${met_base}/${GCM_now}_${scenario}_r1i1p1
 
 
 	file_path=${file_dir}/${SITE}/
@@ -92,13 +110,18 @@ do
 		# Creating the default file structure and copying over the base files to be modified
 		mkdir -p histo analy
 		ln -s $ed_exec
-		cp ../../ED2IN_Base_MetManuscript ED2IN
-		cp ${setup_dir}PalEON_Phase2.v1.xml .
+		cp ../../ED2IN_Base_WCr ED2IN
+		cp ${setup_dir}/PFTParams_WCr.xml .
 		
 		# ED2IN Changes	    
 		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
 		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
 	    sed -i "s,TEST,${SITE},g" ED2IN #change site ID
+	    sed -i "s/NL%INCLUDE_FIRE    = .*/NL%INCLUDE_FIRE    = ${fire[FILE]}/" ED2IN # turn on fire if run w/ fire on
+	    sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
+	    if [[ ${ianth[FILE]} == 2 ]]; then
+	    	sed -i "s/NL%LU_DATABASE      = .*/NL%LU_DATABASE      = ${mgmt[FILE]}/" ED2IN # set fire intensity parameter
+	    fi
 
 
 		# spin spawn start changes -- 
