@@ -26,7 +26,7 @@ lu.settings <- data.frame(file.name = c("US-WCr_Production", "US-WCr_Ecological"
 lu.suff <- c("lat42.5lon-90.5.lu")
 biomass.targ <- -1 # target biomass removed; set to negative to ignore
 year.start <- 2006
-year.end <- 2006+25
+year.end <- 2100
 block.area <- 1e6 # LU area; dunno what this actually does
 lu.bb <- c(-90.750, -90.250, 42.250, 42.750) # Land Use boudnign box: xmin, xmax, ymin, ymax
 harvest.pft <- c(6, 8, 9, 10, 11)
