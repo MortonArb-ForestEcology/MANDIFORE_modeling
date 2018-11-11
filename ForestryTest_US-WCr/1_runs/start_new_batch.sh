@@ -99,7 +99,7 @@ do
     newbase=${file_dir}/$SITE
     oldbase=${file_dir}/TEST
 	oldname=TESTinit
-	met_path=${met_base}/${GCM_now}_${scenario}_r1i1p1
+	met_path=${met_base}/${GCM_now}_${scenario[FILE]}_r1i1p1
 
 
 	file_path=${file_dir}/${SITE}/
