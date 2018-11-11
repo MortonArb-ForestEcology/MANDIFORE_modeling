@@ -235,7 +235,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     shA    <- Qair  # specific humidity [kg_H2O/kg_air]
     tmpA   <- Tair  # temperature [K]
     if (useCO2) {
-      co2A <- CO2 * 1e+06  # surface co2 concentration [ppm] converted from mole fraction [kg/kg]
+      co2A <- CO2  # surface co2 concentration [ppm] converted from mole fraction [kg/kg]
     }
 
     ## create directory if(system(paste('ls',froot),ignore.stderr=TRUE)>0)
