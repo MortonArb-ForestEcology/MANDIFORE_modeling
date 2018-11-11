@@ -1,0 +1,9 @@
+RunID,lat,lon,init,time.start,time.finish,GCM,scenario,management,management_file,INCLUDE_FIRE
+pass-lo,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp45,passive,,0
+pass-hi,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp85,passive,,0
+pres-lo,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp45,preservation,,2
+pres-hi,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp85,preservation,,2
+prod-lo,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp45,production,US-WCr_Production_lat45.5lon-90.5.lu,0
+prod-hi,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp85,production,US-WCr_Production_lat45.5lon-90.5.lu,0
+ecol-lo,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp45,ecoogical,US-WCr_Ecological_lat45.5lon-90.5.lu,0
+ecol-hi,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp85,ecoogical,US-WCr_Ecological_lat45.5lon-90.5.lu,0
