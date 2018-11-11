@@ -60,8 +60,8 @@ $ED_NL
    ! RADFRQ -- Time step to integrate radiation, in seconds.  This must be an integer      !
    !            multiple of DTLSM, and we recommend it to be exactly the same as DTLSM.    !
    !---------------------------------------------------------------------------------------!
-   NL%DTLSM  =  600
-   NL%RADFRQ  = 600
+   NL%DTLSM  =  300
+   NL%RADFRQ  = 300
    !---------------------------------------------------------------------------------------!
 
 
