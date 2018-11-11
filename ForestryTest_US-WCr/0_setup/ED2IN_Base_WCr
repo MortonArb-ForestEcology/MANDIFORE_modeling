@@ -199,11 +199,11 @@ $ED_NL
    ! ISOUTPUT -- restart file, for HISTORY runs.  The time interval between files is       !
    !             determined by FRQHIS                                                      !
    !---------------------------------------------------------------------------------------!
-   NL%IFOUTPUT  =  3
+   NL%IFOUTPUT  =  0
    NL%IDOUTPUT  =  0
-   NL%IMOUTPUT  =  0
+   NL%IMOUTPUT  =  3
    NL%IQOUTPUT  =  0
-   NL%IYOUTPUT  =  0
+   NL%IYOUTPUT  =  3
    NL%ITOUTPUT  =  0
    NL%IOOUTPUT  =  0   
    NL%ISOUTPUT  =  3
@@ -283,7 +283,7 @@ $ED_NL
    !                         Multiple timepoints should not be used in the history files   !
    !                         if you intend to use these for HISTORY runs.                  !
    !---------------------------------------------------------------------------------------!
-   NL%OUTFAST    = -1
+   NL%OUTFAST    = -2
    NL%OUTSTATE   = 0
    !---------------------------------------------------------------------------------------!
 
