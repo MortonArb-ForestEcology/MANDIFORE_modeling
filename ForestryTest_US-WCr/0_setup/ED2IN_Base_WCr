@@ -559,7 +559,7 @@ $ED_NL
    !---------------------------------------------------------------------------------------!
    NL%VEG_DATABASE     = '/home/models/ED_inputs/oge2OLD/OGE2_'
    NL%SOIL_DATABASE    = '/home/models/ED_inputs/faoOLD/FAO_'
-   NL%LU_DATABASE      = '/mnt/data/crollinson/MANDIFORE_modeling/ForestryTest_US-WCr/1_runs/TEST'
+   NL%LU_DATABASE      = '/LU/PATH'
    NL%PLANTATION_FILE  = ''
    NL%THSUMS_DATABASE  = '/home/models/ED_inputs/ed_inputs/'
    NL%ED_MET_DRIVER_DB = '/met/path/ED_MET_DRIVER_HEADER'
@@ -1176,7 +1176,7 @@ $ED_NL
    !                   past 12 months, to trigger fires.                                   !
    !---------------------------------------------------------------------------------------!
    NL%INCLUDE_FIRE    = 0
-   NL%FIRE_PARAMETER  = 0.5
+   NL%FIRE_PARAMETER  = 0.55
    NL%SM_FIRE         = 0.07
    !---------------------------------------------------------------------------------------!
 
@@ -1187,6 +1187,7 @@ $ED_NL
    !                   such as land clearing, abandonment, and logging.                    !
    !                   0.  no anthropogenic disturbance.                                   !
    !                   1.  use anthropogenic disturbance dataset.                          !
+   !                   2.  use anthropogenic disturbance dataset based on disturbed area   !
    !---------------------------------------------------------------------------------------!
    NL%IANTH_DISTURB   = 0
    !---------------------------------------------------------------------------------------!
@@ -1398,7 +1399,7 @@ $ED_NL
    !                              TREEFALL_DISTURBANCE_RATE is internally adjusted so the  !
    !                              average patch age is still 1/TREEFALL_DISTURBANCE_RATE   !
    !---------------------------------------------------------------------------------------!
-   NL%TREEFALL_DISTURBANCE_RATE  = 0.0
+   NL%TREEFALL_DISTURBANCE_RATE  = 0.002
    NL%TIME2CANOPY                = 0
    !---------------------------------------------------------------------------------------!
 
@@ -1498,8 +1499,8 @@ $ED_NL
    !---------------------------------------------------------------------------------------!
    NL%IMETTYPE    = 1
    NL%ISHUFFLE    = 0
-   NL%METCYC1     = 1999
-   NL%METCYCF     = 2014
+   NL%METCYC1     = 2006
+   NL%METCYCF     = 2100
    NL%IMETAVG     = 3
    NL%IMETRAD     = 0
    NL%INITIAL_CO2 = 370
