@@ -24,11 +24,11 @@ lu.settings <- data.frame(file.name = c("US-WCr_Production", "US-WCr_Ecological"
 
 # constants during the run
 lu.suff <- c("lat42.5lon-90.5.lu")
-biomass.targ <- -1 # target biomass removed; set to negative to ignore
+biomass.targ <- 0 # target biomass removed; set to negative to ignore
 year.start <- 2006
 year.end <- 2100
-block.area <- 1e6 # LU area; dunno what this actually does
-lu.bb <- c(-90.750, -90.250, 42.250, 42.750) # Land Use boudnign box: xmin, xmax, ymin, ymax
+block.area <- 1e12 # LU area; dunno what this actually does
+lu.bb <- c(-91.00, -90.00, 45.00, 46.000) # Land Use boudnign box: xmin, xmax, ymin, ymax
 harvest.pft <- c(6, 8, 9, 10, 11)
 
 for(i in 1:nrow(lu.settings)){
@@ -54,18 +54,21 @@ for(i in 1:nrow(lu.settings)){
   LU.header$HARVPROB.2ARY = rep(pharv, LU.header$N.PFT.HARVEST)
   
   # Building the LU Transition Table -- Unless ED is modified, there should be 19 columns + year as row names
-  LU.cols <- c("year", "cp", "pc", "pv", "vp", "cv", "sc", "cs", "sp", "ps", "vs", "sbh", "f_sbh", "vbh", "f_vbh", "sbh2", "f_sbh2", "vbh2", "f_vbh2")
+  
+  
+  LU.cols <- c("year", "cp", "pc", "pv", "vp", "vc", "cv", "sc", "cs", "sp", "ps", "vs", "sbh", "f_sbh", "vbh", "f_vbh", "sbh2", "f_sbh2", "vbh2", "f_vbh2")
   lu.mat <- array(0, dim=c(length(LU.header$FIRST.LUYEAR:LU.header$LAST.LUYEAR), length(LU.cols)))
   colnames(lu.mat) <- LU.cols
   lu.mat[,"year"] <- LU.header$FIRST.LUYEAR:LU.header$LAST.LUYEAR
   lu.mat[,c("sbh", "vbh")] <- biomass.targ # Sets biomass target or flag to ignore
   lu.mat[,c("f_sbh", "f_vbh")] <- aharv # Set area to harvest
+  lu.mat[,2:ncol(lu.mat)] <- format(round(lu.mat[,2:ncol(lu.mat)], digits=6), scientific=F, nsmall=6)
   
   # Writing the file
   # First, lets take care of the header
   LU.header2 <- character(length(LU.header))
   for(i in 1:length(names(LU.header))){
-    LU.header2[i] <- paste(names(LU.header)[i], "=", paste(LU.header[[i]], collapse=" "), sep=" ")
+    LU.header2[i] <- paste(stringr::str_pad(names(LU.header)[i], width=14, side="right", pad=" "), "=", paste(LU.header[[i]], collapse=" "), sep=" ")
   }
   
   # Now writing the landuse transition matrix
@@ -74,9 +77,11 @@ for(i in 1:nrow(lu.settings)){
   for(i in 1:nrow(lu.mat)){
     lu.mat2[i+1] <- paste(lu.mat[i,], collapse=" ")
   }
-  
+
   # Write the file
   file.LU <- paste0(file.name)
   writeLines(c(LU.header2, lu.mat2), file.LU)
   # close(file.LU)
+  # write.table(lu.mat, file.name, row.names=F, quote=F)
+  
 }

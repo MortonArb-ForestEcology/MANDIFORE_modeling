@@ -16,7 +16,7 @@ site_file=${setup_dir}/ExperimentalDesign_AGU2018.csv # # Path to list of ED sit
 # Some more constatns
 finalyear=2032
 finalfull=2031
-n=2
+n=4
 
 # Making the file directory if it doesn't already exist
 mkdir -p $file_dir
@@ -120,7 +120,11 @@ do
 	    sed -i "s/NL%INCLUDE_FIRE    = .*/NL%INCLUDE_FIRE    = ${fire[FILE]}/" ED2IN # turn on fire if run w/ fire on
 	    sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
 	    if [[ ${ianth[FILE]} == 2 ]]; then
-	    	sed -i "s/NL%LU_DATABASE      = .*/NL%LU_DATABASE      = '${setup_dir}/${mgmt[FILE]}'/" ED2IN # set fire intensity parameter
+	    	mgmt_path="${setup_dir}/${mgmt[FILE]}"
+	    	echo $mgmt_path
+	    	# sed -i "s/NL%LU_DATABASE      = .*/NL%LU_DATABASE      = ${mgmt_path} /" ED2IN # set fire intensity parameter
+	    	sed -i "s,LANDUSEFILE,${mgmt_path},g" ED2IN # set the file path
+
 	    fi
 
 	popd	
