@@ -78,7 +78,7 @@ n=$(($n<${#runs[@]}?$n:${#runs[@]}))
 for ((FILE=0; FILE<$n; FILE++)) # This is a way of doing it so that we don't have to modify N
 do
 	# Site Name and Lat/Lon
-	SITE=${runID[FILE]}
+	SITE=${runs[FILE]}
 	echo $SITE
 
 	GCM_now=${GCM[FILE]}
@@ -110,7 +110,7 @@ do
 		# Creating the default file structure and copying over the base files to be modified
 		mkdir -p histo analy
 		ln -s $ed_exec
-		cp ../../ED2IN_Base_WCr ED2IN
+		cp ${setup_dir}/ED2IN_Base_WCr ED2IN
 		cp ${setup_dir}/PFTParams_WCr.xml .
 		
 		# ED2IN Changes	    
@@ -123,31 +123,6 @@ do
 	    	sed -i "s/NL%LU_DATABASE      = .*/NL%LU_DATABASE      = ${mgmt[FILE]}/" ED2IN # set fire intensity parameter
 	    fi
 
-
-		# spin spawn start changes -- 
-		# Note: spins require a different first script because they won't have any 
-		#       histo files to read
-		cp ${setup_dir}spawn_startloops_spinstart.sh .
-		sed -i "s/USER=.*/USER=${USER}/" spawn_startloops_spinstart.sh
-		sed -i "s/SITE=.*/SITE=${SITE}/" spawn_startloops_spinstart.sh 		
-		sed -i "s/finalyear=.*/finalyear=${finalfull}/" spawn_startloops_spinstart.sh 		
-	    sed -i "s,/dummy/path,${file_path},g" spawn_startloops_spinstart.sh # set the file path
-	    sed -i "s,sub_post_process.sh,sub_post_process_spininit.sh,g" spawn_startloops_spinstart.sh # set the file path
-
-		# spawn restarts changes
-		cp ${setup_dir}spawn_startloops.sh .
-		sed -i "s/USER=.*/USER=${USER}/" spawn_startloops.sh
-		sed -i "s/SITE=.*/SITE=${SITE}/" spawn_startloops.sh 		
-		sed -i "s/finalyear=.*/finalyear=${finalfull}/" spawn_startloops.sh 		
-	    sed -i "s,/dummy/path,${file_path},g" spawn_startloops.sh # set the file path
-	    sed -i "s,sub_post_process.sh,sub_post_process_spininit.sh,g" spawn_startloops.sh # set the file path
-
-		# adjust integration step changes
-		cp ${setup_dir}adjust_integration_restart.sh .
-		sed -i "s/USER=.*/USER=${USER}/" adjust_integration_restart.sh
-		sed -i "s/SITE=.*/SITE=${SITE}/" adjust_integration_restart.sh 		
-		
-#  		sh spawn_startloops_spinstart.sh
 	popd	
 
 	chmod -R a+rwx ${file_path}
