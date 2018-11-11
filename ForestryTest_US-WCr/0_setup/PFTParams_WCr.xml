@@ -4,6 +4,7 @@
  <config>
    <disturbance>
    	  <mature_harvest_age> 60 </mature_harvest_age> 
+   	  <plantation_rotation> 30 </plantation_rotation> 
    </disturbance>
 
    <pft>
