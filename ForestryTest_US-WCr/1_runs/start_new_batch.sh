@@ -120,7 +120,7 @@ do
 	    sed -i "s/NL%INCLUDE_FIRE    = .*/NL%INCLUDE_FIRE    = ${fire[FILE]}/" ED2IN # turn on fire if run w/ fire on
 	    sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
 	    if [[ ${ianth[FILE]} == 2 ]]; then
-	    	sed -i "s/NL%LU_DATABASE      = .*/NL%LU_DATABASE      = ${mgmt[FILE]}/" ED2IN # set fire intensity parameter
+	    	sed -i "s/NL%LU_DATABASE      = .*/NL%LU_DATABASE      = '${setup_dir}/${mgmt[FILE]}'/" ED2IN # set fire intensity parameter
 	    fi
 
 	popd	
