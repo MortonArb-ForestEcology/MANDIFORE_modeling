@@ -3,3 +3,4 @@ ForestryTest_US-Wcr/met_downscaled_day
 ForestryTest_US-Wcr/ED_MET
 *.history
 *.Rhistory
+ForestryTest_US-WCr/0_setup/.httr-oauth
