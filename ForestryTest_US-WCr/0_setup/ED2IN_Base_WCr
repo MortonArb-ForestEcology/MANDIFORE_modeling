@@ -559,7 +559,7 @@ $ED_NL
    !---------------------------------------------------------------------------------------!
    NL%VEG_DATABASE     = '/home/models/ED_inputs/oge2OLD/OGE2_'
    NL%SOIL_DATABASE    = '/home/models/ED_inputs/faoOLD/FAO_'
-   NL%LU_DATABASE      = '/LU/PATH'
+   NL%LU_DATABASE      = ''
    NL%PLANTATION_FILE  = ''
    NL%THSUMS_DATABASE  = '/home/models/ED_inputs/ed_inputs/'
    NL%ED_MET_DRIVER_DB = '/met/path/ED_MET_DRIVER_HEADER'
