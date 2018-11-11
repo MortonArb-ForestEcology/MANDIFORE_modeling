@@ -23,7 +23,7 @@ lu.settings <- data.frame(file.name = c("US-WCr_Production", "US-WCr_Ecological"
                           )
 
 # constants during the run
-lu.suff <- c("lat42.5lon-90.5")
+lu.suff <- c("lat42.5lon-90.5.lu")
 biomass.targ <- -1 # target biomass removed; set to negative to ignore
 year.start <- 2006
 year.end <- 2006+25
@@ -32,7 +32,7 @@ lu.bb <- c(-90.750, -90.250, 42.250, 42.750) # Land Use boudnign box: xmin, xmax
 harvest.pft <- c(6, 8, 9, 10, 11)
 
 for(i in 1:nrow(lu.settings)){
-  file.name = paste(lu.settings$file.name[i])
+  file.name = paste(lu.settings$file.name[i], lu.suff, sep="_")
   minDBH    = lu.settings$minDBH[i]
   pharv     = lu.settings$pharv[i]
   aharv     = lu.settings$aharv[i]
@@ -76,7 +76,7 @@ for(i in 1:nrow(lu.settings)){
   }
   
   # Write the file
-  file.LU <- paste0(file.name, ".LU")
+  file.LU <- paste0(file.name)
   writeLines(c(LU.header2, lu.mat2), file.LU)
   # close(file.LU)
 }
