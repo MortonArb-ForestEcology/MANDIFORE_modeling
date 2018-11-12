@@ -1179,8 +1179,8 @@ $ED_NL
    !                   past 12 months, to trigger fires.                                   !
    !---------------------------------------------------------------------------------------!
    NL%INCLUDE_FIRE    = 0
-   NL%FIRE_PARAMETER  = 0.55
-   NL%SM_FIRE         = 0.015 ! 2nd lowest threshold from Cori's work
+   NL%FIRE_PARAMETER  = 0.5
+   NL%SM_FIRE         = 0.03 ! 
    !---------------------------------------------------------------------------------------!
 
 
