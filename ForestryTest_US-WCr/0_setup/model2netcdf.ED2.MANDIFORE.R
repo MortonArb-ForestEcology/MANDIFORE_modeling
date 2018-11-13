@@ -981,7 +981,7 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
   
   # lets make it work for a subset of vars fist
   # TODO :  read all (or more) variables, functionality exists, see below
-  varnames.cohort <- c("DBH", "DDBH_DT", "NPLANT", "BA", "AGB", "BALIVE", "BDEAD", "LAI_CO")
+  varnames.cohort <- c("DBH", "DDBH_DT", "NPLANT", "BA_CO", "AGB_CO", "BALIVE", "BDEAD", "LAI_CO")
   varnames.std <- c("DBH", "DDBH_DT", "Density", "BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom", "LAI")
 
   # List of vars to extract includes the requested one, plus others needed below 
