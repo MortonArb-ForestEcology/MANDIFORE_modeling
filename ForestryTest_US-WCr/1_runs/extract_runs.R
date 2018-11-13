@@ -34,12 +34,12 @@ for(RUNID in runs.extract){
   
   # Check to see if it finished the runs
   outfiles <- dir(ed.dir, "-E-") # Listing the monthly files
-  run.done <- any(as.numeric(substr(outfiles,18,21))==lubridate::year(end_date) & as.numeric(substr(outfiles,23,24))==lubridate::month(end_date))
+  # run.done <- any(as.numeric(substr(outfiles,11,14))==lubridate::year(end_date) & as.numeric(substr(outfiles,16,17))==lubridate::month(end_date))
   
   
   outdir <- file.path(out.base, RUNID) # Where we want to save our output
   dir.create(outdir, recursive = T, showWarnings = F)
   
   # For everything that is fine and not missing a year
-  model2netcdf.ED2(ed.dir, outdir, sitelat, sitelon, start_date, end_date, pft_names = NULL)
+  model2netcdf.ED2(ed.dir, outdir, sitelat, sitelon, start_date, end_date, pft_names = NULL, vars.E=T)
 }

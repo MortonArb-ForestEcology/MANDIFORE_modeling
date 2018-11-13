@@ -29,15 +29,15 @@
 ## further modified by S. Serbin 09/2018
 ## even further modify by C. Rollinson 11/2018
 ##'
-model2netcdf.ED2 <- function(outdir, sitelat, sitelon, start_date,
+model2netcdf.ED2 <- function(ed.dir, outdir, sitelat, sitelon, start_date,
                              end_date, vars.T=NULL, vars.E=NULL, pft_names = NULL) {
   
   start_year <- lubridate::year(start_date)
   end_year   <- lubridate::year(end_date)
   
   flist <- list()
-  if(!is.null(vars.T)) flist[["-T-"]] <- dir(outdir, "-T-") # tower files
-  if(!is.null(vars.E)) flist[["-E-"]] <- dir(outdir, "-E-") # monthly files
+  if(!is.null(vars.T)) flist[["-T-"]] <- dir(ed.dir, "-T-") # tower files
+  if(!is.null(vars.E)) flist[["-E-"]] <- dir(ed.dir, "-E-") # monthly files
   
   # check if there are files
   file.check <- sapply(flist, function (f) length(f) != 0)
@@ -45,7 +45,8 @@ model2netcdf.ED2 <- function(outdir, sitelat, sitelon, start_date,
   if (!any(file.check)) {
     
     # no output files
-    PEcAn.logger::logger.warn("WARNING: No output files found for :", outdir)
+    # PEcAn.logger::logger.warn("WARNING: No output files found for :", outdir)
+    warning("WARNING: No output files found for :", ed.dir)
     return(NULL)
     
   } else {
@@ -84,18 +85,21 @@ model2netcdf.ED2 <- function(outdir, sitelat, sitelon, start_date,
   # on parameters?
   year_check <- unique(unlist(ylist))
   if (max(year_check) < end_year) {
-    PEcAn.logger::logger.info("Run failed with some outputs.")
+    warning("Run failed with some outputs.")
     rundir <- gsub(file.path("out"), file.path("run"), outdir)
     readme <- file(file.path(rundir, "README.txt"))
     runtype <- readLines(readme, n = 1)
     close(readme)
     if (grepl("ensemble", runtype)) {
-      PEcAn.logger::logger.info("This is an ensemble run.
-                                Not processing anything.")
+      # PEcAn.logger::logger.info("This is an ensemble run.
+      #                           Not processing anything.")
+      warning("This is an ensemble run. Not processing anything.")
+      
       return(NULL)
     } else {
-      PEcAn.logger::logger.info("This is not an ensemble run.
-                                Processing existing outputs.")
+      # PEcAn.logger::logger.info("This is not an ensemble run.
+      #                           Processing existing outputs.")
+      warning("This is an ensemble run. Processing existing outputs.")
       end_year <- max(year_check)
     }
   }
@@ -103,7 +107,8 @@ model2netcdf.ED2 <- function(outdir, sitelat, sitelon, start_date,
   # ----- start loop over years
   for (y in start_year:end_year) {
     
-    PEcAn.logger::logger.info(paste0("----- Processing year: ", y))
+    # PEcAn.logger::logger.info(paste0("----- Processing year: ", y))
+    print(paste0("----- Processing year: ", y))
     
     # ----- read values from ED output files
     for (i in seq_along(out_list)) {
@@ -111,7 +116,7 @@ model2netcdf.ED2 <- function(outdir, sitelat, sitelon, start_date,
       fcnx  <- paste0("read_", gsub("-", "", rflag), "_files")
       fcn   <- match.fun(fcnx)
       out_list[[rflag]] <- fcn(yr = y, ylist[[rflag]], flist[[rflag]],
-                               outdir, start_date, end_date,
+                               ed.dir, start_date, end_date,
                                pft_names)
     }
     
@@ -151,13 +156,13 @@ model2netcdf.ED2 <- function(outdir, sitelat, sitelon, start_date,
     }
     
     # ----- write ncdf files
-    PEcAn.logger::logger.info("*** Writing netCDF file ***")
+    print("*** Writing netCDF file ***")
     
-    out <- unlist(out_list, recursive = FALSE)
+    # out <- unlist(out_list, recursive = FALSE)
     nc <- ncdf4::nc_create(file.path(outdir, paste(y, "nc", sep = ".")),
                            nc_var)
     # define time_bouds for -T- outputs, if exists
-    if (!is.null(vars.T) & file.check[["-T-"]]==TRUE) {
+    if (!is.null(vars.T) ) {
       ncdf4::ncatt_put(nc, "time", "bounds", "time_bounds", prec = NA)
     }
     # define time_bouds for -E- outputs, if exists
@@ -165,9 +170,12 @@ model2netcdf.ED2 <- function(outdir, sitelat, sitelon, start_date,
       ncdf4::ncatt_put(nc, "dtime", "bounds", "dtime_bounds", prec = NA)
     }
     varfile <- file(file.path(outdir, paste(y, "nc", "var", sep = ".")), "w")
-    for (i in seq_along(nc_var)) {
-      ncdf4::ncvar_put(nc, nc_var[[i]], out[[i]])
-      cat(paste(nc_var[[i]]$name, nc_var[[i]]$longname), file = varfile,
+    for (VAR in names(nc_var)) {
+      if(VAR=="DTime") next
+      print(VAR)
+      out_list[["-E-"]][[VAR]][is.na(out_list[["-E-"]][[VAR]])] <- -999
+      ncdf4::ncvar_put(nc, nc_var[[VAR]], out_list[["-E-"]][[VAR]])
+      cat(paste(nc_var[[VAR]]$name, nc_var[[VAR]]$longname), file = varfile,
           sep = "\n")
     }
     close(varfile)
@@ -194,7 +202,8 @@ model2netcdf.ED2 <- function(outdir, sitelat, sitelon, start_date,
 ##' @export
 read_T_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, vars.T, ...){
   
-  PEcAn.logger::logger.info(paste0("*** Reading -T- file ***"))
+  # PEcAn.logger::logger.info(paste0("*** Reading -T- file ***"))
+  print(paste0("*** Reading -T- file ***"))
   
   # add
   add <- function(dat, col, row, year) {
@@ -218,16 +227,20 @@ read_T_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, vars.
           out[[col]] <- array(dat, dim = (end - start))
         } else {
           if (start != 0) {
-            PEcAn.logger::logger.warn("start date is not 0 this year, 
-                                      but data already exists in this col", 
-                                      col, "how is this possible?")
+            # PEcAn.logger::logger.warn("start date is not 0 this year, 
+            #                           but data already exists in this col", 
+            #                           col, "how is this possible?")
+            warning("start date is not 0 this year, but data already exists in this col",
+                    col, "how is this possible?")
+            
           }
           out[[col]] <- abind::abind(out[[col]], 
                                      array(dat, dim = (end - start)), 
                                      along = 1)
         }
         } else {
-          PEcAn.logger::logger.warn("expected a single value")
+          # PEcAn.logger::logger.warn("expected a single value")
+          warning("expected a single value")
         }
     } else if (length(dims) == 1) {
       dat <- dat[1:(end - start)]
@@ -235,9 +248,13 @@ read_T_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, vars.
         out[[col]] <- dat
       } else {
         if (start != 0) {
-          PEcAn.logger::logger.warn("start date is not 0 this year, 
+          # PEcAn.logger::logger.warn("start date is not 0 this year, 
+          #                           but data already exists in this col",
+          #                           col, "how is this possible?")
+          warning("start date is not 0 this year, 
                                     but data already exists in this col",
                                     col, "how is this possible?")
+          
         }
         out[[col]] <- abind::abind(out[[col]], dat, along = 1)
       }
@@ -249,20 +266,32 @@ read_T_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, vars.
           out[[col]] <- dat
         } else {
           if (start != 0) {
-            PEcAn.logger::logger.warn("start date is not 0 this year, 
+            # PEcAn.logger::logger.warn("start date is not 0 this year, 
+            #                           but data already exists in this 
+            #                           col", col, "how is this possible?")
+            warning("start date is not 0 this year, 
                                       but data already exists in this 
                                       col", col, "how is this possible?")
+            
           }
           out[[col]] <- abind::abind(out[[col]], dat, along = 1)
           }
         } else {
-          PEcAn.logger::logger.debug("-------------------------------------------------------------")
-          PEcAn.logger::logger.debug("col=", col)
-          PEcAn.logger::logger.debug("length=", length(dat))
-          PEcAn.logger::logger.debug("start=", start)
-          PEcAn.logger::logger.debug("end=", end)
-          PEcAn.logger::logger.debug("dims=", dims)
-          PEcAn.logger::logger.warn("Don't know how to handle larger arrays yet.")
+          # PEcAn.logger::logger.debug("-------------------------------------------------------------")
+          # PEcAn.logger::logger.debug("col=", col)
+          # PEcAn.logger::logger.debug("length=", length(dat))
+          # PEcAn.logger::logger.debug("start=", start)
+          # PEcAn.logger::logger.debug("end=", end)
+          # PEcAn.logger::logger.debug("dims=", dims)
+          # PEcAn.logger::logger.warn("Don't know how to handle larger arrays yet.")
+          warning("-------------------------------------------------------------")
+          warning("col=", col)
+          warning("length=", length(dat))
+          warning("start=", start)
+          warning("end=", end)
+          warning("dims=", dims)
+          warning("Don't know how to handle larger arrays yet.")
+          
         }
     
     ## finally make sure we use -999 for invalid values
@@ -277,7 +306,7 @@ read_T_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, vars.
     if (var %in% names(nc$var)) {
       return(ncdf4::ncvar_get(nc, var))
     } else {
-      PEcAn.logger::logger.warn("Could not find", var, "in ed hdf5 output.")
+      warning("Could not find", var, "in ed hdf5 output.")
       return(-999)
     }
   }
@@ -292,12 +321,12 @@ read_T_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, vars.
   ysel <- which(yr == yfiles)
   
   if (yr < strftime(start_date, "%Y")) {
-    PEcAn.logger::logger.info(yr, "<", strftime(start_date, "%Y"))
+    warning(yr, "<", strftime(start_date, "%Y"))
     next
   }
   
   if (yr > strftime(end_date, "%Y")) {
-    PEcAn.logger::logger.info(yr, ">", strftime(end_date, "%Y"))
+    warning(yr, ">", strftime(end_date, "%Y"))
     next
   }
   
@@ -313,7 +342,7 @@ read_T_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, vars.
                   ncT$dim$phony_dim_0$len / 366, # a leaper 
                   ncT$dim$phony_dim_0$len / 365) # non leap
   
-  PEcAn.logger::logger.info(paste0("Output interval: ", 86400 / block, " sec"))
+  print(paste0("Output interval: ", 86400 / block, " sec"))
   
   
   if (file.exists(file.path(outdir, sub("-T-", "-Y-", tfiles[ysel])))) {
@@ -321,7 +350,7 @@ read_T_files <- function(yr, yfiles, tfiles, outdir, start_date, end_date, vars.
     slzdata <- getHdf5Data(ncY, "SLZ")
     ncdf4::nc_close(ncY)
   } else {
-    PEcAn.logger::logger.warn("Could not find SLZ in Y file, 
+    warning("Could not find SLZ in Y file, 
                               making a crude assumpution.")
     slzdata <- array(c(-2, -1.5, -1, -0.8, -0.6, -0.4, -0.2, -0.1, -0.05))
   }
@@ -851,8 +880,13 @@ put_T_values <- function(yr, nc_var, out, lat, lon, begins, ends, ...){
 ##'
 ##' @export
 read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_names, vars.E, ...){
-
-  PEcAn.logger::logger.info(paste0("*** Reading -E- file ***"))
+  PFTs <- data.frame(PFT=1:17,
+                     Description=c("C4 grass", "Early tropical", "Mid Tropical", "Late tropical", "Temperate C3 Grass", 
+                                   "North Pine", "South Pine", "Late conifer", 
+                                   "Early hardwood", "Mid hardwood", "Late hardwood", 
+                                   "C3 crop", "C3 pasture", "C4 crop", "C4 pasture", "C3 grass", "Araucaria"))
+  
+  print(paste0("*** Reading -E- file ***"))
   
   add <- function(dat, var.name) {
     
@@ -921,7 +955,7 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
     if (var %in% names(nc$var)) {
       return(ncdf4::ncvar_get(nc, var))
     } else {
-      PEcAn.logger::logger.warn("Could not find", var, "in ed hdf5 output.")
+      warning("Could not find", var, "in ed hdf5 output.")
       return(-999)
     }
   }
@@ -947,8 +981,8 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
   
   # lets make it work for a subset of vars fist
   # TODO :  read all (or more) variables, functionality exists, see below
-  varnames.cohort <- c("DBH", "DDBH_DT", "NPLANT", "BA", "AGB", "BALIVE", "BDEAD", "LAI_CO", "MMEAN_MORT_RATE_CO")
-  varnames.std <- c("DBH", "DDBH_DT", "Density", "BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom", "LAI", "MortRate")
+  varnames.cohort <- c("DBH", "DDBH_DT", "NPLANT", "BA", "AGB", "BALIVE", "BDEAD", "LAI_CO")
+  varnames.std <- c("DBH", "DDBH_DT", "Density", "BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom", "LAI")
 
   # List of vars to extract includes the requested one, plus others needed below 
   vars <- c(varnames.cohort, "PFT", "AREA", "PACO_N")
@@ -960,9 +994,10 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
   # loop over the files for that year
   for(i in ysel) {
     
-    nc <- ncdf4::nc_open(file.path(outdir, efiles[i]))
-    allvars <- names(nc$var)
+    ncT <- ncdf4::nc_open(file.path(outdir, efiles[i]))
+    allvars <- names(ncT$var)
     
+    if(i==ysel[1]) out$SLZ <- ncdf4::ncvar_get(ncT, "SLZ")
     # -------
     # Drivers
     # -------
@@ -976,8 +1011,8 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
     out <- add(getHdf5Data(ncT, "MMEAN_ATM_VELS_PY"), "Wind")  ## Wind
     out <- add(getHdf5Data(ncT, 'MMEAN_ATM_RLONG_PY')-getHdf5Data(ncT, 'MMEAN_RLONGUP_PY'), "LWnet") ## Lwnet
     
-    out <- add(getHdf5Data(ncT, "FMEAN_SFCW_DEPTH_PY"), "SnowDepth")  ## SnowDepth (ED2 currently groups snow in to surface water)
-    out <- add(1 - getHdf5Data(ncT, "FMEAN_SFCW_FLIQ_PY"), "SnowFrac")  ## SnowFrac (ED2 currently groups snow in to surface water)
+    out <- add(getHdf5Data(ncT, "MMEAN_SFCW_DEPTH_PY"), "SnowDepth")  ## SnowDepth (ED2 currently groups snow in to surface water)
+    out <- add(1 - getHdf5Data(ncT, "MMEAN_SFCW_FLIQ_PY"), "SnowFrac")  ## SnowFrac (ED2 currently groups snow in to surface water)
     
     # -------
     
@@ -1009,8 +1044,8 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
     out <- add(getHdf5Data(ncT, "MMEAN_FS_OPEN_PY"), "NetStress")  ## Net stress factor
 
     # Site-Level Soil Characterstics 
-    out <- add(getHdf5Data(ncT, "FAST_SOIL_C_PY") + getHdf5Data(ncT, "STRUCT_SOIL_C_PY") + 
-                 getHdf5Data(ncT, "SLOW_SOIL_C_PY"), "TotSoilCarb")  ## TotSoilCarb
+    out <- add(getHdf5Data(ncT, "MMEAN_FAST_SOIL_C_PY") + getHdf5Data(ncT, "MMEAN_STRUCT_SOIL_C_PY") + 
+                 getHdf5Data(ncT, "MMEAN_SLOW_SOIL_C_PY"), "TotSoilCarb")  ## TotSoilCarb
     
     # Site-Level Soil Characteristics by depth
     out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilMoist")  ## SoilWater  **********
@@ -1027,7 +1062,7 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
       
       for (j in 1:length(allvars)) {
         ed.dat[[j]] <- list()
-        ed.dat[[j]][[1]] <- ncdf4::ncvar_get(nc, allvars[j])
+        ed.dat[[j]][[1]] <- ncdf4::ncvar_get(ncT, allvars[j])
       }
       names(ed.dat) <- allvars
       
@@ -1042,20 +1077,20 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
         
         if (length(k)>0) {
           
-          ed.dat[[k]][[t]] <- ncdf4::ncvar_get(nc, allvars[j])
+          ed.dat[[k]][[t]] <- ncdf4::ncvar_get(ncT, allvars[j])
           
         } else { ## add a new ed.datiable. ***Not checked (shouldn't come up?)
           
           ed.dat[[length(ed.dat)+1]] <- list()    # Add space for new ed.datiable
           ed.dat[[length(ed.dat)]][1:(t-1)] <- NA # Give NA for all previous time points
-          ed.dat[[length(ed.dat)]][t] <- ncdf4::ncvar_get(nc, allvars[j]) # Assign the value of the new ed.datiable at this time point
+          ed.dat[[length(ed.dat)]][t] <- ncdf4::ncvar_get(ncT, allvars[j]) # Assign the value of the new ed.datiable at this time point
           names(ed.dat)[length(ed.dat)] <- allvars[j]
           
         }
       }      
     }
     # -------
-    ncdf4::nc_close(nc)
+    ncdf4::nc_close(ncT)
   } # end ysel-loop
   
   # for now this function does not read any ED variable that has soil as a dimension
@@ -1065,17 +1100,26 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
     pft_names <- pft_names[!(soil.check)]
   }
   
+  pft_names=PFTs$Description
+  pfts <- PFTs$PFT
   npft <- length(pft_names)
-  data(pftmapping, package = "PEcAn.ED2")
-  pfts <- sapply(pft_names, function(x) pftmapping$ED[pftmapping$PEcAn == x]) 
+  # data(pftmapping, package = "PEcAn.ED2")
+  # pfts <- sapply(pft_names, function(x) pftmapping$ED[pftmapping$PEcAn == x]) 
   
   # out <- list()
   for (i in seq_along(varnames.cohort)) {
     out[[varnames.std[i]]] <- array(NA, c(length(ysel), npft))
   }
   
+  
   # Aggregate over PFT and DBH bins  
   for (i in seq_along(ysel)) {
+    # Convert c("BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom")) to /m2
+    if("BA" %in% names(ed.dat)) ed.dat$BA[[i]] <- ed.dat$BA[[i]]*ed.dat$NPLANT[[i]]
+    if("AGB" %in% names(ed.dat)) ed.dat$AGB[[i]] <- ed.dat$AGB[[i]]*ed.dat$NPLANT[[i]]
+    if("BALIVE" %in% names(ed.dat)) ed.dat$BALIVE[[i]] <- ed.dat$BALIVE[[i]]*ed.dat$NPLANT[[i]]
+    if("BDEAD" %in% names(ed.dat)) ed.dat$BDEAD[[i]] <- ed.dat$BDEAD[[i]]*ed.dat$NPLANT[[i]]
+    
     # Get additional cohort-level variables required
     pft        <- ed.dat$PFT[[i]]
     dbh        <- ed.dat$DBH[[i]]      # cm / plant --unused?
@@ -1098,25 +1142,24 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
       ind <- (pft == pfts[k])
       
       if (any(ind)) {
-        for (i in seq_along(varnames.cohort)) {
-          if(varnames.cohort[i] == "NPLANT") {
+        for (j in seq_along(varnames.cohort)) {
+          if(varnames.cohort[j] == "NPLANT") {
             # Return the total number of plants in the bin
-            out$NPLANT[i,k] <- sum(nplant[ind])
-          } else if (varnames.cohort[i] == "MMEAN_MORT_RATE_CO") {
+            out$Density[i,k] <- sum(nplant[ind])
+          } else if (varnames.cohort[j] == "MMEAN_MORT_RATE_CO") {
             # Sum over all columns 
             mort <- apply(ed.dat$MMEAN_MORT_RATE_CO[[i]][ind,, drop=F], 1, sum, na.rm = T)
             out$MMEAN_MORT_RATE_CO[i,k] <- sum(mort * nplant[ind]) / sum(nplant[ind])
           } else {
             # For all others, just get mean weighted by nplant
-            out[[varnames.std[i]]][i,k] <- sum(ed.dat[[varname]][[i]][ind] * nplant[ind]) / sum(nplant[ind])
+            out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind]) / sum(nplant[ind])
           }
-          dimnames(out[[varnames.std[i]]]) <- list(months = times[ysel], pft = pft_names)
+          dimnames(out[[varnames.std[j]]]) <- list(months = times[ysel], pft = pft_names)
         }
       }
     }
     
   }
-  out$SLZ <- slzdata
   out$PFT <- pfts # will write this to the .nc file
   
   return(out)
@@ -1129,6 +1172,12 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
 ##' @export
 put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, pft_names, ...){
   
+  PFTs <- data.frame(PFT=1:17,
+                     Description=c("C4 grass", "Early tropical", "Mid Tropical", "Late tropical", "Temperate C3 Grass", 
+                                   "North Pine", "South Pine", "Late conifer", 
+                                   "Early hardwood", "Mid hardwood", "Late hardwood", 
+                                   "C3 crop", "C3 pasture", "C4 crop", "C4 pasture", "C3 grass", "Araucaria"))
+  
   s <- length(nc_var)
   
   # even if this is a SA run for soil, currently we are not reading any variable that has a soil dimension
@@ -1138,16 +1187,17 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, pft_names, ...
     # for now keep soil out
     pft_names <- pft_names[!(soil.check)]
   }
-  
-  data(pftmapping, package = "PEcAn.ED2")
-  pfts <- sapply(pft_names, function(x) pftmapping$ED[pftmapping$PEcAn == x]) 
+  pfts <- PFTs$PFT
+  pft_names <- PFTs$Description
+  # data(pftmapping, package = "PEcAn.ED2")
+  # pfts <- sapply(pft_names, function(x) pftmapping$ED[pftmapping$PEcAn == x]) 
   
   # ----- fill list
   
   ##### setup output time and time bounds
   ## Create a date vector that contains each month of the model run (e.g. "2001-07-01" "2001-08-01" "2001-09-01"....)
   ## and which is the correct length for each full or partial year
-  output_date_vector <- seq(lubridate::floor_date(begins,"month"), by = "month", length.out = dim(out[[1]])[1] )
+  output_date_vector <- seq(lubridate::floor_date(begins,"month"), by = "month", length.out = dim(out[[2]])[2] )
   ## Create a vector of the number of days in each month by year
   ## (e.g. 31 31 30 31 30 31)
   num_days_per_month <- lubridate::days_in_month(output_date_vector)
@@ -1194,10 +1244,11 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, pft_names, ...
   Mc <- 12.017  #molar mass of C, g/mol
   umol2kg_C <- Mc * udunits2::ud.convert(1, "umol", "mol") * udunits2::ud.convert(1, "g", "kg")
   yr2s      <- udunits2::ud.convert(1, "s", "yr")
-  pl2m2 <- out$Density
+  # pl2m2 <- out$Density
   
   # TODO - remove this function and replace with ifelse statements inline below (SPS)
   conversion <- function(var.name, mult) {
+    out[[var.name]][is.na(out[[var.name]])] <- -999
     ## make sure only to convert those values that are not -999
     out[[var.name]][out[[var.name]] != -999] <- out[[var.name]][out[[var.name]] != -999] * mult
     return(out)
@@ -1321,24 +1372,19 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, pft_names, ...
   nc_var[["Density"]] <- ncdf4::ncvar_def("Density", units = "plant m-2", dim = list(lon, lat, t, p), missval = -999, 
                                           longname = "Plant density")
   
-  out <- conversion("BasalArea", pl2m2)  ## cm2/plant -> cm2/m2
-  nc_var[["BasalArea"]] <- ncdf4::ncvar_def("BasalArea", units = "kg C m-2", dim = list(lon, lat, t, p),
+  nc_var[["BasalArea"]] <- ncdf4::ncvar_def("BasalArea", units = "cm m-2", dim = list(lon, lat, t, p),
                                             missval = -999, longname = "Cohort basal area")
-  
-  out <- conversion("AbvGrndBiom", pl2m2)  ## kgC/plant -> cm2/m2
   nc_var[["AbvGrndBiom"]] <- ncdf4::ncvar_def("AbvGrndBiom", units = "kg C m-2", dim = list(lon, lat, t, p), 
                                               missval = -999, longname = "Cohort above ground biomass")
-  out <- conversion("TotLivBiom", pl2m2)  ## kgC/plant -> cm2/m2
   nc_var[["TotLivBiom"]] <- ncdf4::ncvar_def("TotLivBiom", units = "kg C m-2", dim = list(lon, lat, t, p), 
                                              missval = -999, longname = "Cohort living biomass")
-  out <- conversion("TotDeadBiom", pl2m2)  ## kgC/plant -> cm2/m2
   nc_var[["TotDeadBiom"]] <- ncdf4::ncvar_def("TotDeadBiom", units = "kg C m-2", dim = list(lon, lat, t, p), 
                                               missval = -999, longname = "Total non-living biomass")
   
   nc_var[["LAI"]] <- ncdf4::ncvar_def("LAI", units = "m2 m-2", dim = list(lon, lat, t, p), 
                                       missval = -999, longname = "Cohort Leaf Area Index")
-  nc_var[["MortRate"]] <- ncdf4::ncvar_def("MortRate", units = "unknown", dim = list(lon, lat, t, p), 
-                                           missval = -999, longname = "Mortality Rate")
+  # nc_var[["MortRate"]] <- ncdf4::ncvar_def("MortRate", units = "unknown", dim = list(lon, lat, t, p), 
+  #                                          missval = -999, longname = "Mortality Rate")
   # -------
   
   # longname of this variable will be parsed by read.output
@@ -1370,7 +1416,7 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, pft_names, ...
 #' @export
 read_S_files <- function(sfile, outdir, pft_names, pecan_names = NULL){
   
-  PEcAn.logger::logger.info(paste0("*** Reading -S- file ***"))
+  print(paste0("*** Reading -S- file ***"))
   
   # commonly used vars
   if(is.null(pecan_names)) pecan_names <- c("AGB", "AbvGrndWood", "GWBI", "DBH")
