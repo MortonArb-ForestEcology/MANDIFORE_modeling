@@ -172,7 +172,7 @@ model2netcdf.ED2 <- function(ed.dir, outdir, sitelat, sitelon, start_date,
     varfile <- file(file.path(outdir, paste(y, "nc", "var", sep = ".")), "w")
     for (VAR in names(nc_var)) {
       if(VAR=="DTime") next
-      print(VAR)
+      # print(VAR)
       out_list[["-E-"]][[VAR]][is.na(out_list[["-E-"]][[VAR]])] <- -999
       ncdf4::ncvar_put(nc, nc_var[[VAR]], out_list[["-E-"]][[VAR]])
       cat(paste(nc_var[[VAR]]$name, nc_var[[VAR]]$longname), file = varfile,
