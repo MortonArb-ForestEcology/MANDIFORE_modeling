@@ -981,9 +981,16 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
   
   # lets make it work for a subset of vars fist
   # TODO :  read all (or more) variables, functionality exists, see below
-  varnames.cohort <- c("DBH", "DDBH_DT", "NPLANT")
-  varnames.std <- c("DBH", "DDBH_DT", "Density")
+  varnames.cohort <- c("DBH", "DDBH_DT", "NPLANT", "BA_CO", "AGB_CO", "BALIVE", "BDEAD", "LAI_CO")
+  varnames.std <- c("DBH", "DDBH_DT", "Density", "BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom", "LAI")
 
+  #, "BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom", "LAI"
+  # out <- add(getHdf5Data(ncT, "BASAL_AREA_PY"), "BasalArea")  ## Aboveground Biomass
+  # out <- add(getHdf5Data(ncT, "AGB_PY"), "AbvGrndBiom")  ## Aboveground Biomass
+  # out <- add(getHdf5Data(ncT, "BALIVE_PY"), "TotLivBiom")  ## Aboveground Biomass
+  # out <- add(getHdf5Data(ncT, "BDEAD_PY"), "TotDeadBiom")  ## Aboveground Biomass
+  # out <- add(getHdf5Data(ncT, "MMEAN_LAI_PY"), "LAI")  ## Aboveground Biomass
+  
   # List of vars to extract includes the requested one, plus others needed below 
   vars <- c(varnames.cohort, "PFT", "AREA", "PACO_N")
   
@@ -1054,11 +1061,11 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
     
     # Site-Level Community Characteristics by PFT
     #, "BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom", "LAI"
-    out <- add(getHdf5Data(ncT, "BASAL_AREA_PY"), "BasalArea")  ## Aboveground Biomass
-    out <- add(getHdf5Data(ncT, "AGB_PY"), "AbvGrndBiom")  ## Aboveground Biomass
-    out <- add(getHdf5Data(ncT, "BALIVE_PY"), "TotLivBiom")  ## Aboveground Biomass
-    out <- add(getHdf5Data(ncT, "BDEAD_PY"), "TotDeadBiom")  ## Aboveground Biomass
-    out <- add(getHdf5Data(ncT, "MMEAN_LAI_PY"), "LAI")  ## Aboveground Biomass
+    # out <- add(getHdf5Data(ncT, "BASAL_AREA_PY"), "BasalArea")  ## Aboveground Biomass
+    # out <- add(getHdf5Data(ncT, "AGB_PY"), "AbvGrndBiom")  ## Aboveground Biomass
+    # out <- add(getHdf5Data(ncT, "BALIVE_PY"), "TotLivBiom")  ## Aboveground Biomass
+    # out <- add(getHdf5Data(ncT, "BDEAD_PY"), "TotDeadBiom")  ## Aboveground Biomass
+    # out <- add(getHdf5Data(ncT, "MMEAN_LAI_PY"), "LAI")  ## Aboveground Biomass
     # -------
     
     # -------
@@ -1158,6 +1165,7 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
             # note: because these are individual plant measures and not /m2 we do want to relativize by total
             out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind])/sum(nplant[ind]) 
           } else {
+            # For non-individual number (thinks per m2, we can just sum the relativized numbers)
             out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind]) 
           }
           dimnames(out[[varnames.std[j]]]) <- list(months = times[ysel], pft = pft_names)
