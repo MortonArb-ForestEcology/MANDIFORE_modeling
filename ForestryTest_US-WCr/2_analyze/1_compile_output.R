@@ -1,6 +1,8 @@
 # Identify sites
 # Goal: Build a handy-dandy csv file with the variables we're interested in and the appropriate predictors that can then get passed to fun analyses
 
+library(ggplot2)
+
 # Setting File paths
 run.table <- read.csv("../0_setup/ExperimentalDesign_AGU2018.csv")
 path.extract <- "../1_runs/extracted_output.v1/"
@@ -12,8 +14,9 @@ sitelon = -90.079722
 start_date <- "2007-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
 end_date = "2100-12-31"
 
-vars.site <- c("CO2air", "Tair", "Rainf", "SoilMoist", "SoilTemp", "Fire_flux", "NEE", "NPP")
-vars.pft <- c("AbvGrndBiom", "Density", "BasalArea", "LAI")
+vars.met <- c("CO2air", "Tair", "Rainf")
+vars.site <- c("SoilMoist", "SoilTemp", "Fire_flux", "NEE", "NPP")
+vars.pft <- c("AbvGrndBiom", "LAI", "Density_Tree", "BasalArea_Tree", "DBH_Tree")
 pfts.extract <- c(6, 8, 9:11)
 
 slz <- c(-1.17, -0.80, -0.60, -0.45, -0.30, -0.20, -0.12, -0.06)
@@ -56,7 +59,7 @@ for(RUNID in all.runs){
     
     ncT <- ncdf4::nc_open(file.path(path.extract, RUNID, frun[i]))
     # Extract vars where we want 1 var per site
-    for(VAR in vars.site){
+    for(VAR in c(vars.met, vars.site)){
       if(VAR %in% c("SoilMoist", "SoilTemp")){
         tmp.mo[,VAR] <- apply(ncdf4::ncvar_get(ncT, VAR)[depth.use,] * wt.depth, 2, sum)
       } else {
@@ -66,9 +69,15 @@ for(RUNID in all.runs){
     
     # Extract info where we have PFT information
     for(VAR in vars.pft){
+      if(!VAR %in% names(ncT$var)) next
       var.tmp <- ncdf4::ncvar_get(ncT, VAR) # extract the dat once for speed
       
-      tmp.mo[,VAR] <- apply(var.tmp, 1, sum, na.rm=T) # Store the sum
+      if(VAR %in% c("DBH")){
+        tmp.mo[,VAR] <- apply(var.tmp[,pfts.extract], 1, mean, na.rm=T) # Store the mean DBH
+      } else {
+        tmp.mo[,VAR] <- apply(var.tmp[,pfts.extract], 1, sum, na.rm=T) # Store the sum
+      }
+      
       for(PFT in pfts.extract){
         tmp.pft[tmp.pft$pft==PFT,VAR] <- var.tmp[,PFT]
       }
@@ -79,3 +88,52 @@ for(RUNID in all.runs){
     dat.pft <- rbind(dat.pft, tmp.pft)
   }
 }
+summary(dat.mo)
+summary(dat.pft)
+
+dat.yr <- aggregate(dat.mo[,c(vars.site, vars.pft)], 
+                    by=dat.mo[,c("management", "GCM", "scenario", "year")],
+                    FUN=mean, na.rm=T)
+dat.yr$management <- factor(dat.yr$management, levels=c("passive", "preservation", "ecological", "production"))
+summary(dat.yr)
+
+dat.yr.pft <- aggregate(dat.pft[,c(vars.pft)],
+                        by=dat.pft[,c("management", "GCM", "scenario", "year", "pft")],
+                        FUN=mean, na.rm=T)
+dat.yr.pft$management <- factor(dat.yr.pft$management, levels=c("passive", "preservation", "ecological", "production"))
+dat.yr.pft$pft <- car::recode(dat.yr.pft$pft, "'6'='N. Pine'; '8'='Late Conifer'; '9'='Early Hardwood'; '10'='Mid Hardwood'; '11'='Late Hardwood'")
+dat.yr.pft$pft <- factor(dat.yr.pft$pft, levels=c("Early Hardwood", "Mid Hardwood", "Late Hardwood", "N. Pine", "Late Conifer"))
+summary(dat.yr.pft)
+
+
+pdf("../Figures/WCr_MANDIFORE_Output_QuickGraphs.pdf", height=8, width=10)
+for(VAR in c(vars.site, vars.pft)){
+  if(VAR %in% c("DBH")) next
+  dat.yr$VAR <- dat.yr[,VAR]
+  print(
+    ggplot(data=dat.yr[,]) +
+      ggtitle(VAR) +
+      # facet_wrap(~scenario) +
+      geom_line(aes(x=year, y=VAR, linetype=scenario, color=management), size=0.75) +
+      scale_color_manual(values=c("black", "blue2", "green4", "darkorange2")) +
+      theme_bw()
+  )
+}
+dev.off()
+
+pdf("../Figures/WCr_MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
+for(VAR in c(vars.pft)){
+  # if(VAR %in% c("BasalArea", "DBH", "Density")) next
+  dat.yr.pft$VAR <- dat.yr.pft[,VAR]
+  print(
+    ggplot(data=dat.yr.pft[,]) +
+      ggtitle(VAR) +
+      facet_wrap(~pft) +
+      geom_line(aes(x=year, y=VAR, linetype=scenario, color=management), size=0.75) +
+      scale_color_manual(values=c("black", "blue2", "green4", "darkorange2")) +
+      theme_bw() +
+      theme(legend.position=c(0.85, 0.25))
+  )
+}
+dev.off()
+
