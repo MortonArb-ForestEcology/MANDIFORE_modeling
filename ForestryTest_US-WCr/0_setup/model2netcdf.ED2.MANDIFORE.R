@@ -981,8 +981,8 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
   
   # lets make it work for a subset of vars fist
   # TODO :  read all (or more) variables, functionality exists, see below
-  varnames.cohort <- c("DBH", "DDBH_DT", "NPLANT", "BA_CO", "AGB_CO", "BALIVE", "BDEAD", "LAI_CO")
-  varnames.std <- c("DBH", "DDBH_DT", "Density", "BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom", "LAI")
+  varnames.cohort <- c("DBH", "DDBH_DT", "NPLANT")
+  varnames.std <- c("DBH", "DDBH_DT", "Density")
 
   # List of vars to extract includes the requested one, plus others needed below 
   vars <- c(varnames.cohort, "PFT", "AREA", "PACO_N")
@@ -1051,6 +1051,14 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
     out <- add(getHdf5Data(ncT, "MMEAN_SOIL_WATER_PY"), "SoilMoist")  ## SoilWater  **********
     out <- add(getHdf5Data(ncT, "MMEAN_SOIL_TEMP_PY"), "SoilTemp")  ## SoilTemp
     out <- add(getHdf5Data(ncT, "MMEAN_SOIL_MSTPOT_PY"), "SoilMstPot")  ## SoilMstPot = Soil Matric Potential (m); not MsTMIP
+    
+    # Site-Level Community Characteristics by PFT
+    #, "BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom", "LAI"
+    out <- add(getHdf5Data(ncT, "BASAL_AREA_PY"), "BasalArea")  ## Aboveground Biomass
+    out <- add(getHdf5Data(ncT, "AGB_PY"), "AbvGrndBiom")  ## Aboveground Biomass
+    out <- add(getHdf5Data(ncT, "BALIVE_PY"), "TotLivBiom")  ## Aboveground Biomass
+    out <- add(getHdf5Data(ncT, "BDEAD_PY"), "TotDeadBiom")  ## Aboveground Biomass
+    out <- add(getHdf5Data(ncT, "MMEAN_LAI_PY"), "LAI")  ## Aboveground Biomass
     # -------
     
     # -------
@@ -1114,11 +1122,6 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
   
   # Aggregate over PFT and DBH bins  
   for (i in seq_along(ysel)) {
-    # Convert c("BasalArea", "AbvGrndBiom", "TotLivBiom", "TotDeadBiom")) to /m2
-    if("BA" %in% names(ed.dat)) ed.dat$BA[[i]] <- ed.dat$BA[[i]]*ed.dat$NPLANT[[i]]
-    if("AGB" %in% names(ed.dat)) ed.dat$AGB[[i]] <- ed.dat$AGB[[i]]*ed.dat$NPLANT[[i]]
-    if("BALIVE" %in% names(ed.dat)) ed.dat$BALIVE[[i]] <- ed.dat$BALIVE[[i]]*ed.dat$NPLANT[[i]]
-    if("BDEAD" %in% names(ed.dat)) ed.dat$BDEAD[[i]] <- ed.dat$BDEAD[[i]]*ed.dat$NPLANT[[i]]
     
     # Get additional cohort-level variables required
     pft        <- ed.dat$PFT[[i]]
@@ -1150,9 +1153,12 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
             # Sum over all columns 
             mort <- apply(ed.dat$MMEAN_MORT_RATE_CO[[i]][ind,, drop=F], 1, sum, na.rm = T)
             out$MMEAN_MORT_RATE_CO[i,k] <- sum(mort * nplant[ind]) / sum(nplant[ind])
+          } else if(varnames.cohort[j] %in% c("DBH", "DDBH_DT")) {
+            # For all others, just get mean weighted by nplant; 
+            # note: because these are individual plant measures and not /m2 we do want to relativize by total
+            out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind])/sum(nplant[ind]) 
           } else {
-            # For all others, just get mean weighted by nplant
-            out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind]) / sum(nplant[ind])
+            out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind]) 
           }
           dimnames(out[[varnames.std[j]]]) <- list(months = times[ysel], pft = pft_names)
         }
