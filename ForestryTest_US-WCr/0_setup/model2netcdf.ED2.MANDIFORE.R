@@ -1165,7 +1165,7 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
             # For all others, just get mean weighted by nplant; 
             # note: because these are individual plant measures and not /m2 we do want to relativize by total
             out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind])/sum(nplant[ind]) 
-          } else if(varnames.cohort[j]=="LAI") {
+          } else if(varnames.cohort[j]=="LAI_CO") {
             out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * patch.area[ind]) 
           } else {
             # For non-individual number (thinks per m2, we can just sum the relativized numbers)
