@@ -1152,10 +1152,13 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
       ind <- (pft == pfts[k])
       
       if (any(ind)) {
+        ind.10cm <- which(ed.dat[["DBH"]][[i]][[ind]]>10)
+        
         for (j in seq_along(varnames.cohort)) {
           if(varnames.cohort[j] == "NPLANT") {
             # Return the total number of plants in the bin
             out$Density[i,k] <- sum(nplant[ind])
+            out$Density_Tree[i,k] <- sum(nplant[ind][ind.10cm])
           } else if (varnames.cohort[j] == "MMEAN_MORT_RATE_CO") {
             # Sum over all columns 
             mort <- apply(ed.dat$MMEAN_MORT_RATE_CO[[i]][ind,, drop=F], 1, sum, na.rm = T)
@@ -1164,9 +1167,15 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
             # For all others, just get mean weighted by nplant; 
             # note: because these are individual plant measures and not /m2 we do want to relativize by total
             out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind])/sum(nplant[ind]) 
+            # Adding a field for trees >10 cm
+            out[[paste0(varnames.std[j], "_Tree")]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind][ind.10cm] * nplant[ind][ind.10cm])/sum(nplant[ind][ind.10cm]) 
           } else {
             # For non-individual number (thinks per m2, we can just sum the relativized numbers)
             out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind]) 
+            
+            if(varnames.std[j]=="BasalArea"){
+              out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind][ind.10cm] * nplant[ind][ind.10cm]) 
+            }
           }
           dimnames(out[[varnames.std[j]]]) <- list(months = times[ysel], pft = pft_names)
         }
@@ -1381,13 +1390,21 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, pft_names, ...
   # -------
   nc_var[["DBH"]] <- ncdf4::ncvar_def("DBH", units = "cm", dim = list(lon, lat, t, p), missval = -999, 
                                       longname = "Diameter at breast height")
+  nc_var[["DBH_Tree"]] <- ncdf4::ncvar_def("DBH_Tree", units = "cm", dim = list(lon, lat, t, p), missval = -999, 
+                                      longname = "Diameter at breast height, >10cm DBH")
   nc_var[["DDBH_DT"]] <- ncdf4::ncvar_def("DDBH_DT", units = "cm yr-1", dim = list(lon, lat, t, p), missval = -999, 
                                           longname = "Rate of change in dbh")
+  nc_var[["DDBH_DT_Tree"]] <- ncdf4::ncvar_def("DDBH_DT_Tree", units = "cm yr-1", dim = list(lon, lat, t, p), missval = -999, 
+                                          longname = "Rate of change in dbh, >10cm DBH")
   nc_var[["Density"]] <- ncdf4::ncvar_def("Density", units = "plant m-2", dim = list(lon, lat, t, p), missval = -999, 
                                           longname = "Plant density")
+  nc_var[["Density_Tree"]] <- ncdf4::ncvar_def("Density_Tree", units = "plant m-2", dim = list(lon, lat, t, p), missval = -999, 
+                                          longname = "Plant density, >10cm DBH")
   
   nc_var[["BasalArea"]] <- ncdf4::ncvar_def("BasalArea", units = "cm m-2", dim = list(lon, lat, t, p),
                                             missval = -999, longname = "Cohort basal area")
+  nc_var[["BasalArea_Tree"]] <- ncdf4::ncvar_def("BasalArea_Tree", units = "cm m-2", dim = list(lon, lat, t, p),
+                                            missval = -999, longname = "Cohort basal area, >10cm DBH")
   nc_var[["AbvGrndBiom"]] <- ncdf4::ncvar_def("AbvGrndBiom", units = "kg C m-2", dim = list(lon, lat, t, p), 
                                               missval = -999, longname = "Cohort above ground biomass")
   nc_var[["TotLivBiom"]] <- ncdf4::ncvar_def("TotLivBiom", units = "kg C m-2", dim = list(lon, lat, t, p), 
