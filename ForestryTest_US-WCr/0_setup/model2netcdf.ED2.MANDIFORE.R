@@ -1122,10 +1122,10 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
   # pfts <- sapply(pft_names, function(x) pftmapping$ED[pftmapping$PEcAn == x]) 
   
   # out <- list()
-  for (i in seq_along(varnames.cohort)) {
-    out[[varnames.std[i]]] <- array(NA, c(length(ysel), npft))
+  for (VAR in c(varnames.std, "DBH_Tree", "DDBH_DT_Tree", "Density_Tree", "BasalArea_Tree")) {
+    out[[VAR]] <- array(NA, c(length(ysel), npft))
   }
-  
+
   
   # Aggregate over PFT and DBH bins  
   for (i in seq_along(ysel)) {
@@ -1150,15 +1150,13 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
     
     for (k in 1:npft) {
       ind <- (pft == pfts[k])
+      ind.10cm <- (pft==pfts[k] & dbh>=10)
       
       if (any(ind)) {
-        ind.10cm <- which(ed.dat[["DBH"]][[i]][[ind]]>10)
-        
         for (j in seq_along(varnames.cohort)) {
           if(varnames.cohort[j] == "NPLANT") {
             # Return the total number of plants in the bin
             out$Density[i,k] <- sum(nplant[ind])
-            out$Density_Tree[i,k] <- sum(nplant[ind][ind.10cm])
           } else if (varnames.cohort[j] == "MMEAN_MORT_RATE_CO") {
             # Sum over all columns 
             mort <- apply(ed.dat$MMEAN_MORT_RATE_CO[[i]][ind,, drop=F], 1, sum, na.rm = T)
@@ -1167,18 +1165,19 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
             # For all others, just get mean weighted by nplant; 
             # note: because these are individual plant measures and not /m2 we do want to relativize by total
             out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind])/sum(nplant[ind]) 
-            # Adding a field for trees >10 cm
-            out[[paste0(varnames.std[j], "_Tree")]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind][ind.10cm] * nplant[ind][ind.10cm])/sum(nplant[ind][ind.10cm]) 
           } else {
             # For non-individual number (thinks per m2, we can just sum the relativized numbers)
             out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind] * nplant[ind]) 
-            
-            if(varnames.std[j]=="BasalArea"){
-              out[[varnames.std[j]]][i,k] <- sum(ed.dat[[varnames.cohort[j]]][[i]][ind][ind.10cm] * nplant[ind][ind.10cm]) 
-            }
           }
           dimnames(out[[varnames.std[j]]]) <- list(months = times[ysel], pft = pft_names)
         }
+      }  #end any(ind)
+      if(any(ind.10cm)){
+        out$Density_Tree[i,k] <- sum(nplant[ind.10cm])
+        out$DBH_Tree[i,k] <- sum(ed.dat[["DBH"]][[i]][ind.10cm] * nplant[ind.10cm])/sum(nplant[ind.10cm]) 
+        out$DDBH_DT_Tree[i,k] <- sum(ed.dat[["DBH_DT"]][[i]][ind.10cm] * nplant[ind.10cm])/sum(nplant[ind.10cm]) 
+        out[["BasalArea_Tree"]][i,k] <- sum(ed.dat[["BA_CO"]][[i]][ind.10cm] * nplant[ind.10cm]) 
+        
       }
     }
     
