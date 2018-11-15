@@ -1178,7 +1178,7 @@ $ED_NL
    !                   the minimum water deficit relative to the total rainfall, over the  !
    !                   past 12 months, to trigger fires.                                   !
    !---------------------------------------------------------------------------------------!
-   NL%INCLUDE_FIRE    = 0
+   NL%INCLUDE_FIRE    = 2
    NL%FIRE_PARAMETER  = 0.5
    NL%SM_FIRE         = 0.05 ! 
    !---------------------------------------------------------------------------------------!
