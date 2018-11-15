@@ -13,7 +13,7 @@ source("pecan_met_conversion/met2model.ED2.R")
 
 
 met.base="/mnt/data/crollinson/MANDIFORE_modeling/ForestryTests_Ameriflux/met_ed"
-in.base="../met_raw/WILLOWCREEK/"
+in.base="../met_raw/"
 outfolder="../met_ed/"
 
 # Open up the experimental design sheet
@@ -29,15 +29,13 @@ for(SITE in sites$SiteName){
   if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
   
   met.avail <- dir(file.path(in.base, SITE))
-  # gcm.convert <- c("GFDL_CM3_rcp45_r1i1p1")
-  # gcm.convert <- dir(in.base)
-  
+
   # NEED TO FIX LEAP YEAR -- IT KEEPS SKIPPING!
   for(GCM in met.avail){
     met2model.ED2(in.path=file.path(in.base, SITE, GCM), 
                   in.prefix=gsub("_", ".", GCM), 
-                  outfolder=file.path(outfolder, GCM), 
-                  header_folder = file.path(met.base, GCM),
+                  outfolder=file.path(outfolder, SITE, GCM), 
+                  header_folder = file.path(met.base, SITE, GCM),
                   start_date="2006-01-01", 
                   end_date="2100-12-31",
                   leap_year = FALSE, overwrite=F)
