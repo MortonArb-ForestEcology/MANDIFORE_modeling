@@ -19,26 +19,31 @@ options(scipen=999) # Turn off scientific notation
 expdesign <- read.csv("ExperimentalDesign_Test.csv")
 summary(expdesign)
 
-lu.settings <- data.frame(file.name = c("US-WCr_Production", "US-WCr_Ecological"),
+expdesign <- expdesign[expdesign$management_file!="NONE",]
+
+lu.settings <- data.frame(management = c("production", "ecological"),
                           minDBH    = c(10, 50),
                           pharv     = c(1, 0.5),
                           aharv     = c(0.02, 0.02)
                           )
-
-# constants during the run
-lu.suff <- c("lat42.5lon-90.5.lu")
 biomass.targ <- 0 # target biomass removed; set to negative to ignore
 year.start <- 2006
 year.end <- 2100
 block.area <- 1e12 # LU area; dunno what this actually does
-lu.bb <- c(-91.00, -90.00, 45.00, 46.000) # Land Use boudnign box: xmin, xmax, ymin, ymax
-harvest.pft <- c(6, 8, 9, 10, 11)
 
-for(i in 1:nrow(lu.settings)){
-  file.name = paste(lu.settings$file.name[i], lu.suff, sep="_")
-  minDBH    = lu.settings$minDBH[i]
-  pharv     = lu.settings$pharv[i]
-  aharv     = lu.settings$aharv[i]
+for(i in 1:nrow(expdesign)){
+  latmin <- trunc(expdesign$lat[i])
+  lonmin <- trunc(expdesign$lon[i])
+  # constants during the run
+  lu.pref <- expdesign$management_file[i]
+  lu.suff <- paste0("lat", latmin+0.5, "lon", lonmin-0.5, ".lu")
+  
+  lu.bb <- c(lonmin-1, lonmin, latmin, latmin+1) # Making this really big just for ease at the moment
+  harvest.pft <- as.numeric(unlist(strsplit(paste(expdesign$pft[i]), " ")))
+  
+  minDBH    = lu.settings[lu.settings$management==paste(expdesign$management[i]),"minDBH"]
+  pharv     = lu.settings[lu.settings$management==paste(expdesign$management[i]),"pharv"]
+  aharv     = lu.settings[lu.settings$management==paste(expdesign$management[i]),"aharv"]
   
   # LU Table Header Categories
   LU.header <- list()
@@ -57,8 +62,6 @@ for(i in 1:nrow(lu.settings)){
   LU.header$HARVPROB.2ARY = rep(pharv, LU.header$N.PFT.HARVEST)
   
   # Building the LU Transition Table -- Unless ED is modified, there should be 19 columns + year as row names
-  
-  
   LU.cols <- c("year", "cp", "pc", "pv", "vp", "vc", "cv", "sc", "cs", "sp", "ps", "vs", "sbh", "f_sbh", "vbh", "f_vbh", "sbh2", "f_sbh2", "vbh2", "f_vbh2")
   lu.mat <- array(0, dim=c(length(LU.header$FIRST.LUYEAR:LU.header$LAST.LUYEAR), length(LU.cols)))
   colnames(lu.mat) <- LU.cols
@@ -80,11 +83,11 @@ for(i in 1:nrow(lu.settings)){
   for(i in 1:nrow(lu.mat)){
     lu.mat2[i+1] <- paste(lu.mat[i,], collapse=" ")
   }
-
+  
   # Write the file
-  file.LU <- paste0(file.name)
+  file.LU <- paste(lu.pref, lu.suff, sep="_")
   writeLines(c(LU.header2, lu.mat2), file.LU)
   # close(file.LU)
   # write.table(lu.mat, file.name, row.names=F, quote=F)
-  
+    
 }
