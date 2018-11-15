@@ -1,9 +1,0 @@
-RunID,lat,lon,init,time.start,time.finish,GCM,scenario,management,ianth_disturb,management_file,INCLUDE_FIRE
-pass-lo,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp45,passive,0,NONE,0
-pass-hi,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp85,passive,0,NONE,0
-pres-lo,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp45,preservation,0,NONE,2
-pres-hi,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp85,preservation,0,NONE,2
-prod-lo,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp45,production,2,US-WCr_Production,0
-prod-hi,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp85,production,2,US-WCr_Production,0
-ecol-lo,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp45,ecological,2,US-WCr_Ecological,0
-ecol-hi,45.805822,-90.079722,US-Wcr,2006,2100,GFDL-CM3,rcp85,ecological,2,US-WCr_Ecological,0
