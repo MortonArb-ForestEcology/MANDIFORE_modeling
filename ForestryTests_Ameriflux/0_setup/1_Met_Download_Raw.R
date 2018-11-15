@@ -3,11 +3,11 @@ path.pecan <- "~/Desktop/Research/pecan/"
 path.out = "../met_raw"
 
 # Load the experimental design table
-expdesign <- read.csv("ExperimentalDesign_Test.csv")
-summary(expdesign)
+sites <- read.csv("Sites_ExperimentalDesign_Test.csv")
+summary(sites)
 
-sites <- aggregate(expdesign[,c("lat", "lon")], by=list(expdesign$SiteName), mean)
-names(sites)[1] <- "SiteName"
+# sites <- aggregate(expdesign[,c("lat", "lon")], by=list(expdesign$SiteName), mean)
+# names(sites)[1] <- "SiteName"
 
 
 # -------------------------------
