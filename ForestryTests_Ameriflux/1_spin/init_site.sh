@@ -2,8 +2,8 @@
 # This file sets up runs based on a common table of settings
 # Christy Rollinson, crollinson@mortonarb.org
 
-# Number of sites you want to run
-n=8 # 8 is a full site right now
+# Number of SITES (not experiments) you want to run
+n=3 # 
 
 # Define constants & file paths for the scripts
 file_base=/mnt/data/crollinson/MANDIFORE_modeling/ForestryTests_Ameriflux # whatever you want the base output file path to be
@@ -11,19 +11,25 @@ EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
 met_base=${file_base}/met_ed/
 
 ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_runs/ed_runs.v2/ # Where everything will go
+file_dir=${file_base}/1_spin/ed_spin.v2/ # Where everything will go
 setup_dir=${file_base}/0_setup # Where some constant setup files are
-site_file=${setup_dir}/ExperimentalDesign_Test.csv # # Path to list of ED sites w/ status
+site_file=${setup_dir}/Sites_ExperimentalDesign_Test.csv # # Path to list of ED sites w/ status
 
-# Some more constatns
-finalyear=2101
-finalfull=2100
+# Want to do a 25-year spin that ends in the year we want to starts
+finalyear=2006 #
+finalfull=2005
+startyear=$((${finalyear}-25))
+
+# The range of met years to cycle for the transient spin
+# We're just going to do the first year
+metfirst=2006
+metlast=2008
 
 # Making the file directory if it doesn't already exist
 mkdir -p $file_dir
 
 # Extract the file names of sites that haven't been started yet
-runs_all=($(awk -F ',' 'NR>1 {print $1}' ${site_file}))
+# runs_all=($(awk -F ',' 'NR>1 {print $1}' ${site_file}))
 sites_all=($(awk -F ',' 'NR>1 {print $2}' ${site_file}))
 lat_all=($(awk -F ',' 'NR>1 {print $3}' ${site_file}))
 lon_all=($(awk -F ',' 'NR>1 {print $4}' ${site_file}))
@@ -52,7 +58,7 @@ file_done=(${file_done[@]/"*-*"/})
 # Because we want to preserve the order of runs, I can't find away around doing a loop
 # - This is slower than other options, but makes sure we still do our controls first
 # - DO NOT imitate this with a large array
-runs=()
+# runs=()
 sites=()
 lat=()
 lon=()
@@ -67,13 +73,13 @@ fire=()
 ianth=()
 mgmt=()
 
-for((i=0;i<${#runs_all[@]};i++)); do 
-	RUN=${runs_all[i]}
-    TEST=( ${file_done[@]/$RUN/} ) # Remove element from array
+for((i=0;i<${#sites_all[@]};i++)); do 
+	SITE=${sites_all[i]}
+    TEST=( ${file_done[@]/$SITE/} ) # Remove element from array
 
 	# If the length of TEST is still the same, we haven't done it yet
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
-		runs+=("$RUN")
+# 		runs+=("$RUN")
 		sites+=("${sites_all[i]}")
 		lat+=("${lat_all[i]}")
 		lon+=("${lon_all[i]}")
@@ -93,14 +99,14 @@ done
 
 
 
-n=$(($n<${#runs[@]}?$n:${#runs[@]}))
+n=$(($n<${#sites[@]}?$n:${#sites[@]}))
 
 
 # for FILE in $(seq 0 (($n-1)))
 for ((FILE=0; FILE<$n; FILE++)) # This is a way of doing it so that we don't have to modify N
 do
 	# Site Name and Lat/Lon
-	SITE=${runs[FILE]}
+	SITE=${sites[FILE]}
 	echo $SITE
 
 	GCM_now=${GCM[FILE]}
@@ -194,6 +200,22 @@ do
 		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
 	    sed -i "s,TEST,${SITE},g" ED2IN #change site ID
 	    sed -i "s,METSITE,${sites[FILE]},g" ED2IN #change site ID
+	    
+	    sed -i "s/NL%RUNTYPE  = .*/NL%RUNTYPE  = 'INITIAL'/" ED2IN # change from bare ground to .css/.pss run
+        sed -i "s/NL%IYEARA   = .*/NL%IYEARA   = ${startyear}/" ED2IN # Set first year
+        sed -i "s/NL%IMONTHA  = .*/NL%IMONTHA  = 06/" ED2IN # Set first month
+        sed -i "s/NL%IDATEA   = .*/NL%IDATEA   = 01/" ED2IN # Set first day
+		sed -i "s/NL%IYEARH   = .*/NL%IYEARH   = ${startyear}/" ED2IN # Set first year
+		sed -i "s/NL%IMONTHH  = .*/NL%IMONTHH  = 06/" ED2IN # Set first month
+		sed -i "s/NL%IDATEH   = .*/NL%IDATEH   = 01/" ED2IN # Set first day
+
+        sed -i "s/NL%IYEARZ   = .*/NL%IYEARZ   = ${finalyear}/" ED2IN # Set last year
+        sed -i "s/NL%IMONTHZ  = .*/NL%IMONTHZ  = 01/" ED2IN # Set last month
+        sed -i "s/NL%IDATEZ   = .*/NL%IDATEZ   = 01/" ED2IN # Set last day
+
+        sed -i "s/NL%METCYC1     =.*/NL%METCYC1     = $metfirst/" ED2IN # Set met start
+        sed -i "s/NL%METCYCF     =.*/NL%METCYCF     = $metlast/" ED2IN # Set met end
+
 	    sed -i "s/POI_LAT  =.*/POI_LAT  = $lat_now/" ED2IN # set site latitude
         sed -i "s/POI_LON  =.*/POI_LON  = $lon_now/" ED2IN # set site longitude
         sed -i "s/SLXCLAY =.*/SLXCLAY = ${clay[FILE]}/" ED2IN # set fraction soil clay
