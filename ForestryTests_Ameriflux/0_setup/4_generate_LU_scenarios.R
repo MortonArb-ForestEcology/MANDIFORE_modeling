@@ -39,7 +39,7 @@ for(i in 1:nrow(expdesign)){
   lu.suff <- paste0("lat", latmin+0.5, "lon", lonmin-0.5, ".lu")
   
   lu.bb <- c(lonmin-1, lonmin, latmin, latmin+1) # Making this really big just for ease at the moment
-  harvest.pft <- as.numeric(unlist(strsplit(paste(expdesign$pft[i]), " ")))
+  harvest.pft <- as.numeric(unlist(strsplit(paste(expdesign$pft[i]), "-")))
   
   minDBH    = lu.settings[lu.settings$management==paste(expdesign$management[i]),"minDBH"]
   pharv     = lu.settings[lu.settings$management==paste(expdesign$management[i]),"pharv"]
@@ -86,7 +86,7 @@ for(i in 1:nrow(expdesign)){
   
   # Write the file
   file.LU <- paste(lu.pref, lu.suff, sep="_")
-  writeLines(c(LU.header2, lu.mat2), file.LU)
+  writeLines(c(LU.header2, lu.mat2), file.path("../lu_files", file.LU))
   # close(file.LU)
   # write.table(lu.mat, file.name, row.names=F, quote=F)
     

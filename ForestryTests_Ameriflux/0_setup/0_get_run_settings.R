@@ -16,3 +16,6 @@ summary(exp.design)
 exp.design
 
 write.csv(exp.design, file="ExperimentalDesign_Test.csv", na="", row.names=F, quote = F, fileEncoding="utf8")
+
+sites <- exp.design[exp.design$management=="passive" & exp.design$scenario=="rcp45",]
+write.csv(sites, file="Sites_ExperimentalDesign_Test.csv", na="", row.names=F, quote = F, fileEncoding="utf8")

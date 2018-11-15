@@ -1,0 +1,4 @@
+RunID,SiteName,lat,lon,clay,sand,depth,init,pft,time.start,time.finish,GCM,scenario,management,ianth_disturb,management_file,INCLUDE_FIRE,SMFIRE
+WCr-pass-lo,WILLOWCREEK,45.805822,-90.079722,0.08,0.637,-1.12,US-Wcr,5-6-8-9-10-11,2006,2100,GFDL-CM3,rcp45,passive,0,NONE,2,0.01
+Ha1-pass-lo,HARVARD_EMS,42.5378,-72.1715,0.128,0.632,-0.9,harvard.NACP,5-6-8-9-10-11,2006,2100,GFDL-CM3,rcp45,passive,0,NONE,2,0.01
+NR1-pass-lo,NIWOTRIDGE,40.0329,-105.5464,0.073,0.624,-0.6953,NR1.NACP,5-7-8-9,2006,2100,GFDL-CM3,rcp45,passive,0,NONE,2,0.01
