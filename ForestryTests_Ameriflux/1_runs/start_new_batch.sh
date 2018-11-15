@@ -11,7 +11,7 @@ EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
 met_base=${file_base}/met_ed/
 
 ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_runs/ed_runs.v1/ # Where everything will go
+file_dir=${file_base}/1_runs/ed_runs.v2/ # Where everything will go
 setup_dir=${file_base}/0_setup # Where some constant setup files are
 site_file=${setup_dir}/ExperimentalDesign_Test.csv # # Path to list of ED sites w/ status
 
@@ -31,6 +31,7 @@ mkdir -p $file_dir
 
 # Extract the file names of sites that haven't been started yet
 runs_all=($(awk -F ',' 'NR>1 {print $1}' ${site_file}))
+sites_all=($(awk -F ',' 'NR>1 {print $2}' ${site_file}))
 lat_all=($(awk -F ',' 'NR>1 {print $3}' ${site_file}))
 lon_all=($(awk -F ',' 'NR>1 {print $4}' ${site_file}))
 
@@ -59,11 +60,12 @@ file_done=(${file_done[@]/"*-*"/})
 # - This is slower than other options, but makes sure we still do our controls first
 # - DO NOT imitate this with a large array
 runs=()
+sites=()
 lat=()
 lon=()
 clay=()
 sand=()
-depth()
+depth=()
 finit=()
 pft=()
 GCM=()
@@ -79,6 +81,7 @@ for((i=0;i<${#runs_all[@]};i++)); do
 	# If the length of TEST is still the same, we haven't done it yet
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
 		runs+=("$RUN")
+		sites+=("$sites_all[i]")
 		lat+=("${lat_all[i]}")
 		lon+=("${lon_all[i]}")
 		clay+=("${clay_all[i]}")
@@ -190,10 +193,11 @@ do
 		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
 		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
 	    sed -i "s,TEST,${SITE},g" ED2IN #change site ID
+	    sed -i "s,METSITE,${sites[FILE]},g" ED2IN #change site ID
 	    sed -i "s/POI_LAT  =.*/POI_LAT  = $lat_now/" ED2IN # set site latitude
         sed -i "s/POI_LON  =.*/POI_LON  = $lon_now/" ED2IN # set site longitude
-        sed -i "s/SLXCLAY =.*/SLXCLAY = $clay[FILE]/" ED2IN # set fraction soil clay
-        sed -i "s/SLXSAND =.*/SLXSAND = $sand[FILE]/" ED2IN # set fraction soil sand
+        sed -i "s/SLXCLAY =.*/SLXCLAY = ${clay[FILE]}/" ED2IN # set fraction soil clay
+        sed -i "s/SLXSAND =.*/SLXSAND = ${sand[FILE]}/" ED2IN # set fraction soil sand
         sed -i "s/NZG =.*/NZG = $NZG/" ED2IN # set number soil layers
         sed -i "s/SLZ     =.*/SLZ = $SLZ/" ED2IN # set soil depths
         sed -i "s/SLMSTR  =.*/SLMSTR = $SLMSTR/" ED2IN # set initial soil moisture
