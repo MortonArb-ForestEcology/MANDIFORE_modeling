@@ -74,7 +74,7 @@ for((i=0;i<${#runs_all[@]};i++)); do
 	# If the length of TEST is still the same, we haven't done it yet
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
 		runs+=("$RUN")
-		sites+=("$sites_all[i]")
+		sites+=("${sites_all[i]}")
 		lat+=("${lat_all[i]}")
 		lon+=("${lon_all[i]}")
 		clay+=("${clay_all[i]}")
@@ -175,7 +175,7 @@ do
     newbase=${file_dir}/$SITE
     oldbase=${file_dir}/TEST
 	oldname=TESTinit
-	met_path=${met_base}/${GCM_now}_${scenario[FILE]}_r1i1p1
+	met_path=${met_base}/${sites[FILE]}/${GCM_now}_${scenario[FILE]}_r1i1p1
 
 
 	file_path=${file_dir}/${SITE}/

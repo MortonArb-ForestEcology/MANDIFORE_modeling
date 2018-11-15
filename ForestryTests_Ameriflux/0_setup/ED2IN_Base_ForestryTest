@@ -565,7 +565,7 @@ $ED_NL
    NL%LU_DATABASE      = 'LANDUSEFILE'
    NL%PLANTATION_FILE  = ''
    NL%THSUMS_DATABASE  = '/home/models/ED_inputs/ed_inputs/'
-   NL%ED_MET_DRIVER_DB = '/met/path/METSITE/ED_MET_DRIVER_HEADER'
+   NL%ED_MET_DRIVER_DB = '/met/path/ED_MET_DRIVER_HEADER'
    NL%SOILSTATE_DB     = '/home/models/ED_inputs/ed_inputs/STW1996OCT.dat'
    NL%SOILDEPTH_DB     = ''
    !---------------------------------------------------------------------------------------!
