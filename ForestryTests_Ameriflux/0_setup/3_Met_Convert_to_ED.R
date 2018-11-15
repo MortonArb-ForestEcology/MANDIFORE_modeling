@@ -12,22 +12,34 @@ source(file.path(path.pecan, "models/ed/R/check_ed_metheader.R"))
 source("pecan_met_conversion/met2model.ED2.R")
 
 
+met.base="/mnt/data/crollinson/MANDIFORE_modeling/ForestryTests_Ameriflux/met_ed"
 in.base="../met_raw/WILLOWCREEK/"
-outfolder="../ED_MET/"
-# met.base="~/Desktop/Research/MANDIFORE_modeling/ForestryTest_US-WCr/ED_MET/"
-met.base="/mnt/data/crollinson/MANDIFORE_modeling/ForestryTest_US-WCr/ED_MET"
-if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
+outfolder="../met_ed/"
 
-# gcm.convert <- c("GFDL_CM3_rcp45_r1i1p1")
-gcm.convert <- dir(in.base)
+# Open up the experimental design sheet
+# Load the experimental design table
+expdesign <- read.csv("ExperimentalDesign_Test.csv")
+summary(expdesign)
 
-# NEED TO FIX LEAP YEAR -- IT KEEPS SKIPPING!
-for(i in 2:length(gcm.convert)){
-  met2model.ED2(in.path=file.path(in.base, gcm.convert[i]), 
-                in.prefix=gsub("_", ".", gcm.convert[i]), 
-                outfolder=file.path(outfolder, gcm.convert[i]), 
-                header_folder = file.path(met.base, gcm.convert[i]),
-                start_date="2006-01-01", 
-                end_date="2100-12-31",
-                leap_year = FALSE, overwrite=F)
+sites <- aggregate(expdesign[,c("lat", "lon")], by=list(expdesign$SiteName), mean)
+names(sites)[1] <- "SiteName"
+
+for(SITE in sites$SiteName){
+  # met.base="~/Desktop/Research/MANDIFORE_modeling/ForestryTest_US-WCr/ED_MET/"
+  if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
+  
+  met.avail <- dir(file.path(in.base, SITE))
+  # gcm.convert <- c("GFDL_CM3_rcp45_r1i1p1")
+  # gcm.convert <- dir(in.base)
+  
+  # NEED TO FIX LEAP YEAR -- IT KEEPS SKIPPING!
+  for(GCM in met.avail){
+    met2model.ED2(in.path=file.path(in.base, SITE, GCM), 
+                  in.prefix=gsub("_", ".", GCM), 
+                  outfolder=file.path(outfolder, GCM), 
+                  header_folder = file.path(met.base, GCM),
+                  start_date="2006-01-01", 
+                  end_date="2100-12-31",
+                  leap_year = FALSE, overwrite=F)
+  }
 }

@@ -9,3 +9,5 @@ ForestryTest_US-WCr/0_setup/.httr-oauth
 ForestryTest_US-WCr/Figures/WCr_MANDIFORE_Output_QuickGraphs.pdf
 ForestryTests_Ameriflux/met_raw/WILLOWCREEK/GFDL_CM3_rcp45_r1i1p1/GFDL.CM3.rcp45.r1i1p1.2048.nc
 *.nc
+ForestryTests_Ameriflux/met_ed/GFDL_CM3_rcp45_r1i1p1/ED_MET_DRIVER_HEADER
+ForestryTests_Ameriflux/ED_MET/GFDL_CM3_rcp45_r1i1p1/ED_MET_DRIVER_HEADER

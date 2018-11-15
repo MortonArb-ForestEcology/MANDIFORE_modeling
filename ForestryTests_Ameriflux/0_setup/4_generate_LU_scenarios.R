@@ -16,6 +16,9 @@
 # 2. Loop through and write settings as appropriate
 options(scipen=999) # Turn off scientific notation
 
+expdesign <- read.csv("ExperimentalDesign_Test.csv")
+summary(expdesign)
+
 lu.settings <- data.frame(file.name = c("US-WCr_Production", "US-WCr_Ecological"),
                           minDBH    = c(10, 50),
                           pharv     = c(1, 0.5),
