@@ -19,13 +19,6 @@ site_file=${setup_dir}/ExperimentalDesign_Test.csv # # Path to list of ED sites 
 finalyear=2101
 finalfull=2100
 
-SLZ_BASE=(-4.00 -3.00 -2.17 -1.50 -1.10 -0.80 -0.60 -0.45 -0.30 -0.20 -0.12 -0.06)
-SLMSTR_BASE=(1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00)
-STGOFF_BASE=(0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00)
-NZG=${#SLZ_BASE[@]}
-depth_min=(-0.15) # Setting an artificial minimum soil depth of 15 cm; note: this gets us a min of 3 soil layers
-
-
 # Making the file directory if it doesn't already exist
 mkdir -p $file_dir
 
@@ -124,6 +117,13 @@ do
 	# ---------------------------------------------
 	# 4) subsetting soil layers based on soil depth; deepest layer = soil_depth
 	# ---------------------------------------------
+	SLZ_BASE=(-4.00 -3.00 -2.17 -1.50 -1.10 -0.80 -0.60 -0.45 -0.30 -0.20 -0.12 -0.06)
+	SLMSTR_BASE=(1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00)
+	STGOFF_BASE=(0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00)
+	NZG=${#SLZ_BASE[@]}
+	depth_min=(-0.15) # Setting an artificial minimum soil depth of 15 cm; note: this gets us a min of 3 soil layers
+
+
 	# If the actual soil depth is less than what we specified as the minimum, use our 
 	# artificial minimum (default = 0.15 cm)
 	BOTTOM=${depth[FILE]}
