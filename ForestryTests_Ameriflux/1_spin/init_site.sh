@@ -200,6 +200,7 @@ do
 		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
 	    sed -i "s,TEST,${SITE},g" ED2IN #change site ID
 	    sed -i "s,METSITE,${sites[FILE]},g" ED2IN #change site ID
+        sed -i "s,SFILIN   = .*,SFILIN   = '${file_base}/init_files/${finit[FILE]}',g" ED2IN # set initial file path to the SAS spin folder
 	    
 	    sed -i "s/NL%RUNTYPE  = .*/NL%RUNTYPE  = 'INITIAL'/" ED2IN # change from bare ground to .css/.pss run
         sed -i "s/NL%IYEARA   = .*/NL%IYEARA   = ${startyear}/" ED2IN # Set first year
