@@ -1539,7 +1539,7 @@ $ED_NL
    !               simulation.                                                             !
    ! PHENPATH   -- path and prefix of the prescribed phenology data.                       !
    !---------------------------------------------------------------------------------------!
-   NL%IEDCNFGF   = 'PFTPARAMS_MANDIFORE.xml'
+   NL%IEDCNFGF   = 'PFTParams_MANDIFORE.xml'
    NL%EVENT_FILE = ''
    !---------------------------------------------------------------------------------------!
 
