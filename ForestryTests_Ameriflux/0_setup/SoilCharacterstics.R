@@ -35,4 +35,11 @@ sum(nr1.depth*nr1.areas)
 
 
 # Austin Cary (SP1) 29.73807, -82.21877
+sp1.areas <- c(0.832, 0.008, 0.096, 0.012, 0.037); sp1.areas <- sp1.areas/sum(sp1.areas)
+sp1.clay <- c(0.126, 0.102, 0.093, 0.170, 0.094)
+sp1.sand <- c(0.786, 0.811, 0.843, 0.724, 0.836)
+sp1.depth <- c(2.00, 2.00, 2.00, 2.00, 2.00)
 
+sum(sp1.clay*sp1.areas)
+sum(sp1.sand*sp1.areas)
+sum(sp1.depth*sp1.areas)
