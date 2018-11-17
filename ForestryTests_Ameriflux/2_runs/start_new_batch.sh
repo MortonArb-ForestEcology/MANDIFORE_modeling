@@ -154,7 +154,7 @@ do
 	    sed -i "s/NL%SM_FIRE         = .*/NL%SM_FIRE         = ${fire[FILE]}/" ED2IN # adjust fire threshold
 	    sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
 	    if [[ ${ianth[FILE]} == 2 ]]; then
-	    	mgmt_path="${setup_dir}/${mgmt[FILE]}"
+	    	mgmt_path="${lu_dir}/${mgmt[FILE]}"
 	    	sed -i "s,LANDUSEFILE,${mgmt_path},g" ED2IN # set the file path
 	    fi
 
