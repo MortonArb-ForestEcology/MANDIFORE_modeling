@@ -15,6 +15,7 @@ file_dir=${file_base}/2_runs/ed_runs.v2 # Where everything will go
 setup_dir=${file_base}/0_setup # Where some constant setup files are
 site_file=${setup_dir}/ExperimentalDesign_Test.csv # # Path to list of ED sites w/ status
 init_dir=${file_base}/1_spin/ed_spin.v2
+lu_dir=${file_base}/lu_files # Where some constant setup files are
 
 # Want to do a 25-year spin that ends in the year we want to starts
 startyear=2006
