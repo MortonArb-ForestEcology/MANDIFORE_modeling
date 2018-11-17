@@ -128,9 +128,9 @@ do
 
 	    sed -i "s,$init_dir,$file_dir,g" ED2IN #change the baseline file path everywhere
 		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
-		sed -i "s,NL%ED_MET_DRIVER_DB = .*,'${met_path}',g" ED2IN # set the file path
-		sed -i "s,NL%FFILOUT = .*,NL%FFILOUT = '${new_analy}',g" ED2IN # set the file path
-		sed -i "s,NL%SFILOUT = .*,NL%SFILOUT = '${new_histo}',g" ED2IN # set the file path
+		sed -i "s,NL%ED_MET_DRIVER_DB = .*,NL%ED_MET_DRIVER_DB = '${met_path}/ED_MET_DRIVER_HEADER',g" ED2IN # set the file path
+		sed -i "s,NL%FFILOUT = .*,NL%FFILOUT = ${new_analy},g" ED2IN # set the file path
+		sed -i "s,NL%SFILOUT = .*,NL%SFILOUT = ${new_histo},g" ED2IN # set the file path
 
 	    sed -i "s/NL%RUNTYPE  = .*/NL%RUNTYPE  = 'HISTORY'/" ED2IN # change from .css/.pss to history
         sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 5/" ED2IN # change from bare ground to .css/.pss run
