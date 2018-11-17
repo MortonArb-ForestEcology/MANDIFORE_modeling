@@ -51,9 +51,9 @@ mgmt_all=($(awk -F ',' 'NR>1 {print $16}' ${site_file}))
 
 # Get the list of what grid runs have already finished spinups
 pushd $file_dir
-	file_done=(*-*)
+	file_done=(*)
 popd
-file_done=(${file_done[@]/"*-*"/})
+file_done=(${file_done[@]/"*"/})
 
 # Because we want to preserve the order of runs, I can't find away around doing a loop
 # - This is slower than other options, but makes sure we still do our controls first

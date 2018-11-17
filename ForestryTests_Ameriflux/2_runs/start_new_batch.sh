@@ -46,9 +46,9 @@ mgmt_all=($(awk -F ',' 'NR>1 {print $16}' ${site_file}))
 
 # Get the list of what grid runs have already finished spinups
 pushd $file_dir
-	file_done=(*-*)
+	file_done=(*)
 popd
-file_done=(${file_done[@]/"*-*"/})
+file_done=(${file_done[@]/"*"/})
 
 # Because we want to preserve the order of runs, I can't find away around doing a loop
 # - This is slower than other options, but makes sure we still do our controls first
@@ -66,7 +66,7 @@ mgmt=()
 
 for((i=0;i<${#runs_all[@]};i++)); do 
 	RUN=${runs_all[i]}
-    TEST=( ${file_done[@]/$RUN/} ) # Remove element from array
+    TEST=( ${file_done[@]/$SITE/} ) # Remove element from array
 
 	# If the length of TEST is still the same, we haven't done it yet
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
@@ -83,7 +83,6 @@ for((i=0;i<${#runs_all[@]};i++)); do
 	fi    
 
 done
-
 
 
 n=$(($n<${#runs[@]}?$n:${#runs[@]}))
@@ -121,7 +120,7 @@ do
 		# Creating the default file structure and copying over the base files to be modified
 		mkdir -p histo analy
 		ln -s $ed_exec
-		cp ${init_dir}/${SITE}/ED2IN_Base_ForestryTest ED2IN
+		cp ${init_dir}/${SITE}/ED2IN ED2IN
 		cp ${init_dir}/${SITE}/PFTParams_MANDIFORE.xml .
 		
 		# ED2IN Changes	    
@@ -129,9 +128,9 @@ do
 
 	    sed -i "s,$init_dir,$file_dir,g" ED2IN #change the baseline file path everywhere
 		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
-		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
-	    sed -i "s,TEST,${RUN},g" ED2IN #change site ID
-	    sed -i "s,METRUN,${sites[FILE]},g" ED2IN #change site ID
+		sed -i "s,NL%ED_MET_DRIVER_DB = .*,'${met_path}',g" ED2IN # set the file path
+		sed -i "s,NL%FFILOUT = .*,NL%FFILOUT = '${new_analy}',g" ED2IN # set the file path
+		sed -i "s,NL%SFILOUT = .*,NL%SFILOUT = '${new_histo}',g" ED2IN # set the file path
 
 	    sed -i "s/NL%RUNTYPE  = .*/NL%RUNTYPE  = 'HISTORY'/" ED2IN # change from .css/.pss to history
         sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 5/" ED2IN # change from bare ground to .css/.pss run
