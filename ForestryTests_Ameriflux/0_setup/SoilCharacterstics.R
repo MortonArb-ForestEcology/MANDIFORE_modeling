@@ -43,3 +43,13 @@ sp1.depth <- c(2.00, 2.00, 2.00, 2.00, 2.00)
 sum(sp1.clay*sp1.areas)
 sum(sp1.sand*sp1.areas)
 sum(sp1.depth*sp1.areas)
+
+# Wind River (Wrc) 45.8205, -121.9519 -- had to go north of site for data availability
+wrc.areas <- c(0.064, 0.717, 0.079, 0.012, 0.110); wrc.areas <- wrc.areas/sum(wrc.areas)
+wrc.clay <- c(0.072, 0.128, 0.128, 0.112, 0.112)
+wrc.sand <- c(0.650, 0.517, 0.517, 0.489, 0.489)
+wrc.depth <- c(1.14, 2.00, 2.00, 2.00, 2.00)
+
+sum(wrc.clay*wrc.areas)
+sum(wrc.sand*wrc.areas)
+sum(wrc.depth*wrc.areas)
