@@ -11,13 +11,13 @@ mstmip_local <- read.csv("../0_setup/pecan.utils/mstmip_local.csv", sep=";")
 # some site metadata
 sitelat =  45.805822
 sitelon = -90.079722
-start_date <- "2007-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
+start_date <- "2006-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
 end_date = "2100-12-31"
 
 ## Original
-runs.dir <- "ed_runs.v1" # Where our output is
+runs.dir <- "ed_runs.v2" # Where our output is
 all.runs <- dir(runs.dir) # Get a list of what's been run (at least partially)
-out.base <- "extracted_output.v1" # Where we want to put our output
+out.base <- "extracted_output.v2" # Where we want to put our output
 dir.create(out.base, recursive = T, showWarnings = F) # Create the directory if it's not there yet
 
 # Get a list of what runs we need to extract
