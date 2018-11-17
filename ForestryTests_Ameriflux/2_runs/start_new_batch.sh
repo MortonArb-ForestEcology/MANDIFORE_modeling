@@ -66,7 +66,7 @@ mgmt=()
 
 for((i=0;i<${#runs_all[@]};i++)); do 
 	RUN=${runs_all[i]}
-    TEST=( ${file_done[@]/$SITE/} ) # Remove element from array
+    TEST=( ${file_done[@]/$RUN/} ) # Remove element from array
 
 	# If the length of TEST is still the same, we haven't done it yet
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
