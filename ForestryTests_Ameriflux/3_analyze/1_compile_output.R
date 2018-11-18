@@ -4,14 +4,14 @@
 library(ggplot2)
 
 # Setting File paths
-run.table <- read.csv("../0_setup/ExperimentalDesign_AGU2018.csv")
-path.extract <- "../1_runs/extracted_output.v1/"
+run.table <- read.csv("../0_setup/ExperimentalDesign_Test.csv")
+path.extract <- "../2_runs/extracted_output.v2/"
 summary(run.table)
 
 # some site metadata
-sitelat =  45.805822
-sitelon = -90.079722
-start_date <- "2007-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
+# sitelat =  45.805822
+# sitelon = -90.079722
+start_date <- "2006-01-01" # The runs actually start in June 1800, but lets skip that first year because it's only partial
 end_date = "2100-12-31"
 
 vars.met <- c("CO2air", "Tair", "Rainf")
@@ -106,7 +106,7 @@ dat.yr.pft$pft <- factor(dat.yr.pft$pft, levels=c("Early Hardwood", "Mid Hardwoo
 summary(dat.yr.pft)
 
 
-pdf("../Figures/WCr_MANDIFORE_Output_QuickGraphs.pdf", height=8, width=10)
+pdf("Figures/WCr_MANDIFORE_Output_QuickGraphs.pdf", height=8, width=10)
 for(VAR in c(vars.site, vars.pft)){
   if(VAR %in% c("DBH")) next
   dat.yr$VAR <- dat.yr[,VAR]
@@ -121,7 +121,7 @@ for(VAR in c(vars.site, vars.pft)){
 }
 dev.off()
 
-pdf("../Figures/WCr_MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
+pdf("Figures/WCr_MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
 for(VAR in c(vars.pft)){
   # if(VAR %in% c("BasalArea", "DBH", "Density")) next
   dat.yr.pft$VAR <- dat.yr.pft[,VAR]
