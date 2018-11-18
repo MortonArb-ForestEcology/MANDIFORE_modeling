@@ -83,32 +83,35 @@ model2netcdf.ED2 <- function(ed.dir, outdir, sitelat, sitelon, start_date,
   # process whatever there is
   # for now I'm going with this, do failed runs also provide information
   # on parameters?
-  year_check <- unique(unlist(ylist))
-  if (max(year_check) < end_year) {
-    warning("Run failed with some outputs.")
-    rundir <- gsub(file.path("out"), file.path("run"), outdir)
-    readme <- file(file.path(rundir, "README.txt"))
-    runtype <- readLines(readme, n = 1)
-    close(readme)
-    if (grepl("ensemble", runtype)) {
-      # PEcAn.logger::logger.info("This is an ensemble run.
-      #                           Not processing anything.")
-      warning("This is an ensemble run. Not processing anything.")
-      
-      return(NULL)
-    } else {
-      # PEcAn.logger::logger.info("This is not an ensemble run.
-      #                           Processing existing outputs.")
-      warning("This is an ensemble run. Processing existing outputs.")
-      end_year <- max(year_check)
-    }
-  }
+  # year_check <- unique(unlist(ylist))
+  # if (max(year_check) < end_year) {
+  #   warning("Run failed with some outputs.")
+  #   rundir <- gsub(file.path("out"), file.path("run"), outdir)
+  #   # readme <- file(file.path(rundir, "README.txt"))
+  #   # runtype <- readLines(readme, n = 1)
+  #   close(readme)
+  #   if (grepl("ensemble", runtype)) {
+  #     # PEcAn.logger::logger.info("This is an ensemble run.
+  #     #                           Not processing anything.")
+  #     warning("This is an ensemble run. Not processing anything.")
+  #     
+  #     return(NULL)
+  #   } else {
+  #     # PEcAn.logger::logger.info("This is not an ensemble run.
+  #     #                           Processing existing outputs.")
+  #     warning("This is an ensemble run. Processing existing outputs.")
+  #     end_year <- max(year_check)
+  #   }
+  # }
   
   # ----- start loop over years
   for (y in start_year:end_year) {
     
     # PEcAn.logger::logger.info(paste0("----- Processing year: ", y))
     print(paste0("----- Processing year: ", y))
+    
+    # Check to see if file is done; if so go to next year
+    if(file.exists(file.path(outdir, paste(y, "nc", sep = ".")))) next
     
     # ----- read values from ED output files
     for (i in seq_along(out_list)) {
