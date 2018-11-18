@@ -114,6 +114,9 @@ do
 	GCM_now=${GCM[FILE]}
 	GCM_now=${GCM_now/"-"/"_"}
 
+	lat_now=${lat[FILE]}
+	lon_now=${lon[FILE]}
+
 	pft_now=${pft[FILE]}
 	pft_now=${pft_now//"-"/","}
 
@@ -186,8 +189,8 @@ do
 		# Creating the default file structure and copying over the base files to be modified
 		mkdir -p histo analy
 		ln -s $ed_exec
-		cp ${init_dir}/${SITE}/ED2IN ED2IN
-		cp ${init_dir}/${SITE}/PFTParams_MANDIFORE.xml .
+		cp ${setup_dir}/ED2IN_Base_ForestryTest ED2IN
+		cp ${setup_dir}/PFTParams_MANDIFORE.xml .
 		
 		# ED2IN Changes	    
 		sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'MANDIFORE TESTS'/" ED2IN # change the experiment name
