@@ -44,6 +44,18 @@ sum(sp1.clay*sp1.areas)
 sum(sp1.sand*sp1.areas)
 sum(sp1.depth*sp1.areas)
 
+
+# Metolius (Me2) 44.4523, -121.5574
+me2.areas <- c(100); me2.areas <- me2.areas/sum(me2.areas)
+me2.clay <- c(22.4)
+me2.sand <- c(42.9)
+me2.depth <- c(115)
+
+sum(me2.clay*me2.areas)
+sum(me2.sand*me2.areas)
+sum(me2.depth*me2.areas)
+
+
 # Wind River (Wrc) 45.8205, -121.9519 -- had to go north of site for data availability
 wrc.areas <- c(0.064, 0.717, 0.079, 0.012, 0.110); wrc.areas <- wrc.areas/sum(wrc.areas)
 wrc.clay <- c(0.072, 0.128, 0.128, 0.112, 0.112)
