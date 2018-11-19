@@ -15,7 +15,8 @@ start_date <- "2006-01-01" # The runs actually start in June 1800, but lets skip
 end_date = "2100-12-31"
 
 vars.met <- c("CO2air", "Tair", "Rainf")
-vars.site <- c("SoilMoist", "SoilTemp", "Fire_flux", "NEE", "NPP")
+# vars.site <- c("SoilMoist", "SoilTemp", "Fire_flux", "NEE", "NPP")
+vars.site <- c("Fire_flux", "NEE", "NPP")
 vars.pft <- c("AbvGrndBiom", "LAI", "Density_Tree", "BasalArea_Tree", "DBH_Tree")
 pfts.extract <- c(6, 8, 9:11)
 
@@ -46,11 +47,13 @@ for(RUNID in all.runs){
     yr.now  <- as.numeric(substr(frun[i], 1, 4))
     
     tmp.mo  <- data.frame(RunID=rep(RUNID, 12), 
+                          site=run.table$SiteName[exp.ind],
                           management=run.table$management[exp.ind], 
                           GCM=run.table$GCM[exp.ind], 
                           scenario=run.table$scenario[exp.ind], 
                           year=yr.now, month=1:12)
     tmp.pft <- data.frame(RunID=RUNID, 
+                          site=run.table$SiteName[exp.ind],
                           management=run.table$management[exp.ind], 
                           GCM=run.table$GCM[exp.ind], 
                           scenario=run.table$scenario[exp.ind], 
@@ -92,13 +95,13 @@ summary(dat.mo)
 summary(dat.pft)
 
 dat.yr <- aggregate(dat.mo[,c(vars.site, vars.pft)], 
-                    by=dat.mo[,c("management", "GCM", "scenario", "year")],
+                    by=dat.mo[,c("site", "management", "GCM", "scenario", "year")],
                     FUN=mean, na.rm=T)
 dat.yr$management <- factor(dat.yr$management, levels=c("passive", "preservation", "ecological", "production"))
 summary(dat.yr)
 
 dat.yr.pft <- aggregate(dat.pft[,c(vars.pft)],
-                        by=dat.pft[,c("management", "GCM", "scenario", "year", "pft")],
+                        by=dat.pft[,c("site", "management", "GCM", "scenario", "year", "pft")],
                         FUN=mean, na.rm=T)
 dat.yr.pft$management <- factor(dat.yr.pft$management, levels=c("passive", "preservation", "ecological", "production"))
 dat.yr.pft$pft <- car::recode(dat.yr.pft$pft, "'6'='N. Pine'; '8'='Late Conifer'; '9'='Early Hardwood'; '10'='Mid Hardwood'; '11'='Late Hardwood'")
@@ -113,7 +116,7 @@ for(VAR in c(vars.site, vars.pft)){
   print(
     ggplot(data=dat.yr[,]) +
       ggtitle(VAR) +
-      # facet_wrap(~scenario) +
+      facet_wrap(~site) +
       geom_line(aes(x=year, y=VAR, linetype=scenario, color=management), size=0.75) +
       scale_color_manual(values=c("black", "blue2", "green4", "darkorange2")) +
       theme_bw()
@@ -128,11 +131,11 @@ for(VAR in c(vars.pft)){
   print(
     ggplot(data=dat.yr.pft[,]) +
       ggtitle(VAR) +
-      facet_wrap(~pft) +
+      facet_grid(pft~site) +
       geom_line(aes(x=year, y=VAR, linetype=scenario, color=management), size=0.75) +
       scale_color_manual(values=c("black", "blue2", "green4", "darkorange2")) +
       theme_bw() +
-      theme(legend.position=c(0.85, 0.25))
+      theme(legend.position="bottom")
   )
 }
 dev.off()
