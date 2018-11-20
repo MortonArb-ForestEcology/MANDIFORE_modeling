@@ -241,6 +241,21 @@ do
 	    	mgmt_path="${lu_dir}/${mgmt[FILE]}"
 	    	sed -i "s,LANDUSEFILE,${mgmt_path},g" ED2IN # set the file path
 	    fi
+	    
+	    # If this is a preservation run, we need to do a 2-part spin
+	    if [[ ${fire[FILE]} == 0.05 ]]; then
+			cp ${setup_dir}/adjust_fire.sh .
+			
+			# Adjust some of the ED2IN settings
+			sed -i "s/NL%SM_FIRE         = .*/NL%SM_FIRE         = 0.01/" ED2IN # adjust fire threshold
+			sed -i "s/NL%IYEARZ   = .*/NL%IYEARZ   = 2006/" ED2IN # Set last year
+			sed -i "s/NL%IMONTHZ  = .*/NL%IMONTHZ  = 01/" ED2IN # Set last month
+			sed -i "s/NL%IDATEZ   = .*/NL%IDATEZ   = 01/" ED2IN # Set last day
+
+			sed -i "s,HISTOPATH,${new_histo},g" adjust_fire.sh # set initial file path to the SAS spin folder
+
+	
+	    fi
 
 	popd	
 
