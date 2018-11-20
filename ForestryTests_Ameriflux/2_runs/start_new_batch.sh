@@ -243,7 +243,7 @@ do
 	    fi
 	    
 	    # If this is a preservation run, we need to do a 2-part spin
-	    if [[ ${fire[FILE]} == 0.05 ]]; then
+	    if [[ ${fire[FILE]} == 0.03 ]]; then
 			cp ${setup_dir}/adjust_fire.sh .
 			
 			# Adjust some of the ED2IN settings
