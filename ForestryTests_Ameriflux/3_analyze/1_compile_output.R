@@ -109,7 +109,7 @@ dat.yr.pft$pft <- factor(dat.yr.pft$pft, levels=c("Early Hardwood", "Mid Hardwoo
 summary(dat.yr.pft)
 
 
-pdf("Figures/WCr_MANDIFORE_Output_QuickGraphs.pdf", height=8, width=10)
+pdf("Figures/MANDIFORE_Output_QuickGraphs.pdf", height=8, width=10)
 for(VAR in c(vars.site, vars.pft)){
   if(VAR %in% c("DBH")) next
   dat.yr$VAR <- dat.yr[,VAR]
@@ -124,7 +124,7 @@ for(VAR in c(vars.site, vars.pft)){
 }
 dev.off()
 
-pdf("Figures/WCr_MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
+pdf("Figures/MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
 for(VAR in c(vars.pft)){
   # if(VAR %in% c("BasalArea", "DBH", "Density")) next
   dat.yr.pft$VAR <- dat.yr.pft[,VAR]
