@@ -253,7 +253,7 @@ do
 			sed -i "s/NL%IDATEZ   = .*/NL%IDATEZ   = 01/" ED2IN # Set last day
 
 			sed -i "s,HISTOPATH,${new_histo},g" adjust_fire.sh # set initial file path to the SAS spin folder
-			sed -i "s,FIRE,${fire[FILE]},g" adjust_fire.sh # set initial file path to the SAS spin folder
+			sed -i "s,SMFIRE,${fire[FILE]},g" adjust_fire.sh # set initial file path to the SAS spin folder
 
 	
 	    fi
