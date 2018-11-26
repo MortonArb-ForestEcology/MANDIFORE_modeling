@@ -18,7 +18,7 @@ vars.met <- c("CO2air", "Tair", "Rainf")
 # vars.site <- c("SoilMoist", "SoilTemp", "Fire_flux", "NEE", "NPP")
 vars.site <- c("Fire_flux", "NEE", "NPP")
 vars.pft <- c("AbvGrndBiom", "LAI", "Density_Tree", "BasalArea_Tree", "DBH_Tree")
-pfts.extract <- c(6, 8, 9:11)
+pfts.extract <- c(5:11)
 
 slz <- c(-1.17, -0.80, -0.60, -0.45, -0.30, -0.20, -0.12, -0.06)
 depth.use <- which(slz>= -0.30) # Just use the top 30 cm
@@ -104,8 +104,8 @@ dat.yr.pft <- aggregate(dat.pft[,c(vars.pft)],
                         by=dat.pft[,c("site", "management", "GCM", "scenario", "year", "pft")],
                         FUN=mean, na.rm=T)
 dat.yr.pft$management <- factor(dat.yr.pft$management, levels=c("passive", "preservation", "ecological", "production"))
-dat.yr.pft$pft <- car::recode(dat.yr.pft$pft, "'6'='N. Pine'; '8'='Late Conifer'; '9'='Early Hardwood'; '10'='Mid Hardwood'; '11'='Late Hardwood'")
-dat.yr.pft$pft <- factor(dat.yr.pft$pft, levels=c("Early Hardwood", "Mid Hardwood", "Late Hardwood", "N. Pine", "Late Conifer"))
+dat.yr.pft$pft <- car::recode(dat.yr.pft$pft, "'5'='Grass'; '6'='N. Pine'; '7'='S. Pine'; '8'='Late Conifer'; '9'='Early Hardwood'; '10'='Mid Hardwood'; '11'='Late Hardwood'")
+dat.yr.pft$pft <- factor(dat.yr.pft$pft, levels=c("Early Hardwood", "Mid Hardwood", "Late Hardwood", "S. Pine", "N. Pine", "Late Conifer", "Grass"))
 summary(dat.yr.pft)
 
 
