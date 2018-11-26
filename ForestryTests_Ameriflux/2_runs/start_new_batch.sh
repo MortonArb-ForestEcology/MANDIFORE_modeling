@@ -193,7 +193,7 @@ do
 		cp ${setup_dir}/PFTParams_MANDIFORE_${SITE}.xml .
 		
 		# ED2IN Changes	    
-		sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'MANDIFORE TESTS'/" ED2IN # change the experiment name
+		sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'MANDIFORE TEST'/" ED2IN # change the experiment name
 
 		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
 		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
@@ -235,6 +235,8 @@ do
         sed -i "s/STGOFF  =.*/STGOFF = $STGOFF/" ED2IN # set initial soil temp offset
 
         sed -i "s/NL%INCLUDE_THESE_PFT =.*/NL%INCLUDE_THESE_PFT = $pft_now/" ED2IN # set possible PFTs
+        sed -i "s/   NL%IEDCNFGF   =.*/NL%   NL%IEDCNFGF   = 'PFTParams_MANDIFORE_${SITE}.xml'/" ED2IN # set possible PFTs
+
 	    sed -i "s/NL%SM_FIRE         = .*/NL%SM_FIRE         = ${fire[FILE]}/" ED2IN # adjust fire threshold
 	    sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
 	    if [[ ${ianth[FILE]} == 2 ]]; then
