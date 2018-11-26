@@ -21,12 +21,48 @@
    </pft>
   
    <pft>
+      <num>				 6      </num>
+      
+      <!-- Rough numbers from Starker 1934; e.g. West White Pine -->
+      <fire_s_gtht>
+                 0.15      </fire_s_gtht> <!--  -->
+      <fire_s_ltht>
+                 0.00      </fire_s_ltht> <!--  -->
+
+   </pft>
+   <pft>
+      <num>				 7      </num>
+      
+	  <!-- Fire tolerant parameters copied from oaks; based on PIRI being above QUMO -->
+      <fire_s_gtht>
+                 0.73      </fire_s_gtht> <!-- Value from lit for Oaks ~30 cm DBH -->
+      <fire_s_ltht>
+                 0.33      </fire_s_ltht> <!-- Value from lit for Oaks ~10 cm DBH -->
+
+   </pft>
+   <pft>
+      <num>				 8      </num>
+      
+      <!-- Rough numbers from Starker 1934; e.g. W. Hemlock -->
+      <fire_s_gtht>
+                 0.10      </fire_s_gtht> <!--  -->
+      <fire_s_ltht>
+                 0.00      </fire_s_ltht> <!--  -->
+      
+   </pft>
+
+   <pft>
       <num>				 9      </num>
 <!-- 
       <include_pft_ag>	 0      </include_pft_ag>
       <include_pft>		 1      </include_pft>
  -->
 
+	  <!-- Fire Intolerant based on N. Pine -->
+      <fire_s_gtht>
+                 0.15      </fire_s_gtht> <!--  -->
+      <fire_s_ltht>
+                 0.00      </fire_s_ltht> <!--  -->
 
 	  <!-- Leaf Params -->	
       <phenology>
@@ -53,6 +89,11 @@
       <!-- Mortality Params -->
       <plant_min_temp>
                193.00000      </plant_min_temp> <!-- Modified -->
+
+      <fire_s_gtht>
+                 0.73      </fire_s_gtht> <!-- Value from lit for Oaks ~30 cm DBH -->
+      <fire_s_ltht>
+                 0.33      </fire_s_ltht> <!-- Value from lit for Oaks ~10 cm DBH -->
       
    </pft>
 
@@ -62,6 +103,12 @@
       <include_pft_ag>	 0      </include_pft_ag>
       <include_pft>		 1      </include_pft>
  -->
+
+	  <!-- Fire Intolerant based on Late Conifer -->
+      <fire_s_gtht>
+                 0.10      </fire_s_gtht> <!--  -->
+      <fire_s_ltht>
+                 0.00      </fire_s_ltht> <!--  -->
 
 
 	  <!-- Leaf Params -->	
