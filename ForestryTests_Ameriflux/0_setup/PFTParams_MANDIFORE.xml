@@ -9,8 +9,10 @@
 
    <pft>
       <num>       		5      </num>
+<!-- 
       <include_pft_ag>  1      </include_pft_ag>
       <include_pft>     1      </include_pft>
+ -->
 
 
 	  <!-- Leaf Params -->	
@@ -20,8 +22,10 @@
   
    <pft>
       <num>				 9      </num>
+<!-- 
       <include_pft_ag>	 0      </include_pft_ag>
       <include_pft>		 1      </include_pft>
+ -->
 
 
 	  <!-- Leaf Params -->	
@@ -36,8 +40,10 @@
 
    <pft>
       <num>				10      </num>
+<!-- 
       <include_pft_ag>	 0      </include_pft_ag>
       <include_pft>		 1      </include_pft>
+ -->
 
 
 	  <!-- Leaf Params -->	
@@ -52,8 +58,10 @@
 
    <pft>
       <num>				11      </num>
+<!-- 
       <include_pft_ag>	 0      </include_pft_ag>
       <include_pft>		 1      </include_pft>
+ -->
 
 
 	  <!-- Leaf Params -->	
