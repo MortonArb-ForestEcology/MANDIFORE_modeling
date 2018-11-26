@@ -235,7 +235,7 @@ do
         sed -i "s/STGOFF  =.*/STGOFF = $STGOFF/" ED2IN # set initial soil temp offset
 
         sed -i "s/NL%INCLUDE_THESE_PFT =.*/NL%INCLUDE_THESE_PFT = $pft_now/" ED2IN # set possible PFTs
-        sed -i "s/   NL%IEDCNFGF   =.*/NL%   NL%IEDCNFGF   = 'PFTParams_MANDIFORE_${SITE}.xml'/" ED2IN # set possible PFTs
+        sed -i "s/NL%IEDCNFGF   =.*/NL%IEDCNFGF   = 'PFTParams_MANDIFORE_${SITE}.xml'/" ED2IN # set possible PFTs
 
 	    sed -i "s/NL%SM_FIRE         = .*/NL%SM_FIRE         = ${fire[FILE]}/" ED2IN # adjust fire threshold
 	    sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
