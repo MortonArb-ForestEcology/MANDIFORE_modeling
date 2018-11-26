@@ -11,7 +11,7 @@ EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
 met_base=${file_base}/met_ed/
 
 ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_spin/ed_spin.v2/ # Where everything will go
+file_dir=${file_base}/1_spin/ed_spin.v3/ # Where everything will go
 setup_dir=${file_base}/0_setup # Where some constant setup files are
 site_file=${setup_dir}/Sites_ExperimentalDesign_Test.csv # # Path to list of ED sites w/ status
 

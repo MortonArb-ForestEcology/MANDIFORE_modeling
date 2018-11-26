@@ -5,7 +5,7 @@ library(ggplot2)
 
 # Setting File paths
 run.table <- read.csv("../0_setup/ExperimentalDesign_Test.csv")
-path.extract <- "../2_runs/extracted_output.v2/"
+path.extract <- "../2_runs/extracted_output.v3/"
 summary(run.table)
 
 # some site metadata

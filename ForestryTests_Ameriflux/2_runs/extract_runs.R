@@ -15,9 +15,9 @@ start_date <- "2006-01-01" # The runs actually start in June 1800, but lets skip
 end_date = "2100-12-31"
 
 ## Original
-runs.dir <- "ed_runs.v2" # Where our output is
+runs.dir <- "ed_runs.v3" # Where our output is
 all.runs <- dir(runs.dir) # Get a list of what's been run (at least partially)
-out.base <- "extracted_output.v2" # Where we want to put our output
+out.base <- "extracted_output.v3" # Where we want to put our output
 dir.create(out.base, recursive = T, showWarnings = F) # Create the directory if it's not there yet
 
 # Get a list of what runs we need to extract
