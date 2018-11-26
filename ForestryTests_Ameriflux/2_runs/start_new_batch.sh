@@ -190,7 +190,7 @@ do
 		mkdir -p histo analy
 		ln -s $ed_exec
 		cp ${setup_dir}/ED2IN_Base_ForestryTest ED2IN
-		cp ${setup_dir}/PFTParams_MANDIFORE.xml .
+		cp ${setup_dir}/PFTParams_MANDIFORE_${SITE}.xml .
 		
 		# ED2IN Changes	    
 		sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'MANDIFORE TESTS'/" ED2IN # change the experiment name
