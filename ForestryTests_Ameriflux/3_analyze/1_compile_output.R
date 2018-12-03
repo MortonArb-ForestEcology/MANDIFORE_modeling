@@ -75,13 +75,16 @@ for(RUNID in all.runs){
       if(!VAR %in% names(ncT$var)) next
       var.tmp <- ncdf4::ncvar_get(ncT, VAR) # extract the dat once for speed
       
-      if(VAR %in% c("DBH")){
-        tmp.mo[,VAR] <- apply(var.tmp[,pfts.extract], 1, mean, na.rm=T) # Store the mean DBH
+      if(VAR %in% c("DBH_Tree")){
+        tmp.mo[,VAR] <- apply(var.tmp[,pfts.extract[!pfts.extract==5]], 1, mean, na.rm=T) # Store the mean DBH
+      } else if(VAR %in% c("BasalArea_Tree", "Density_Tree")) {
+        tmp.mo[,VAR] <- apply(var.tmp[,pfts.extract[!pfts.extract==5]], 1, sum, na.rm=T) # Store the sum
       } else {
         tmp.mo[,VAR] <- apply(var.tmp[,pfts.extract], 1, sum, na.rm=T) # Store the sum
       }
       
       for(PFT in pfts.extract){
+        if(PFT==5 & VAR %in% c("DBH_Tree", "BasalArea_Tree", "Density_Tree")) next
         tmp.pft[tmp.pft$pft==PFT,VAR] <- var.tmp[,PFT]
       }
     } # End PFT vars
@@ -93,6 +96,9 @@ for(RUNID in all.runs){
 }
 summary(dat.mo)
 summary(dat.pft)
+
+write.csv(dat.mo, "processed_out/MANDIFORE_Ameriflux_month_site.csv", row.names=F)
+write.csv(dat.pft, "processed_out/MANDIFORE_Ameriflux_month_pft.csv", row.names=F)
 
 dat.yr <- aggregate(dat.mo[,c(vars.site, vars.pft)], 
                     by=dat.mo[,c("site", "management", "GCM", "scenario", "year")],
@@ -109,7 +115,7 @@ dat.yr.pft$pft <- factor(dat.yr.pft$pft, levels=c("Early Hardwood", "Mid Hardwoo
 summary(dat.yr.pft)
 
 
-pdf("Figures/MANDIFORE_Output_QuickGraphs.pdf", height=8, width=10)
+pdf("figures.v3/MANDIFORE_Output_QuickGraphs.pdf", height=8, width=10)
 for(VAR in c(vars.site, vars.pft)){
   if(VAR %in% c("DBH")) next
   dat.yr$VAR <- dat.yr[,VAR]
@@ -124,7 +130,7 @@ for(VAR in c(vars.site, vars.pft)){
 }
 dev.off()
 
-pdf("Figures/MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
+pdf("figures.v3/MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
 for(VAR in c(vars.pft)){
   # if(VAR %in% c("BasalArea", "DBH", "Density")) next
   dat.yr.pft$VAR <- dat.yr.pft[,VAR]

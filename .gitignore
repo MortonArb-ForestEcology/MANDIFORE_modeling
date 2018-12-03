@@ -17,3 +17,5 @@ ForestryTests_Ameriflux/Figures/WCr_MANDIFORE_Output_QuickGraphs_PFT.pdf
 *.pdf
 ForestryTests_Ameriflux/met_ed/WILLOWCREEK/GFDL_CM3_rcp45_r1i1p1/ED_MET_DRIVER_HEADER
 ForestryTests_Ameriflux/init_files/fluxnet_dietze/*
+ForestryTests_Ameriflux/3_analyze/processed_out/MANDIFORE_Ameriflux_month_pft.csv
+ForestryTests_Ameriflux/3_analyze/processed_out/MANDIFORE_Ameriflux_month_site.csv
