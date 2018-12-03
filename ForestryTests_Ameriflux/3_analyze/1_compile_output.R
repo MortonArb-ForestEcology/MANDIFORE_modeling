@@ -16,7 +16,7 @@ end_date = "2100-12-31"
 
 vars.met <- c("CO2air", "Tair", "Rainf")
 # vars.site <- c("SoilMoist", "SoilTemp", "Fire_flux", "NEE", "NPP")
-vars.site <- c("Fire_flux", "NEE", "NPP")
+vars.site <- c("Fire_flux", "NEE", "NPP", "Albedo", "Runoff", "SoilMoist")
 vars.pft <- c("AbvGrndBiom", "LAI", "Density_Tree", "BasalArea_Tree", "DBH_Tree")
 pfts.extract <- c(5:11)
 
@@ -64,7 +64,16 @@ for(RUNID in all.runs){
     # Extract vars where we want 1 var per site
     for(VAR in c(vars.met, vars.site)){
       if(VAR %in% c("SoilMoist", "SoilTemp")){
-        tmp.mo[,VAR] <- apply(ncdf4::ncvar_get(ncT, VAR)[depth.use,] * wt.depth, 2, sum)
+        dat.raw <- ncdf4::ncvar_get(ncT, VAR)
+        
+        if(nrow(dat.raw)>=4){
+          depth.now <- (nrow(dat.raw)-length(depth.use)+1):nrow(dat.raw)
+          tmp.mo[,VAR] <- apply(dat.raw[depth.now,] * wt.depth, 2, sum)
+        } else {
+          stop("Need to figure out how to deal with shallow soils")
+          # depth.now <- (nrow(dat.raw)-length(depth.use)+1):nrow(dat.raw)
+          # tmp.mo[,VAR] <- apply(dat.raw[depth.now,] * wt.depth, 2, sum)
+        }
       } else {
         tmp.mo[,VAR] <- ncdf4::ncvar_get(ncT, VAR)
       }
