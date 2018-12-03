@@ -1043,6 +1043,10 @@ read_E_files <- function(yr, yfiles, efiles, outdir, start_date, end_date, pft_n
     out <- add(getHdf5Data(ncT, "MMEAN_VAPOR_LC_PY") + getHdf5Data(ncT, "MMEAN_VAPOR_WC_PY") +
                  getHdf5Data(ncT, "MMEAN_VAPOR_GC_PY") + getHdf5Data(ncT, "MMEAN_TRANSP_PY"), "Evap")  ## Evap
 
+    # Other Variables of use
+    out <- add(getHdf5Data(ncT, "MMEAN_ALBEDO_PY"), "Albedo")
+    out <- add(getHdf5Data(ncT, "MMEAN_RUNOFF_PY"), "Runoff")
+    
     # Site-level variables related to water & carbon stress
     out <- add(getHdf5Data(ncT, "MMEAN_AVAILABLE_WATER_PY"), "WaterAvail")  ## WaterAvail=Available Water kg/m2
     out <- add(getHdf5Data(ncT, "MMEAN_A_CLOSED_PY"), "A_Closed")  ## Minimum assimilation rate; umol/m2l/s
@@ -1352,6 +1356,11 @@ put_E_values <- function(yr, nc_var, out, lat, lon, begins, ends, pft_names, ...
                                        longname = "Total Evaporation")
   
   # Non-Standard Carbon Fluxes & Stress Measures
+  nc_var[["Albedo"]] <- ncdf4::ncvar_def("Albedo", units = "unitless", dim = list(lon, lat, t), missval = -999, 
+                                       longname = "Surface Albedo")
+  nc_var[["Runoff"]] <- ncdf4::ncvar_def("Runoff", units = "kg m-2 s-1", dim = list(lon, lat, t), missval = -999, 
+                                         longname = "Surface Runoff")
+
   nc_var[["WaterAvail"]] <- ncdf4::ncvar_def("WaterAvail", units = "kg m-2", dim = list(lon, lat, t), missval = -999, 
                                              longname = "Available Water")
   
