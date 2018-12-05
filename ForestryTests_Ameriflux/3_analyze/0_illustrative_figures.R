@@ -1,10 +1,16 @@
 # Some generic, illustrative figures
 
 # 1. Map of Sites -- Ecoregions (w/ forest cover?)
-# 2. Example of Spatially implicit approach & management schemes using patch/cohort init file?
+# 2. Example of management schemes
+# 3. Example of Spatially implicit approach & turnover w/ patch creation?
 
 library(rgdal); library(ggplot2); library(maptools); library(raster)
 
+path.figs <- "/Volumes/GoogleDrive/My Drive/Conferences_Presentations/AGU 2018/"
+
+# -----------------------------------------------------------
+# 1. Map of Sites -- Ecoregions (w/ forest cover?)
+# -----------------------------------------------------------
 # -------------
 # Reading in and formatting (aggregating) the NBCD
 # -------------
@@ -94,7 +100,7 @@ summary(usa3)
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 eco.nf <- c("GREAT PLAINS", "NORTH AMERICAN DESERTS")
 
-png("../0_setup/SiteLocations.png", height=15, width=22, units="in", res=220)
+png(file.path(path.figs, "SiteLocations.png"), height=15, width=22, units="in", res=220)
 ggplot(data=eco.df.L1b[!eco.df.L1b$NA_L1NAME %in% eco.nf,]) +
   coord_equal() + 
   geom_point(data=nbcd.df[nbcd.df$Biomass>0,],aes(x=x, y=y, color=Biomass), shape=15, size=1) +
@@ -119,4 +125,98 @@ ggplot(data=eco.df.L1b[!eco.df.L1b$NA_L1NAME %in% eco.nf,]) +
         panel.border = element_blank()
         )
 dev.off()
- 
+# -------------
+# -----------------------------------------------------------
+
+# -----------------------------------------------------------
+# 2. Example of management schemes
+# -----------------------------------------------------------
+# patch <- read.table("../init_files/harvard.NACP.lat42.5lon-72.5.pss", header=T)
+# cohort <- read.table("../init_files/harvard.NACP.lat42.5lon-72.5.css", header=T)
+cohort <- read.table("../init_files/US-WCr.Inv.lat45.5lon-90.5.css", header=T)
+patch <- read.table("../init_files/US-WCr.Inv.lat45.5lon-90.5.pss", header=T)
+summary(patch)
+summary(cohort)
+
+
+p.pot <- unique(cohort[cohort$dbh>50, "patch"])
+p.pot <- patch[patch$patch %in% p.pot & patch$age>50, "patch"]
+# p.use <- patch[patch$age==max(patch$age),"patch"]
+# p.use <- patch[patch$age==60,"patch"]
+c.pch <- cohort[cohort$patch==p.pot[1],]
+dim(c.pch)
+summary(c.pch)
+
+# Making a simplified table
+c.use <- c.pch[c.pch$dbh>35,]
+c.use <- rbind(c.use, c.pch[sample(1:nrow(c.pch), 25),])
+summary(c.use)
+dim(c.use)
+
+# set.seed(1204) 2014 2004
+set.seed(2004)
+c.use$x <- sample(1:100, nrow(c.use), replace=F)
+c.use$y <- sample(1:100, nrow(c.use), replace=F)
+summary(c.use)
+
+ggplot(data=c.use) +
+  coord_equal() +
+  geom_point(aes(x=x, y=y, color=as.factor(pft), size=dbh)) +
+  scale_size_continuous(range=c(5,20)) +
+  guides(color=F, size=F) +
+  theme_bw() +
+  theme(panel.background = element_blank(),
+        panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+
+
+pass <- data.frame(treatment="Passive", c.use[,c("x", "y", "dbh", "pft")])
+summary(as.factor(pass$pft))
+
+pft.09a <- which(pass$pft==9 & pass$dbh>30) # 15% survival
+pft.09b <- which(pass$pft==9 & pass$dbh<30) # 0% survival
+pft.10a <- which(pass$pft==10 & pass$dbh>30) # 75% survival
+pft.10b <- which(pass$pft==10 & pass$dbh<30) # 33% survival
+pft.11a <- which(pass$pft==11 & pass$dbh>30) # 10% survival
+pft.11b <- which(pass$pft==11 & pass$dbh<30) #  0% survival
+
+pres.keep <- c(sample(pft.09a,length(pft.09a)*0.15), 
+                sample(pft.10a, length(pft.10a)*0.75), sample(pft.10b, length(pft.10b)*0.33),
+                sample(pft.10a, length(pft.11a)*0.1))
+pres <- data.frame(treatment="Preservation", c.use[pres.keep,c("x", "y", "dbh", "pft")])
+
+produ <- data.frame(treatment="Production", c.use[c.use$dbh<10,c("x", "y", "dbh", "pft")])
+
+pft.09a2 <- which(pass$pft==9 & pass$dbh>50) # 15% survival
+pft.10a2 <- which(pass$pft==10 & pass$dbh>50) # 15% survival
+pft.11a2 <- which(pass$pft==11 & pass$dbh>50) # 15% survival
+
+ecol.keep <- c(sample(pft.09a2,length(pft.09a2)/2), 
+               sample(pft.10a2, length(pft.10a2)/2),
+               sample(pft.10a2, length(pft.11a2)/2)
+               )
+ecol <- data.frame(treatment="Ecological", c.use[ecol.keep,c("x", "y", "dbh", "pft")])
+
+dat.mgmt <- rbind(pass, pres, produ, ecol)
+
+png(file.path(path.figs, "Treatment_Illustration.png"), height=7, width=7, units="in", res=220)
+ggplot(data=dat.mgmt) +
+  coord_equal() +
+  facet_wrap(~treatment) +
+  geom_point(aes(x=x, y=y, color=as.factor(pft), size=dbh)) +
+  scale_size_continuous(range=c(3,15)) +
+  scale_color_brewer(palette = "Dark2") + 
+  guides(color=F, size=F) +
+  theme_bw() +
+  theme(panel.background = element_blank(),
+        panel.grid = element_blank(),
+        strip.text=element_text(size=unit(24, "points"), face="bold"),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+dev.off()
+# -----------------------------------------------------------
+
+
