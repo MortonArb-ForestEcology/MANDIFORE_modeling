@@ -4,7 +4,7 @@ library(ggplot2)
 path.figs <- "/Volumes/GoogleDrive/My Drive/Conferences_Presentations/AGU 2018/figures"
 
 # Load the data frame
-dat.all <- read.csv("../2_runs/extracted_output.v3/MANDIFORE_Ameriflux_month_site_last10.csv")
+dat.all <- read.csv("../2_runs/extracted_output.v3/MANDIFORE_Ameriflux_month_site.csv")
 summary(dat.all)
 
 # Convert values to per year instead per second
@@ -27,15 +27,100 @@ dat.yr2 <- stack(dat.yr[,c(vars.met, vars.eco)])
 dat.yr2[,vars.fac] <- dat.yr[,vars.fac]
 summary(dat.yr2)
 
-ggplot(data=dat.yr2[dat.yr2$site=="HARVARD_EMS" & dat.yr2$ind %in% c("AbvGrndBiom", "NEE"),]) +
-  facet_wrap(~ind, scales="free_y") +
-  geom_boxplot(aes(x=management, y=values, fill=scenario)) +
+# -----------------------------------------------------------
+# Plots of drivers -- all together and at separate sites
+# -----------------------------------------------------------
+dat.clim <- dat.yr[,c(vars.fac, vars.met)]
+dat.clim$Tair <- dat.clim$Tair - 273.15
+dat.clim$Rainf <- dat.clim$Rainf*0.001
+dat.clim[,paste0("d", vars.met)] <- NA
+for(RUN in unique(dat.clim$RunID)){
+  row.ind <- which(dat.clim$RunID==RUN)
+  clim.ref <- dat.clim[dat.clim$RunID==RUN & dat.clim$year==2006,vars.met]
+  
+  dat.clim[row.ind,paste0("d", vars.met)] <- sweep(dat.clim[row.ind, vars.met], 2, as.numeric(clim.ref), "-")
+}
+summary(dat.clim)
+
+dat.clim2 <- stack(dat.clim[,vars.met])
+names(dat.clim2) <- c("raw", "ind")
+dat.clim2$diff <- stack(dat.clim[,paste0("d",vars.met)])[,1]
+dat.clim2[,vars.fac] <- dat.clim[,vars.fac]
+summary(dat.clim2)
+
+clim.region <- aggregate(dat.clim2[,c("raw", "diff")], 
+                         by = dat.clim2[,c("year", "ind", "scenario")],
+                         FUN=mean)
+clim.region[,c("raw.lo", "diff.lo")] <- aggregate(dat.clim2[,c("raw", "diff")], 
+                                                  by = dat.clim2[,c("year", "ind", "scenario")],
+                                                  FUN=min)[,c("raw", "diff")]
+clim.region[,c("raw.hi", "diff.hi")] <- aggregate(dat.clim2[,c("raw", "diff")], 
+                                                  by = dat.clim2[,c("year", "ind", "scenario")],
+                                                  FUN=max)[,c("raw", "diff")]
+summary(clim.region)
+# clim.region[clim.region$ind=="CO2air",]
+
+# Adding the reference point back in
+for(IND in unique(clim.region$ind)){
+  row.ind <- clim.region$ind==IND
+  ref <- clim.region[clim.region$year==2006 & clim.region$ind==IND,"raw"]
+  
+  clim.region[row.ind, "diff.lo"] <- clim.region[row.ind, "diff.lo"]+ref
+  clim.region[row.ind, "diff.hi"] <- clim.region[row.ind, "diff.hi"]+ref
+}
+
+vars.smooth <- c("raw", "diff.lo", "diff.hi")
+for(IND in unique(clim.region$ind)){
+  for(RCP in unique(clim.region$scenario)){
+    row.ind <- which(clim.region$ind==IND & clim.region$scenario==RCP)
+    
+    for(VAR in vars.smooth){
+      clim.region[row.ind, paste0(VAR, ".05")] <- zoo::rollapply(clim.region[row.ind, VAR], 05, mean, fill=NA, align="right")
+      clim.region[row.ind, paste0(VAR, ".10")] <- zoo::rollapply(clim.region[row.ind, VAR], 10, mean, fill=NA, align="right")
+    }
+  }
+}
+
+clim.region$ind <- car::recode(clim.region$ind, "'CO2air'='CO2 (ppm)'; 'Rainf'='Precip. (mm/yr)'; 'Tair'='Temp. (deg. C)'")
+clim.region$ind <- factor(clim.region$ind, levels=c("CO2 (ppm)", "Temp. (deg. C)", "Precip. (mm/yr)"))
+ggplot(data=clim.region[,]) +
+  facet_grid(ind~., scales="free_y") +
+  # facet_grid(ind ~ site, scales="free_y") +
+  geom_ribbon(aes(x=year, ymin=diff.lo, ymax=diff.hi, fill=scenario), alpha=0.5) +
+  geom_line(aes(x=year, y=raw, color=scenario)) +
   theme_bw()
 
+png(file.path(path.figs, "MetDrivers_smooth05.png"), height=7.5, width=6, units="in", res=180)
+ggplot(data=clim.region[,]) +
+  facet_grid(ind~., scales="free_y") +
+  # facet_grid(ind ~ site, scales="free_y") +
+  geom_ribbon(aes(x=year, ymin=diff.lo.05, ymax=diff.hi.05, fill=scenario), alpha=0.5) +
+  geom_line(aes(x=year, y=raw.05, color=scenario), size=1.5) +
+  scale_fill_manual(name="Scenario",values=c("#0072B2", "#E69F00")) +
+  scale_color_manual(name="Scenario",values=c("#0072B2", "#E69F00")) +
+  scale_x_continuous(name="Year", expand=c(0,0)) +
+  theme_bw() +
+  theme(legend.position="top",
+        # legend.direction="vertical",
+        legend.key.size=unit(2.5, "lines"),
+        legend.text = element_text(size=rel(1.25)),
+        legend.title = element_text(size=rel(1.5), face="bold"),
+        strip.text = element_text(size=rel(1.5), face="bold"),
+        panel.grid = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size=rel(1.5), color="black"),
+        axis.text=element_text(size=rel(1.5), color="black"))
+dev.off()
+
+# -----------------------------------------------------------
+
+# -----------------------------------------------------------
+# Plots of Ecosystem Model Output
+# -----------------------------------------------------------
 for(SITE in unique(dat.yr$site)){
   png(file.path(path.figs, paste0(SITE, "_AGB_mean", "_2090-2100.png")), height=7.5, width=6, units="in", res=180)
   print(
-    ggplot(data=dat.yr[dat.yr$site==SITE,]) +
+    ggplot(data=dat.yr[dat.yr$site==SITE & dat.yr$year>=2090,]) +
       # facet_wrap(~site) +
       geom_boxplot(aes(x=management, y=AbvGrndBiom, fill=scenario)) +
       scale_fill_manual(name="Scenario",values=c("#0072B2", "#E69F00")) +
@@ -57,7 +142,7 @@ for(SITE in unique(dat.yr$site)){
   
   png(file.path(path.figs, paste0(SITE, "_NEE_mean", "_2090-2100.png")), height=7.5, width=6, units="in", res=180)
   print(
-    ggplot(data=dat.yr[dat.yr$site==SITE,]) +
+    ggplot(data=dat.yr[dat.yr$site==SITE & dat.yr$year>=2090,]) +
       # facet_wrap(~site) +
       geom_hline(yintercept=0, size=0.25) +
       geom_boxplot(aes(x=management, y=NEE, fill=scenario)) +
@@ -104,3 +189,4 @@ anova(mod.nee.nr1)
 mod.nee <- lme(NEE ~ management*scenario, random=list(site=~1, year=~1), data=dat.yr)
 # summary(mod.nee)
 anova(mod.nee)
+# -----------------------------------------------------------
