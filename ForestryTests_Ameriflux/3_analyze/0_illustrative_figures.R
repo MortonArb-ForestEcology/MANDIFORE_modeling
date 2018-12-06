@@ -197,9 +197,9 @@ ecol.keep <- c(sample(pft.09a2,length(pft.09a2)/2),
                sample(pft.10a2, length(pft.10a2)/2),
                sample(pft.10a2, length(pft.11a2)/2)
                )
-ecol <- data.frame(treatment="Ecological", c.use[ecol.keep,c("x", "y", "dbh", "pft")])
+ecol <- data.frame(treatment="Ecological", c.use[c.use$dbh<50 | ecol.keep,c("x", "y", "dbh", "pft")])
 
-dat.mgmt <- rbind(pass, pres, produ, ecol)
+dat.mgmt <- rbind(pass, pres, ecol, produ)
 
 png(file.path(path.figs, "Treatment_Illustration.png"), height=7, width=7, units="in", res=220)
 ggplot(data=dat.mgmt) +
