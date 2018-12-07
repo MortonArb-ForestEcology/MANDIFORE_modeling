@@ -24,7 +24,7 @@ nbcd2
 plot(nbcd2)
 
 nbcd.df <- data.frame(sp::coordinates(nbcd2))
-nbcd.df$Biomass <- as.data.frame(nbcd2)[,1]/10/10/2 # divide by 10 for file correction; divide by 10 for Mg/HA to KgC/m2 divide by 2 for BM to C
+nbcd.df$Biomass <- as.data.frame(nbcd2)[,1]/10/2 # divide by 10 for file correction; divide by 10 for Mg/HA to KgC/m2 divide by 2 for BM to C
 summary(nbcd.df)
 dim(nbcd.df)
 # -------------
