@@ -6,7 +6,7 @@
 
 library(rgdal); library(ggplot2); library(maptools); library(raster)
 
-path.figs <- "/Volumes/GoogleDrive/My Drive/Conferences_Presentations/AGU 2018/"
+path.figs <- "/Volumes/GoogleDrive/My Drive/Conferences_Presentations/AGU 2018/figures"
 
 # -----------------------------------------------------------
 # 1. Map of Sites -- Ecoregions (w/ forest cover?)
@@ -106,7 +106,7 @@ png(file.path(path.figs, "SiteLocations.png"), height=15, width=22, units="in", 
 ggplot(data=eco.df.L1b[!eco.df.L1b$NA_L1NAME %in% eco.nf,]) +
   coord_equal() + 
   geom_point(data=nbcd.df[nbcd.df$Biomass>0,],aes(x=x, y=y, color=Biomass), shape=15, size=1) +
-  scale_color_gradient2(low="white", high="black", mid="gray30", midpoint=(max(nbcd.df$Biomass)-min(nbcd.df$Biomass))/2) +
+  scale_color_gradient2(name=expression(bold(paste("Biomass (kg m"^"-2",")"))), low="white", high="black", mid="gray30", midpoint=(max(nbcd.df$Biomass)-min(nbcd.df$Biomass))/2) +
   geom_polygon(aes(x=long, y=lat, group=group, fill=NA_L1NAME), alpha=0.5) +
   scale_fill_brewer(palette = "Set3", name="Ecoregion") + 
   geom_point(data=nacp[nacp$lat<48,], aes(x=lon.1, y=lat.1, shape="Future"), size=5, stroke=1.5) +
