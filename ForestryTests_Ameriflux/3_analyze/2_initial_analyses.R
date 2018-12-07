@@ -94,10 +94,12 @@ png(file.path(path.figs, "MetDrivers_smooth05.png"), height=7.5, width=6, units=
 ggplot(data=clim.region[,]) +
   facet_grid(ind~., scales="free_y") +
   # facet_grid(ind ~ site, scales="free_y") +
+  annotate("rect", xmin=2090, xmax=2100, ymin=-Inf, ymax=Inf, alpha=0.5) +
   geom_ribbon(aes(x=year, ymin=diff.lo.05, ymax=diff.hi.05, fill=scenario), alpha=0.5) +
   geom_line(aes(x=year, y=raw.05, color=scenario), size=1.5) +
-  scale_fill_manual(name="Scenario",values=c("#0072B2", "#E69F00")) +
-  scale_color_manual(name="Scenario",values=c("#0072B2", "#E69F00")) +
+  geom_vline(xintercept=2090, linetype="dashed", size=2) +
+  scale_fill_manual(name="Scenario",values=c("#0072B2", "#E69F00"), labels=c("rcp45\n(low)", "rcp85\n(high)")) +
+  scale_color_manual(name="Scenario",values=c("#0072B2", "#E69F00"), labels=c("rcp45\n(low)", "rcp85\n(high)")) +
   scale_x_continuous(name="Year", expand=c(0,0)) +
   theme_bw() +
   theme(legend.position="top",
@@ -149,7 +151,7 @@ for(SITE in unique(dat.yr$site)){
       scale_fill_manual(name="Scenario",values=c("#0072B2", "#E69F00")) +
       scale_x_discrete(labels=c("Pass.", "Pres.", "Ecol.", "Prod.")) +
       # expression(bold(paste("Precipitation (mm yr"^"-1", ")")))
-      scale_y_continuous(name=expression(bold(paste("NEE (kgC m"^"-2", " s"^"-1", ")")))) +
+      scale_y_continuous(name=expression(bold(paste("NEE (kgC m"^"-2", " yr"^"-1", ")")))) +
       guides(fill=F) +
       theme_bw() +
       theme(legend.position=c(0.85,0.85),

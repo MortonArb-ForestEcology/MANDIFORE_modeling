@@ -13,16 +13,18 @@ path.figs <- "/Volumes/GoogleDrive/My Drive/Conferences_Presentations/AGU 2018/"
 # -----------------------------------------------------------
 # -------------
 # Reading in and formatting (aggregating) the NBCD
+# https://daac.ornl.gov/NACP/guides/NBCD_2000.html 
+# NOTE: raw data needs to be divided by 10 even before unit conversion
 # -------------
-nbcd <- raster("~/Dropbox/PalEON_CR/PalEON_MIP_Site/Analyses/Change-and-Stability/raw_data/Benchmarks/NBCD_countrywide_biomass_240m_raster/NBCD_countrywide_biomass_mosaic.tif")
+nbcd <- raster::raster("~/Dropbox/PalEON_CR/PalEON_MIP_Site/Analyses/Change-and-Stability/raw_data/Benchmarks/NBCD_countrywide_biomass_240m_raster/NBCD_countrywide_biomass_mosaic.tif")
 nbcd
 
-nbcd2 <- aggregate(nbcd, fac=40) # This should make it approx 5 km res.
+nbcd2 <-raster::aggregate(nbcd, fac=40, FUN=mean) # This should make it approx 5 km res.
 nbcd2
 plot(nbcd2)
 
-nbcd.df <- data.frame(coordinates(nbcd2))
-nbcd.df$Biomass <- as.data.frame(nbcd2)[,1]
+nbcd.df <- data.frame(sp::coordinates(nbcd2))
+nbcd.df$Biomass <- as.data.frame(nbcd2)[,1]/10/10/2 # divide by 10 for file correction; divide by 10 for Mg/HA to KgC/m2 divide by 2 for BM to C
 summary(nbcd.df)
 dim(nbcd.df)
 # -------------
@@ -201,7 +203,7 @@ ecol <- data.frame(treatment="Ecological", c.use[c.use$dbh<50 | ecol.keep,c("x",
 
 dat.mgmt <- rbind(pass, pres, ecol, produ)
 
-png(file.path(path.figs, "Treatment_Illustration.png"), height=7, width=7, units="in", res=220)
+png(file.path(path.figs, "Treatment_Illustration_Map.png"), height=7, width=7, units="in", res=220)
 ggplot(data=dat.mgmt) +
   coord_equal() +
   facet_wrap(~treatment) +
@@ -213,10 +215,29 @@ ggplot(data=dat.mgmt) +
   theme(panel.background = element_blank(),
         panel.grid = element_blank(),
         strip.text=element_text(size=unit(24, "points"), face="bold"),
-        axis.title = element_blank(),
-        axis.text = element_blank(),
+        # axis.title = element_blank(),
+        # axis.text = element_blank(),
         axis.ticks = element_blank())
 dev.off()
+
+dat.mgmt$BA <- pi*(dat.mgmt$dbh/2)^2
+summary(dat.mgmt)
+ggplot(data=dat.mgmt) +
+  facet_wrap(~treatment) +
+  geom_histogram(aes(x=dbh, fill=as.factor(pft), weight=BA*0.01^2), binwidth=10) +
+  # scale_size_continuous(range=c(3,15)) +
+  scale_fill_brewer(palette = "Dark2") + 
+  scale_x_continuous(name="Diameter") +
+  scale_y_continuous(name=expression(bold(paste("Basal Area (m"^"2",")")))) +
+  guides(fill=F, size=F) +
+  theme_bw() +
+  theme(panel.background = element_blank(),
+        panel.grid = element_blank(),
+        strip.text=element_text(size=unit(24, "points"), face="bold"),
+        # axis.title = element_blank(),
+        # axis.text = element_blank(),
+        axis.ticks = element_blank())
+
 # -----------------------------------------------------------
 
 
