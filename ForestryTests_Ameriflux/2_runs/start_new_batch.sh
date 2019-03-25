@@ -50,6 +50,8 @@ fire_all=($(awk -F ',' 'NR>1 {print $18}' ${site_file}))
 ianth_all=($(awk -F ',' 'NR>1 {print $15}' ${site_file}))
 mgmt_all=($(awk -F ',' 'NR>1 {print $16}' ${site_file}))
 
+co2_all=($(awk -F ',' 'NR>1 {print $19}' ${site_file}))
+
 # Get the list of what grid runs have already finished spinups
 pushd $file_dir
 	file_done=(*)
@@ -73,6 +75,7 @@ scenario=()
 fire=()
 ianth=()
 mgmt=()
+co2=()
 
 for((i=0;i<${#runs_all[@]};i++)); do 
 	RUN=${runs_all[i]}
@@ -94,6 +97,7 @@ for((i=0;i<${#runs_all[@]};i++)); do
 		fire+=("${fire_all[i]}")
 		ianth+=("${ianth_all[i]}")
 		mgmt+=("${mgmt_all[i]}")
+		co2+=("${co2_all[i]}")		
 	fi    
 
 done
@@ -256,8 +260,12 @@ do
 
 			sed -i "s,HISTOPATH,${new_histo},g" adjust_fire.sh # set initial file path to the SAS spin folder
 			sed -i "s,SMFIRE,${fire[FILE]},g" adjust_fire.sh # set initial file path to the SAS spin folder
+	    fi
+	    
+	    # If we're turning of CO2, that requires using a met header that SHOULD use a constant CO2 of 380 ppm
+	    if [[ ${co2[FILE]} == 380 ]]; then
+	    	sed -i "s,NL%ED_MET_DRIVER_DB = .*,NL%ED_MET_DRIVER_DB = '${met_path}/ED_MET_DRIVER_HEADER_staticCO2',g" ED2IN # set the file path
 
-	
 	    fi
 
 	popd	
