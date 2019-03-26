@@ -22,8 +22,8 @@ dir.create(out.base, recursive = T, showWarnings = F) # Create the directory if 
 
 # Get a list of what runs we need to extract
 runs.done <- dir(out.base)
-# runs.extract <- all.runs[!all.runs %in% runs.done]
-runs.extract <- all.runs
+runs.extract <- all.runs[!all.runs %in% runs.done]
+# runs.extract <- all.runs
 
 for(RUNID in runs.extract){
   
