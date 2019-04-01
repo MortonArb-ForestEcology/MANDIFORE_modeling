@@ -1,10 +1,10 @@
 # Doing some end-of-simulation comparisons
 library(ggplot2)
 
-path.figs <- "/Volumes/GoogleDrive/My Drive/Conferences_Presentations/AGU 2018/figures"
+path.figs <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/ForestryTests_Ameriflux/figures.v3/"
 
 # Load the data frame
-dat.all <- read.csv("../2_runs/extracted_output.v3/MANDIFORE_Ameriflux_month_site.csv")
+dat.all <- read.csv("processed_out/MANDIFORE_Ameriflux_month_site.csv")
 summary(dat.all)
 
 # Convert values to per year instead per second
@@ -17,7 +17,7 @@ summary(dat.all)
 # Aggregate to annual values
 vars.met <- c("CO2air", "Tair", "Rainf")
 vars.eco <- c("Fire_flux", "NEE", "NPP", "Albedo", "Runoff", "SoilMoist", "AbvGrndBiom", "LAI", "Density_Tree", "BasalArea_Tree")
-vars.fac <- c("RunID", "site", "management", "GCM", "scenario", "year")
+vars.fac <- c("RunID", "site", "management", "GCM", "scenario", "CO2", "year")
 dat.yr <- aggregate(dat.all[,c(vars.met, vars.eco)], 
                     by=dat.all[,vars.fac],
                     FUN=mean)
@@ -123,15 +123,15 @@ for(SITE in unique(dat.yr$site)){
   png(file.path(path.figs, paste0(SITE, "_AGB_mean", "_2090-2100.png")), height=7.5, width=6, units="in", res=180)
   print(
     ggplot(data=dat.yr[dat.yr$site==SITE & dat.yr$year>=2090,]) +
-      # facet_wrap(~site) +
+      facet_grid(CO2~.) +
       geom_boxplot(aes(x=management, y=AbvGrndBiom, fill=scenario)) +
       scale_fill_manual(name="Scenario",values=c("#0072B2", "#E69F00")) +
       scale_x_discrete(labels=c("Pass.", "Pres.", "Ecol.", "Prod.")) +
       # expression(bold(paste("Precipitation (mm yr"^"-1", ")")))
       scale_y_continuous(name=expression(bold(paste("Aboveground Biomass (kgC m"^"-2", ")")))) +
       theme_bw() +
-      theme(legend.position=c(0.85,0.85),
-            legend.direction="vertical",
+      theme(legend.position="top",
+            # legend.direction="vertical",
             legend.key.size=unit(2.5, "lines"),
             legend.text = element_text(size=rel(1.25)),
             legend.title = element_text(size=rel(1.5), face="bold"),
@@ -145,7 +145,7 @@ for(SITE in unique(dat.yr$site)){
   png(file.path(path.figs, paste0(SITE, "_NEE_mean", "_2090-2100.png")), height=7.5, width=6, units="in", res=180)
   print(
     ggplot(data=dat.yr[dat.yr$site==SITE & dat.yr$year>=2090,]) +
-      # facet_wrap(~site) +
+      facet_grid(CO2~.) +
       geom_hline(yintercept=0, size=0.25) +
       geom_boxplot(aes(x=management, y=NEE, fill=scenario)) +
       scale_fill_manual(name="Scenario",values=c("#0072B2", "#E69F00")) +
@@ -154,8 +154,8 @@ for(SITE in unique(dat.yr$site)){
       scale_y_continuous(name=expression(bold(paste("NEE (kgC m"^"-2", " yr"^"-1", ")")))) +
       guides(fill=F) +
       theme_bw() +
-      theme(legend.position=c(0.85,0.85),
-            legend.direction="horizontal",
+      theme(legend.position="top",
+            # legend.direction="horizontal",
             legend.key.size=unit(2.5, "lines"),
             legend.text = element_text(size=rel(1.25)),
             legend.title = element_text(size=rel(1.5), face="bold"),
@@ -169,26 +169,26 @@ for(SITE in unique(dat.yr$site)){
 }
 
 
-library(lme4)
+ library(lme4)
 library(nlme)
 # mod.agb <- lmer(AbvGrndBiom ~ management*scenario-1 + (1|site), data=dat.yr)
-mod.agb <- lme(AbvGrndBiom ~ management*scenario-1, random=list(site=~1, year=~1), data=dat.yr)
+mod.agb <- lme(AbvGrndBiom ~ management*scenario*CO2-1, random=list(site=~1, year=~1), data=dat.yr)
 summary(mod.agb)
 anova(mod.agb)
 
-mod.agb.sp3 <- lme(AbvGrndBiom ~ management*scenario, random=list(site=~1, year=~1), data=dat.yr[dat.yr$site=="AUSTINCARY",])
+mod.agb.sp3 <- lme(AbvGrndBiom ~ management*scenario*CO2, random=list(site=~1, year=~1), data=dat.yr[dat.yr$site=="AUSTINCARY",])
 summary(mod.agb.sp3)
 anova(mod.agb.sp3)
 
-mod.nee.sp3 <- lme(NEE ~ management*scenario, random=list(site=~1, year=~1), data=dat.yr[dat.yr$site=="AUSTINCARY",])
+mod.nee.sp3 <- lme(NEE ~ management*scenario*CO2, random=list(site=~1, year=~1), data=dat.yr[dat.yr$site=="AUSTINCARY",])
 summary(mod.nee.sp3)
 anova(mod.nee.sp3)
 
-mod.nee.nr1 <- lme(NEE ~ management*scenario, random=list(site=~1, year=~1), data=dat.yr[dat.yr$site=="NIWOTRIDGE",])
+mod.nee.nr1 <- lme(NEE ~ management*scenario*CO2, random=list(site=~1, year=~1), data=dat.yr[dat.yr$site=="NIWOTRIDGE",])
 summary(mod.nee.nr1)
 anova(mod.nee.nr1)
 
-mod.nee <- lme(NEE ~ management*scenario, random=list(site=~1, year=~1), data=dat.yr)
+mod.nee <- lme(NEE ~ management*scenario*CO2, random=list(site=~1, year=~1), data=dat.yr)
 # summary(mod.nee)
 anova(mod.nee)
 # -----------------------------------------------------------

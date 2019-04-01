@@ -4,8 +4,9 @@
 library(ggplot2)
 
 # Setting File paths
-run.table <- read.csv("../0_setup/ExperimentalDesign_Test.csv")
 path.extract <- "../2_runs/extracted_output.v3/"
+run.table <- read.csv("../0_setup/ExperimentalDesign_Test.csv")
+run.table$CO2 <- car::recode(run.table$CO2, "'380'='static'")
 summary(run.table)
 
 # some site metadata
@@ -32,8 +33,11 @@ all.runs <- dir(path.extract) # Get a list of what's been run (at least partiall
 
 dat.mo <- data.frame()
 dat.pft <- data.frame()
-for(RUNID in all.runs){
-  print(paste0("-- Processing ", RUNID))
+pb <- txtProgressBar(min=0, max=length(all.runs), style=3)
+for(SIM in 1:length(all.runs)){
+  setTxtProgressBar(pb, SIM)
+  RUNID=all.runs[SIM]
+  # print(paste0("-- Processing ", RUNID))
   exp.ind <- which(run.table$RunID==RUNID)
   
   # Get a list of the files to pull
@@ -41,9 +45,9 @@ for(RUNID in all.runs){
   frun <- frun[which(substr(frun, nchar(frun)-2, nchar(frun))==".nc")] # Get rid of the .var files
   
   # Loop through to extract what we want
-  pb <- txtProgressBar(min=0, max=length(frun), style=3)
+  # pb <- txtProgressBar(min=0, max=length(frun), style=3)
   for(i in 1:length(frun)){
-    setTxtProgressBar(pb, i)
+    # setTxtProgressBar(pb, i)
     yr.now  <- as.numeric(substr(frun[i], 1, 4))
     
     tmp.mo  <- data.frame(RunID=rep(RUNID, 12), 
@@ -106,17 +110,20 @@ for(RUNID in all.runs){
 summary(dat.mo)
 summary(dat.pft)
 
+dat.mo <- merge(dat.mo, run.table[,c("RunID", "CO2", "SMFIRE")], all.x=T)
+dat.pft <- merge(dat.pft, run.table[,c("RunID", "CO2", "SMFIRE")], all.x=T)
+
 write.csv(dat.mo, "processed_out/MANDIFORE_Ameriflux_month_site.csv", row.names=F)
 write.csv(dat.pft, "processed_out/MANDIFORE_Ameriflux_month_pft.csv", row.names=F)
 
 dat.yr <- aggregate(dat.mo[,c(vars.site, vars.pft)], 
-                    by=dat.mo[,c("site", "management", "GCM", "scenario", "year")],
+                    by=dat.mo[,c("site", "management", "GCM", "scenario", "CO2", "year")],
                     FUN=mean, na.rm=T)
 dat.yr$management <- factor(dat.yr$management, levels=c("passive", "preservation", "ecological", "production"))
 summary(dat.yr)
 
 dat.yr.pft <- aggregate(dat.pft[,c(vars.pft)],
-                        by=dat.pft[,c("site", "management", "GCM", "scenario", "year", "pft")],
+                        by=dat.pft[,c("site", "management", "GCM", "scenario", "CO2", "year", "pft")],
                         FUN=mean, na.rm=T)
 dat.yr.pft$management <- factor(dat.yr.pft$management, levels=c("passive", "preservation", "ecological", "production"))
 dat.yr.pft$pft <- car::recode(dat.yr.pft$pft, "'5'='Grass'; '6'='N. Pine'; '7'='S. Pine'; '8'='Late Conifer'; '9'='Early Hardwood'; '10'='Mid Hardwood'; '11'='Late Hardwood'")
@@ -131,7 +138,7 @@ for(VAR in c(vars.site, vars.pft)){
   print(
     ggplot(data=dat.yr[,]) +
       ggtitle(VAR) +
-      facet_wrap(~site) +
+      facet_grid(CO2~site) +
       geom_line(aes(x=year, y=VAR, linetype=scenario, color=management), size=0.75) +
       scale_color_manual(values=c("black", "blue2", "green4", "darkorange2")) +
       theme_bw()
@@ -139,19 +146,19 @@ for(VAR in c(vars.site, vars.pft)){
 }
 dev.off()
 
-pdf("figures.v3/MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
-for(VAR in c(vars.pft)){
-  # if(VAR %in% c("BasalArea", "DBH", "Density")) next
-  dat.yr.pft$VAR <- dat.yr.pft[,VAR]
-  print(
-    ggplot(data=dat.yr.pft[,]) +
-      ggtitle(VAR) +
-      facet_grid(pft~site) +
-      geom_line(aes(x=year, y=VAR, linetype=scenario, color=management), size=0.75) +
-      scale_color_manual(values=c("black", "blue2", "green4", "darkorange2")) +
-      theme_bw() +
-      theme(legend.position="bottom")
-  )
-}
-dev.off()
+# pdf("figures.v3/MANDIFORE_Output_QuickGraphs_PFT.pdf", height=8, width=10)
+# for(VAR in c(vars.pft)){
+#   # if(VAR %in% c("BasalArea", "DBH", "Density")) next
+#   dat.yr.pft$VAR <- dat.yr.pft[,VAR]
+#   print(
+#     ggplot(data=dat.yr.pft[,]) +
+#       ggtitle(VAR) +
+#       facet_grid(pft~site) +
+#       geom_line(aes(x=year, y=VAR, linetype=scenario, color=management), size=0.75) +
+#       scale_color_manual(values=c("black", "blue2", "green4", "darkorange2")) +
+#       theme_bw() +
+#       theme(legend.position="bottom")
+#   )
+# }
+# dev.off()
 
