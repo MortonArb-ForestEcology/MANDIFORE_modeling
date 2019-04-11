@@ -65,3 +65,5 @@ wrc.depth <- c(1.14, 2.00, 2.00, 2.00, 2.00)
 sum(wrc.clay*wrc.areas)
 sum(wrc.sand*wrc.areas)
 sum(wrc.depth*wrc.areas)
+
+# Morgan Monroe
