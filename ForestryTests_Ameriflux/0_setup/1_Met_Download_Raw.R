@@ -19,7 +19,8 @@ source("pecan_met_conversion/download.GFDL.R")
 # ------------
 # Using the default GCM
 # ------------
-ENS.all <- c("CM3", "ESM2M", "ESM2G")
+# ENS.all <- c("CM3", "ESM2M", "ESM2G")
+ENS.all <- c("CM3")
 # CM3: https://www.gfdl.noaa.gov/coupled-physical-model-cm3/
 
 for(i in 1:nrow(sites)){
