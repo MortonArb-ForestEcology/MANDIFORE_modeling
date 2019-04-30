@@ -67,19 +67,19 @@ for(SITE in 1:nrow(dat.site)){
   # Set up disturbances
   for(i in 1:length(list.disturb)){
     child <- XML::newXMLNode(names(list.disturb)[i], parent=xml.disturb)
-    xmlValue(child) <- paste(list.disturb[[i]])
+    XML::xmlValue(child) <- paste(list.disturb[[i]])
   }
   
   # Set up PFTs
   for(PFT in paste(pft.site)){
     xml.pft <- XML::newXMLNode("pft", parent=xml.site)
     pft.num <- XML::newXMLNode("num", parent=xml.pft)
-    xmlValue(pft.num) <- PFT
+    XML::xmlValue(pft.num) <- PFT
     
     if(length(list.pfts[[PFT]])<1) next
     for(i in 1:length(list.pfts[[PFT]])){
       child <- XML::newXMLNode(names(list.pfts[[PFT]])[i], parent=xml.pft)
-      xmlValue(child) <- paste(list.pfts[[PFT]][[i]])
+      XML::xmlValue(child) <- paste(list.pfts[[PFT]][[i]])
       
     }
   }

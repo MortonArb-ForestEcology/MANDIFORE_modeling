@@ -25,6 +25,8 @@ summary(expdesign)
 sites <- aggregate(expdesign[,c("lat", "lon")], by=list(expdesign$SiteName), mean)
 names(sites)[1] <- "SiteName"
 
+sites <- sites[sites$SiteName %in% c("MORGANMONROE", "UMICHBIOLSTAT", "SYLVANIA"),]
+
 for(SITE in sites$SiteName){
   # met.base="~/Desktop/Research/MANDIFORE_modeling/ForestryTest_US-WCr/ED_MET/"
   if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)

@@ -8,6 +8,7 @@ met.max = 2008
 path.met <- "../met_ed"
 
 sites.all <- dir(path.met)
+sites.all <- sites.all[sites.all %in% c("MORGANMONROE", "UMICHBIOLSTAT", "SYLVANIA"),]
 
 # Set up some vectors of how things will be indexed
 met.vec <- rep(met.min:met.max, length.out=n.spin) # Which met goes with each year
