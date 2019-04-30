@@ -19,11 +19,13 @@
 download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
                           overwrite = FALSE, verbose = FALSE,
                           model = "CM3", scenario = "rcp45", ensemble_member = "r1i1p1",
-                          add.co2 = FALSE, FTP=FALSE, ...) {
+                          add.co2 = FALSE, method="local", local.path=NULL, ...) {
 
   if(is.null(model))           model <- "CM3"
   if(is.null(scenario))        scenario <- "rcp45"
   if(is.null(ensemble_member)) ensemble_member <- "r1i1p1"
+  if(!method %in% c("local", "url", "ftp")) stop(paste0("Invalid Extraction Method.  Options are 'local', 'url', 'ftp'. You entered: "), method)
+  if(method=="local" & is.null(local.path)) stop("Must provide local.path for method='local'")
 
   start_year <- lubridate::year(start_date)
   end_year   <- lubridate::year(end_date)
@@ -48,10 +50,15 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
   lon_GFDL <- lon_floor / 2.5
   lon_GFDL <- floor(lon_GFDL) + 1
 
-  if(FTP) {
+  if(method=="ftp") {
     dap_base <- "/Volumes/NOAA-GFDL/GFDL"
-  } else {
+  } else if(method=="url"){
+    warning("Warning: you have selected 'url' to query the opendap URL.  This is not a stable soluiton")
     dap_base <- "http://nomads.gfdl.noaa.gov:9192/opendap/CMIP5/output1/NOAA-GFDL/GFDL"
+    # dap_base <- "https://nomads.gfdl.noaa.gov/dods-data/CMIP5/output1/NOAA-GFDL/GFDL"
+    # dap_test <- "https://esgdata.gfdl.noaa.gov/thredds/catalog/esgcet/8/cmip5.output1.NOAA-GFDL.GFDL-CM3.rcp85.3hr.atmos.3hr.r1i1p1.v20110601.html?dataset=cmip5.output1.NOAA-GFDL.GFDL-CM3.rcp85.3hr.atmos.3hr.r1i1p1.v20110601.tas_3hr_GFDL-CM3_rcp85_r1i1p1_2006010100-2010123123.nc"
+  } else {
+    dap_base <- paste0(local.path, "/GFDL")
   }
   
 

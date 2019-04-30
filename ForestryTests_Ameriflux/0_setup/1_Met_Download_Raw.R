@@ -1,10 +1,12 @@
 # Download/Extract Met Products
-path.pecan <- "~/Desktop/Research/pecan/"
+# path.pecan <- "~/Desktop/Research/pecan/"
 path.out = "../met_raw"
 
 # Load the experimental design table
 sites <- read.csv("Sites_ExperimentalDesign_Test.csv")
 summary(sites)
+
+sites <- sites[sites$SiteName %in% c("MORGANMONROE", "UMICHBIOLSTAT", "SYLVANIA"),]
 
 # sites <- aggregate(expdesign[,c("lat", "lon")], by=list(expdesign$SiteName), mean)
 # names(sites)[1] <- "SiteName"
@@ -33,14 +35,13 @@ for(i in 1:nrow(sites)){
                   start_date="2006-01-01", end_date="2100-12-31", 
                   lat.in=site.lat, lon.in=site.lon,
                   overwrite = FALSE, verbose = FALSE,
-                  model = ENS, scenario = "rcp45", ensemble_member = "r1i1p1", add.co2=TRUE)
+                  model = ENS, scenario = "rcp45", ensemble_member = "r1i1p1", add.co2=TRUE, method="local", local.path="/Volumes/Celtis/Meteorology/CMIP5/")
     
     download.GFDL(outfolder=file.path(path.out, site.name), 
                   start_date="2006-01-01", end_date="2100-12-31", 
                   lat.in=site.lat, lon.in=site.lon,
                   overwrite = FALSE, verbose = FALSE,
-                  model = ENS, scenario = "rcp85", ensemble_member = "r1i1p1", add.co2=TRUE,
-                  FTP=FALSE)
+                  model = ENS, scenario = "rcp85", ensemble_member = "r1i1p1", add.co2=TRUE, method="local", local.path="/Volumes/Celtis/Meteorology/CMIP5/")
   }
   
 }
