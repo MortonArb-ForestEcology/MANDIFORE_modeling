@@ -9,7 +9,7 @@
 
 
 # ------------------------------
-#
+# 
 # ------------------------------
 dat.gis <- read.csv(file.path(path.ew, "Inventory 2018/Analyses_Rollinson/data_processed", "point_info_GIS.csv"))
 dat.gis$PlotID2 <- dat.gis$PlotID
