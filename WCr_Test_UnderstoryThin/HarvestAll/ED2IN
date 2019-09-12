@@ -306,8 +306,8 @@ $ED_NL
    ! FFILOUT -- Path and prefix for analysis files (all but history/restart).              !
    ! SFILOUT -- Path and prefix for history files.                                         !
    !---------------------------------------------------------------------------------------!
-   NL%FFILOUT = '/mnt/data/crollinson/MANDIFORE_modeling/WCr_Test_UnderstoryThin/HarvestAbove/analy/HarvestAbove'
-   NL%SFILOUT = '/mnt/data/crollinson/MANDIFORE_modeling/WCr_Test_UnderstoryThin/HarvestAbove/histo/HarvestAbove'
+   NL%FFILOUT = '/mnt/data/crollinson/MANDIFORE_modeling/WCr_Test_UnderstoryThin/HarvestAll/analy/HarvestAll'
+   NL%SFILOUT = '/mnt/data/crollinson/MANDIFORE_modeling/WCr_Test_UnderstoryThin/HarvestAll/histo/HarvestAll'
    !---------------------------------------------------------------------------------------!
 
 
@@ -562,7 +562,7 @@ $ED_NL
    !---------------------------------------------------------------------------------------!
    NL%VEG_DATABASE     = '/home/models/ED_inputs/oge2OLD/OGE2_'
    NL%SOIL_DATABASE    = '/home/models/ED_inputs/faoOLD/FAO_'
-   NL%LU_DATABASE      = '/mnt/data/crollinson/MANDIFORE_modeling/WCr_Test_UnderstoryThin/HarvestAbove/US-Wrc_HarvestAbove'
+   NL%LU_DATABASE      = '/mnt/data/crollinson/MANDIFORE_modeling/WCr_Test_UnderstoryThin/HarvestAll/US-Wrc_HarvestAll'
    NL%PLANTATION_FILE  = ''
    NL%THSUMS_DATABASE  = '/home/models/ED_inputs/ed_inputs/'
    NL%ED_MET_DRIVER_DB = '/mnt/data/crollinson/MANDIFORE_modeling/ForestryTest_US-WCr/ED_MET//GFDL_CM3_rcp85_r1i1p1/ED_MET_DRIVER_HEADER'

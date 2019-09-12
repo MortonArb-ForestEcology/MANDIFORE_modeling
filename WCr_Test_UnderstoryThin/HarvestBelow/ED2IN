@@ -386,7 +386,7 @@ $ED_NL
    !              path+prefix will be used, as the history for every grid must have come   !
    !              from the same simulation.                                                !
    !---------------------------------------------------------------------------------------!
-   NL%SFILIN   = '/mnt/data/crollinson/MANDIFORE_modeling/ForestryTests_Ameriflux/init_files/US-WCr.Inv.lat45.5lon-90.5'
+   NL%SFILIN   = '/mnt/data/crollinson/MANDIFORE_modeling/WCr_Test_UnderstoryThin/US-WCr.Inv.lat45.5lon-90.5'
    !---------------------------------------------------------------------------------------!
 
 
