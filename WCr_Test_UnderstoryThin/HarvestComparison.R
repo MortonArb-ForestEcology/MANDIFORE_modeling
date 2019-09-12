@@ -2,7 +2,7 @@
 library(ggplot2)
 
 dat.harvest <- data.frame()
-for(HARV in c("Above", "Below")){
+for(HARV in c("Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly")){
   files.over <- dir(paste0("Harvest",HARV,"/analy/"), "-Y-")
   # files.over
   
@@ -32,10 +32,10 @@ for(HARV in c("Above", "Below")){
     df.co <- df.co[df.co$PFT!=5 & df.co$DBH>5,] # Ignore grasses and things <5 cm DBH
     summary(df.co)
     
-    df.co <- aggregate(df.co[,c("dens.wt")],
-                        by=df.co[,c("PFT", "DBH.rnd")],
-                        FUN=sum)
-    names(df.co)[3] <- "dens.wt"
+    # df.co <- aggregate(df.co[,c("dens.wt")],
+    #                     by=df.co[,c("PFT", "DBH.rnd")],
+    #                     FUN=sum)
+    # names(df.co)[3] <- "dens.wt"
     df.co$year <- yr.now
     df.co$Harvest = HARV
     
@@ -45,8 +45,24 @@ for(HARV in c("Above", "Below")){
 dat.harvest$Harvest <- as.factor(dat.harvest$Harvest)
 summary(dat.harvest)
 
-ggplot(data=dat.harvest[dat.harvest$year %in% c(2006:2009, 2017:2020),]) +
-  facet_grid(Harvest ~ year) +
+dat.patches <- aggregate(dat.harvest[,c("patch.area")],
+                         by=dat.harvest[,c("Harvest", "year", "patchID")],
+                         FUN=mean)
+dat.cohorts <- aggregate(dat.harvest[,c("Density", "dens.wt")],
+                         by=dat.harvest[,c("Harvest", "year", "PFT", "DBH.rnd")],
+                         FUN=sum)
+
+summary(dat.patches)
+ggplot(data=dat.patches[,]) +
+  facet_wrap(~Harvest) +
+  geom_line(aes(x=year, y=x, color=as.factor(patchID))) +
+  # geom_vline(xintercept=30, linetype="dashed") +
+  scale_y_continuous(name="density", expand=c(0,0), limits=c(0,1)) +
+  theme_bw() +
+  theme(legend.position="top")
+
+ggplot(data=dat.harvest[dat.cohorts$year==2006,]) +
+  facet_grid(Harvest ~ patchID) +
   geom_histogram(aes(x=DBH.rnd, fill=PFT, weight=dens.wt),binwidth=2) +
   geom_vline(xintercept=30, linetype="dashed") +
   scale_y_continuous(name="density", expand=c(0,0)) +
