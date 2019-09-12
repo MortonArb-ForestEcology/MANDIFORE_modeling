@@ -4,7 +4,7 @@ library(ggplot2)
 dat.cohort.all <- data.frame()
 dat.patch.all <- data.frame()
 # dat.site.all <- data.frame()
-for(HARV in c("None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly")){
+for(HARV in c("None2", "None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly")){
   files.over <- dir(paste0("Harvest",HARV,"/analy/"), "-Y-")
   # files.over
   
@@ -67,8 +67,8 @@ for(HARV in c("None", "All", "Above", "Above_MaplesOnly", "Below", "Below_Maples
     
   } # end file loop
 }# End harvest scheme
-dat.cohort.all$Harvest <- factor(dat.cohort.all$Harvest, levels=c("None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly"))
-dat.patch.all$Harvest <- factor(dat.patch.all$Harvest, levels=c("None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly"))
+dat.cohort.all$Harvest <- factor(dat.cohort.all$Harvest, levels=c("None2", "None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly"))
+dat.patch.all$Harvest <- factor(dat.patch.all$Harvest, levels=c("None2", "None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly"))
 # dat.site.all$Harvest <- factor(dat.site.all$Harvest, levels=c("None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly"))
 summary(dat.cohort.all)
 summary(dat.patch.all)
@@ -95,7 +95,7 @@ ggplot(data=dat.patch.all) +
 
 ggplot(data=dat.patch.all) +
   facet_wrap(~Harvest) +
-  geom_histogram(aes(x=year, weight=patch.area, fill=as.factor(round(patch.age,-1))), binwidth=1)
+  geom_histogram(aes(x=year, weight=patch.area, fill=as.factor(round(patch.age*2,-1)/2)), binwidth=1)
 
 
 ggplot(data=dat.patch.all) +
@@ -152,6 +152,7 @@ for(YR in min(dat.cohorts$year):max(dat.cohorts$year)){
       facet_wrap(~Harvest, ncol=2) +
       geom_histogram(aes(x=DBH.rnd, fill=PFT, weight=AGB.wt),binwidth=2) +
       geom_vline(xintercept=30, linetype="dashed") +
+      scale_x_continuous(name="DBH", limits=c(1, max(dat.cohorts$DBH.rnd[dat.cohorts$PFT!=5]))) +
       scale_y_continuous(name="density", expand=c(0,0), limits=range(0,15)) +
       theme_bw() +
       theme(legend.position="top")
@@ -170,6 +171,7 @@ for(YR in min(dat.cohorts$year):max(dat.cohorts$year)){
       geom_histogram(aes(x=DBH.rnd, fill=PFT, weight=dens.wt),binwidth=2) +
       geom_vline(xintercept=30, linetype="dashed") +
       scale_y_continuous(name="density", expand=c(0,0), limits=range(0,0.1)) +
+      scale_x_continuous(name="DBH", limits=c(1, max(dat.cohorts$DBH.rnd[dat.cohorts$PFT!=5]))) +
       theme_bw() +
       theme(legend.position="top")
   )  

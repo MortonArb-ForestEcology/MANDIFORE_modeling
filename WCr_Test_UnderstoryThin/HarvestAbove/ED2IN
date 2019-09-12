@@ -1368,10 +1368,10 @@ $ED_NL
    !                   a site to be created (ignored if IED_INIT_MODE is set to 3).        !
    !---------------------------------------------------------------------------------------!
    NL%MAXSITE        =     1
-   NL%MAXPATCH       =     6
-   NL%MAXCOHORT      =    20
-   NL%MIN_SITE_AREA  = 0.005
-   NL%MIN_PATCH_AREA = 0.005
+   NL%MAXPATCH       =    20
+   NL%MAXCOHORT      =    50
+   NL%MIN_SITE_AREA  = 0.01
+   NL%MIN_PATCH_AREA = 0.01
    !---------------------------------------------------------------------------------------!
 
 
