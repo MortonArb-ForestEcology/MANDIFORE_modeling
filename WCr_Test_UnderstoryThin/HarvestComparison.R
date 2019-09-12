@@ -94,6 +94,11 @@ ggplot(data=dat.patch.all) +
   geom_line(aes(x=year, y=patch.age, color=as.factor(patchID)))
 
 ggplot(data=dat.patch.all) +
+  facet_wrap(~Harvest) +
+  geom_histogram(aes(x=year, weight=patch.area, fill=as.factor(round(patch.age,-1))), binwidth=1)
+
+
+ggplot(data=dat.patch.all) +
   facet_wrap(~year) +
   geom_histogram(aes(x=patch.age, weight=patch.area, fill=as.factor(Harvest)))
 
