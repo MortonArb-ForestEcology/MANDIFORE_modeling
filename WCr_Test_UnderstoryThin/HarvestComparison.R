@@ -67,8 +67,8 @@ for(HARV in c("None2", "None", "All", "Above", "Above_MaplesOnly", "Below", "Bel
     
   } # end file loop
 }# End harvest scheme
-dat.cohort.all$Harvest <- factor(dat.cohort.all$Harvest, levels=c("None2", "None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly"))
-dat.patch.all$Harvest <- factor(dat.patch.all$Harvest, levels=c("None2", "None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly"))
+dat.cohort.all$Harvest <- factor(dat.cohort.all$Harvest, levels=c("None2", "None", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly", "All"))
+dat.patch.all$Harvest <- factor(dat.patch.all$Harvest, levels=c("None2", "None", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly", "All"))
 # dat.site.all$Harvest <- factor(dat.site.all$Harvest, levels=c("None", "All", "Above", "Above_MaplesOnly", "Below", "Below_MaplesOnly"))
 summary(dat.cohort.all)
 summary(dat.patch.all)
@@ -94,8 +94,9 @@ ggplot(data=dat.patch.all) +
   geom_line(aes(x=year, y=patch.age, color=as.factor(patchID)))
 
 ggplot(data=dat.patch.all) +
-  facet_wrap(~Harvest) +
-  geom_histogram(aes(x=year, weight=patch.area, fill=as.factor(round(patch.age*2,-1)/2)), binwidth=1)
+  facet_wrap(~Harvest, ncol=2) +
+  geom_histogram(aes(x=year, weight=patch.area, fill=as.factor(round(patch.age*2,-1)/2)), binwidth=1) +
+  scale_fill_discrete(name="Age")
 
 
 ggplot(data=dat.patch.all) +
@@ -110,7 +111,7 @@ dat.cohorts <- aggregate(dat.cohort.all[,c("Density", "dens.wt", "AGB.wt")],
                          FUN=sum)
 summary(dat.cohorts)
 
-summary(dat.patches)
+# summary(dat.patches)
 
 ggplot(data=dat.patch.all[,]) +
   facet_wrap(~Harvest) +
@@ -145,7 +146,7 @@ ggplot(data=dat.cohorts[dat.cohorts$PFT!=5 & dat.cohorts$DBH.rnd>=10 & dat.cohor
 
 pdf("HarvestDifferences_AGB.pdf")
 for(YR in min(dat.cohorts$year):max(dat.cohorts$year)){
-  HARV <- ifelse(YR<=2011, "Harvest", "Recovery")
+  HARV <- ifelse(YR<=2011 & YR>2006, "Harvest", "Recovery")
   print(
     ggplot(data=dat.cohorts[dat.cohorts$PFT!=5 & dat.cohorts$DBH.rnd>=1 & dat.cohorts$year==YR,]) +
       ggtitle(paste0(YR, " - ", HARV )) +
@@ -153,7 +154,7 @@ for(YR in min(dat.cohorts$year):max(dat.cohorts$year)){
       geom_histogram(aes(x=DBH.rnd, fill=PFT, weight=AGB.wt),binwidth=2) +
       geom_vline(xintercept=30, linetype="dashed") +
       scale_x_continuous(name="DBH", limits=c(1, max(dat.cohorts$DBH.rnd[dat.cohorts$PFT!=5]))) +
-      scale_y_continuous(name="density", expand=c(0,0), limits=range(0,15)) +
+      scale_y_continuous(name="AGB (kg/m2)", expand=c(0,0), limits=range(0,5)) +
       theme_bw() +
       theme(legend.position="top")
   )  
@@ -163,7 +164,7 @@ dev.off()
 
 pdf("HarvestDifferences_Density.pdf")
 for(YR in min(dat.cohorts$year):max(dat.cohorts$year)){
-  HARV <- ifelse(YR<=2011, "Harvest", "Recovery")
+  HARV <- ifelse(YR<=2011 & YR>2006, "Harvest", "Recovery")
   print(
     ggplot(data=dat.cohorts[dat.cohorts$PFT!=5 & dat.cohorts$DBH.rnd>=1 & dat.cohorts$year==YR,]) +
       ggtitle(paste0(YR, " - ", HARV )) +
