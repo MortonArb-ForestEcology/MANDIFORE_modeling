@@ -1,0 +1,36 @@
+# Download/Extract Met Products
+# Note: GFDL needs to be downloaded & stored locally for extraction.  go here: to find/queue up products: https://esgf-node.llnl.gov/search/cmip5/ 
+# path.pecan <- "~/Desktop/Research/pecan/"
+path.out = "../met_raw"
+
+# -------------------------------
+# Future met from GFDL
+# -------------------------------
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "download.GFDL.R"))
+source("pecan_met_conversion/download.GFDL.R")
+
+# ------------
+# Using the default GCM
+# ------------
+ENS.all <- c("CM3", "ESM2M", "ESM2G")
+# ENS.all <- c("CM3")
+# CM3: https://www.gfdl.noaa.gov/coupled-physical-model-cm3/
+
+site.name= "MortonArb"
+site.lat = 41.82
+site.lon = -88.04
+
+for(ENS in ENS.all[1]){
+  download.GFDL(outfolder=file.path(path.out, site.name), 
+                start_date="2006-01-01", end_date="2100-12-31", 
+                lat.in=site.lat, lon.in=site.lon,
+                overwrite = FALSE, verbose = FALSE,
+                model = ENS, scenario = "rcp45", ensemble_member = "r1i1p1", add.co2=TRUE, method="local", local.path="/Volumes/Celtis/Meteorology/CMIP5/")
+  
+  download.GFDL(outfolder=file.path(path.out, site.name), 
+                start_date="2006-01-01", end_date="2100-12-31", 
+                lat.in=site.lat, lon.in=site.lon,
+                overwrite = FALSE, verbose = FALSE,
+                model = ENS, scenario = "rcp85", ensemble_member = "r1i1p1", add.co2=TRUE, method="local", local.path="/Volumes/Celtis/Meteorology/CMIP5/")
+}
+# -------------------------------
