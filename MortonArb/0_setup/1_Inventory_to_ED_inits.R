@@ -6,38 +6,23 @@
 #  - Other
 # 
 # Will also get Web Soil Survey data to capture any underlying differences in soil conditions factor in.
-
+#
+# First run: just lump everythign together
 
 # ------------------------------
 # 
-# ------------------------------
-dat.gis <- read.csv(file.path(path.ew, "Inventory 2018/Analyses_Rollinson/data_processed", "point_info_GIS.csv"))
-dat.gis$PlotID2 <- dat.gis$PlotID
-dat.gis$PlotID <- as.factor(gsub("-", "", dat.gis$PlotID))
-dat.gis$MgmtUnit <- ifelse(is.na(dat.gis$wooded), "Non-Wooded", 
-                           ifelse(dat.gis$wooded=="Hidden Lake", "Hidden Lake", 
-                                  ifelse(dat.gis$unit=="South 40 South", "Annual Burn", 
-                                         ifelse(!is.na(dat.gis$unit), "Mixed Management", "No Management"))))
-dat.gis$MgmtUnit[is.na(dat.gis$MgmtUnit)] <- "No Management"
-dat.gis$MgmtUnit <- as.factor(dat.gis$MgmtUnit)
-summary(dat.gis)
-# ------------------------------
 
 # ------------------------------
-# Select soils data from Meghan Midgley from the Chicago Wilderness burn soil
+# Getting texture & depth from web soil survey
 # ------------------------------
-dat.soil <- read.csv("CWBurns_Midgley_soil_data_master_copy.csv")
-dat.soil$Depth <- car::recode(dat.soils$Depth, "'15-May'='5-15'")
-# dat.soil <- dat.soil[dat.soil$site.gen=="morton",]
-dat.soil[dat.soil$site.gen=="morton", c("Treatment", "perc.clay", "perc.sand", "n.org", "n.min", "n.inorg", "DOC", "c.mineralization")]
+area.weight <- c(1.8, 2.0, 3.8, 14.7, 1.6, 0.0, 14.3, 19.8, 32.6, 2.0, 0.3, 0.2, 0.5, 0.0, 6.4, 0.0)/100
+depth <- c(33, 25, 20, 92, 89, 72, 99, 94, 79, 98, 73, 200, 200, 15, 200, 200)/100
+sand <- c(14.1, 14.2, 8.4, 9.1, 9.0, 62.5, 12.3, 12.4, 12.8, 12.6, 13.2, 44.1, 39.8, 36.6, 11.0, 0)/100
+clay <- c(31.7, 33.4, 36.2, 31.7, 32.4, 14.4, 32.7, 34.0, 32.9, 32.0, 33.4, 18.4, 19.6, 28.1, 28.9, 0)/100
 
-summary(dat.soil[dat.soil$Treatment=="Control", c("Treatment", "perc.clay", "perc.sand", "n.org", "n.min", "n.inorg", "DOC", "c.mineralization")])
-summary(dat.soil[, c("Treatment", "perc.clay", "perc.sand", "n.org", "n.min", "n.inorg", "DOC", "c.mineralization")])
-
-lm.norg <- nlme::lme(n.org ~ Treatment, random=list(site.gen=~1, PlotID=~1), data=dat.soil, na.action=na.omit)
-dat.soil$pred.n.org <- predict(lm.norg, newdata=dat.soil)
-summary(lm.norg)
-# summary(dat.soil)
+depth.weight <- sum(depth*area.weight)
+sand.weight <- sum(sand*area.weight)
+clay.weight <- sum(clay*area.weight)
 # ------------------------------
 
 # ------------------------------
@@ -92,17 +77,77 @@ dat.plot <- aggregate(tree.2018[,c("Density")],
                       FUN=sum)
 summary(dat.plot)
 
-# Try cluster to see how plots shake out with composition/structure
-set.seed(09111016)
-plot.cluster <- kmeans(dat.plot[,c("DBH.round", "PFT", "x")], centers=10) 
-summary(plot.cluster$cluster)
-
-dat.plot$group <- as.factor(plot.cluster$cluster)
-summary(dat.plot)
 
 # Add in our management units
-dat.plot$
+dat.gis <- read.csv(file.path(path.ew, "Inventory 2018/Analyses_Rollinson/data_processed", "point_info_GIS.csv"))
+dat.gis$PlotID2 <- dat.gis$PlotID
+dat.gis$PlotID <- as.factor(gsub("-", "", dat.gis$PlotID))
+dat.gis$MgmtUnit <- ifelse(is.na(dat.gis$wooded), "Non-Wooded", 
+                           ifelse(dat.gis$wooded=="Hidden Lake", "Hidden Lake", 
+                                  ifelse(dat.gis$unit=="South 40 South", "Annual Burn", 
+                                         ifelse(!is.na(dat.gis$unit), "Mixed Management", "No Management"))))
+dat.gis$MgmtUnit[is.na(dat.gis$MgmtUnit)] <- "No Management"
+dat.gis$MgmtUnit <- as.factor(dat.gis$MgmtUnit)
+summary(dat.gis)
+
+dat.plot <- dat.plot[dat.plot$PlotID %in% dat.gis[!is.na(dat.gis$wooded) & dat.gis$wooded=="East Woods","PlotID"],]
+names(dat.plot) <- c("patch", "pft", "dbh", "n")
+dat.plot$cohort <- 1:nrow(dat.plot)
+dat.plot$time <- 2018
+dat.plot[,c("hite", "bdead", "balive", "lai")] <- 0
+summary(dat.plot)
+
+css <- dat.plot[, c("time", "patch", "cohort", "dbh", "hite", "pft", "n", "bdead", "balive", "lai")]
+css$patch <- as.numeric(css$patch)
+summary(css)
+
+write.table(css, "../init_files/MortonArb_EastWoods_All.css", quote = FALSE, row.names = FALSE)
+
+
+# ------------
+# Creating a pss file to go with the css
+# ------------
+pss <- data.frame(time=2018,
+                  patch=unique(css$patch),
+                  trk=1,
+                  age=2018-1922, # Just going with the age of the arboretum; the woods are actually older, but it doesn't matter
+                  area=1/length(unique(css$patch)),
+                  water=0,
+                  fsc=1, # Pecan Default
+                  stsc=5,# Pecan Default
+                  stsl=5,# Pecan Default
+                  ssc=0.01,# Pecan Default
+                  psc=0, # dummy variable
+                  msn=1,# Pecan Default
+                  fsn=1)# Pecan Default
+# pss <- pss[, c("time", "patch", "trk", "age", "area", "water")]
+summary(pss)
+
+# Some Very rough numbers from Meghan
+# mean bulk density = 0.88 g/cm3
+bd <- 0.88*1e-3 * (100*100) # kg/m3
+SOM <- bd*0.104
+C.tot = bd*0.0516
+C.mic = 1.09e-3*bd
+N.tot = bd*0.0043
+N.mic = 377.46e-6*bd # g microbial N per g soil
+N.min = 13.39e-6*bd
+
+pss$fsn <- N.tot*N.mic/(N.mic+N.min)
+pss$msn <- N.tot*N.min/(N.mic+N.min)
+pss$fsc <- C.mic 
+pss$ssc <- C.tot-C.mic
+pss[,c("stsc", "stsl")] <- SOM*10 # hand-wavy to make more comparable to other numbers
+
+summary(pss)
+write.table(pss, "../init_files/MortonArb_EastWoods_All.pss", quote = FALSE, row.names = FALSE)
+
+# ------------
 # ------------------------------
 
+
+# ------------------------------
+# ------------------------------
+# ------------------------------
 
 
