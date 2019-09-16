@@ -98,7 +98,7 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
     # find start position of currently-wanted year in the 5-year DAP file
     time_offset <- 1 + ((year-1) %% 5) * obs_per_year
 
-    PEcAn.logger::logger.debug(
+    print(
       sprintf(
         "Downloading GFDL year %d (%d of %d)",
         year, i, rows
@@ -111,14 +111,14 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
     )
 
     results$file[i]       <- loc.file
-    results$host[i]       <- PEcAn.remote::fqdn()
+    # results$host[i]       <- PEcAn.remote::fqdn()
     results$startdate[i]  <- paste0(year, "-01-01 00:00:00")
     results$enddate[i]    <- paste0(year, "-12-31 23:59:59")
     results$mimetype[i]   <- "application/x-netcdf"
     results$formatname[i] <- "CF Meteorology"
     
     if (file.exists(loc.file) && !isTRUE(overwrite)) {
-      PEcAn.logger::logger.error("File already exists. Skipping to next year")
+      warning("File already exists. Skipping to next year")
       next
     }
     
@@ -143,7 +143,7 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
 
     ## get data off OpenDAP
     for (j in seq_len(nrow(var))) {
-      PEcAn.logger::logger.debug(
+      print(
         sprintf(
           "Downloading GFDL var %s (%d of %d)",
           var$DAP.name[j], j, nrow(var)
@@ -230,13 +230,13 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
         raw_time <- ncdf4::ncvar_get(dap, "time", start = time_offset, count = obs_per_year)
         converted_time <- udunits2::ud.convert(raw_time, dap$dim$time$units, dim$time$units)
         if(!all(diff(converted_time) == 3 * 60 * 60)){
-          PEcAn.logger::logger.error(
+          warning(
             "Expected timestamps at 3-hour intervals, got",
             paste(range(diff(converted_time)), collapse = "-"),
             "seconds")
         }
         if(!all(abs(dim$time$vals - converted_time) < (3 * 60 * 60))){
-          PEcAn.logger::logger.error(
+          warning(
             "Timestamps in GFDL source file differ from expected by more than 3 hours:",
             "Expected", paste(range(dim$time$vals), collapse = "-"),
             dim$time$units,
