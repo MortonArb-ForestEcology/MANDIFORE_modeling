@@ -32,7 +32,7 @@ mkdir -p $file_dir
 
 # Extract the file names of sites that haven't been started yet
 runs_all=($(awk -F ',' 'NR>1 {print $1}' ${site_file}))
-#sites_all=($(awk -F ',' 'NR>1 {print $2}' ${site_file}))
+sites_all=($(awk -F ',' 'NR>1 {print $2}' ${site_file}))
 #lat_all=($(awk -F ',' 'NR>1 {print $4}' ${site_file}))
 #lon_all=($(awk -F ',' 'NR>1 {print $5}' ${site_file}))
 
@@ -194,7 +194,7 @@ do
 		mkdir -p histo analy
 		ln -s $ed_exec
 		cp ${setup_dir}/ED2IN_Base_MortonArb ED2IN
-		# cp ${setup_dir}/PFTParams_MortonArb.xml .
+		cp ${setup_dir}/PFTParams_MortonArb.xml .
 		
 		# ED2IN Changes	    
 		#sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'MANDIFORE TEST'/" ED2IN # change the experiment name
