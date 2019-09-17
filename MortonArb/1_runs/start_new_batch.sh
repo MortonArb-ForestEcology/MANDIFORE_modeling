@@ -3,7 +3,7 @@
 # Christy Rollinson, crollinson@mortonarb.org
 
 # Number of sites you want to run
-n=8 # 8 is a full site right now
+n=4 # 4 = 1 site x 1 management x 1 GCM x 2 rcps x 2 CO2 scenarios
 
 # Define constants & file paths for the scripts
 file_base=/mnt/data/crollinson/MANDIFORE_modeling/MortonArb # whatever you want the base output file path to be
@@ -62,7 +62,7 @@ file_done=(${file_done[@]/"*"/})
 # - This is slower than other options, but makes sure we still do our controls first
 # - DO NOT imitate this with a large array
 runs=()
-#sites=()
+sites=()
 #lat=()
 #lon=()
 clay=()
@@ -84,7 +84,7 @@ for((i=0;i<${#runs_all[@]};i++)); do
 	# If the length of TEST is still the same, we haven't done it yet
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
 		runs+=("$RUN")
-		#sites+=("${sites_all[i]}")
+		sites+=("${sites_all[i]}")
 		#lat+=("${lat_all[i]}")
 		#lon+=("${lon_all[i]}")
 		clay+=("${clay_all[i]}")
@@ -113,7 +113,7 @@ do
 	RUN=${runs[FILE]}
 	echo $RUN
 
-	#SITE=${sites[FILE]}
+	SITE=${sites[FILE]}
 
 	GCM_now=${GCM[FILE]}
 	GCM_now=${GCM_now/"-"/"_"}
@@ -193,8 +193,8 @@ do
 		# Creating the default file structure and copying over the base files to be modified
 		mkdir -p histo analy
 		ln -s $ed_exec
-		cp ${setup_dir}/ED2IN_Base_ForestryTest ED2IN
-		cp ${setup_dir}/PFTParams_MANDIFORE_${SITE}.xml .
+		cp ${setup_dir}/ED2IN_Base_MortonArb ED2IN
+		# cp ${setup_dir}/PFTParams_MortonArb.xml .
 		
 		# ED2IN Changes	    
 		#sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'MANDIFORE TEST'/" ED2IN # change the experiment name

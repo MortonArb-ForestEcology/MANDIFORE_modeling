@@ -11,6 +11,9 @@
 
 # ------------------------------
 # 
+site.name= "MortonArb"
+site.lat = 41.82
+site.lon = -88.04
 
 # ------------------------------
 # Getting texture & depth from web soil survey
@@ -96,12 +99,20 @@ dat.plot$cohort <- 1:nrow(dat.plot)
 dat.plot$time <- 2018
 dat.plot[,c("hite", "bdead", "balive", "lai")] <- 0
 summary(dat.plot)
+# ------------------------------
+
+# ------------------------------
+# ------------------------------
+fprefix <- paste0("MortonArb_EastWoods_All_lat", trunc(site.lat)+0.5, "lon", trunc(site.lon)-0.5)
+# ------------
+# ------------
 
 css <- dat.plot[, c("time", "patch", "cohort", "dbh", "hite", "pft", "n", "bdead", "balive", "lai")]
 css$patch <- as.numeric(css$patch)
 summary(css)
 
-write.table(css, "../init_files/MortonArb_EastWoods_All.css", quote = FALSE, row.names = FALSE)
+write.table(css, paste0("../init_files/", fprefix,".css"), quote = FALSE, row.names = FALSE)
+# ------------
 
 
 # ------------
@@ -140,7 +151,7 @@ pss$ssc <- C.tot-C.mic
 pss[,c("stsc", "stsl")] <- SOM*10 # hand-wavy to make more comparable to other numbers
 
 summary(pss)
-write.table(pss, "../init_files/MortonArb_EastWoods_All.pss", quote = FALSE, row.names = FALSE)
+write.table(pss, paste0("../init_files/", fprefix,".pss"), quote = FALSE, row.names = FALSE)
 
 # ------------
 # ------------------------------

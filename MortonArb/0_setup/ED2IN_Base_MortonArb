@@ -158,8 +158,8 @@ $ED_NL
    !            soil types                                                                 !
    !---------------------------------------------------------------------------------------!
     NL%N_POI    =    1
-    NL%POI_LAT  =  45.805822 
-    NL%POI_LON  = -90.079722
+    NL%POI_LAT  =  41.82
+    NL%POI_LON  = -88.04
     NL%POI_RES  = 0.125   
    !---------------------------------------------------------------------------------------!
 
@@ -1539,7 +1539,7 @@ $ED_NL
    !               simulation.                                                             !
    ! PHENPATH   -- path and prefix of the prescribed phenology data.                       !
    !---------------------------------------------------------------------------------------!
-   NL%IEDCNFGF   = '/mnt/data/crollinson/MANDIFORE_Modeling/MortonArb/0_setup/PFTParams_MortonArb.xml'
+   NL%IEDCNFGF   = 'PFTParams_MortonArb.xml'
    NL%EVENT_FILE = ''
    !---------------------------------------------------------------------------------------!
 
