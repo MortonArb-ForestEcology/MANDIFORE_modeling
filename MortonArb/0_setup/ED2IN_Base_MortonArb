@@ -32,7 +32,7 @@ $ED_NL
    !---------------------------------------------------------------------------------------!
    NL%IMONTHA  = 06
    NL%IDATEA   = 01
-   NL%IYEARA   = 2006
+   NL%IYEARA   = 2018
    NL%ITIMEA   = 0000
    !---------------------------------------------------------------------------------------!
 
@@ -1178,7 +1178,7 @@ $ED_NL
    !                   the minimum water deficit relative to the total rainfall, over the  !
    !                   past 12 months, to trigger fires.                                   !
    !---------------------------------------------------------------------------------------!
-   NL%INCLUDE_FIRE    = 2
+   NL%INCLUDE_FIRE    = 0
    NL%FIRE_PARAMETER  = 0.5
    NL%SM_FIRE         = 0.05 ! 
    !---------------------------------------------------------------------------------------!
@@ -1192,7 +1192,7 @@ $ED_NL
    !                   1.  use anthropogenic disturbance dataset.                          !
    !                   2.  use anthropogenic disturbance dataset based on disturbed area   !
    !---------------------------------------------------------------------------------------!
-   NL%IANTH_DISTURB   = 0
+   NL%IANTH_DISTURB   = 2
    !---------------------------------------------------------------------------------------!
 
 
@@ -1370,8 +1370,8 @@ $ED_NL
    NL%MAXSITE        =     1
    NL%MAXPATCH       =     6
    NL%MAXCOHORT      =    20
-   NL%MIN_SITE_AREA  = 0.01
-   NL%MIN_PATCH_AREA = 0.01
+   NL%MIN_SITE_AREA  = 0.005
+   NL%MIN_PATCH_AREA = 0.005
    !---------------------------------------------------------------------------------------!
 
 
@@ -1539,7 +1539,7 @@ $ED_NL
    !               simulation.                                                             !
    ! PHENPATH   -- path and prefix of the prescribed phenology data.                       !
    !---------------------------------------------------------------------------------------!
-   NL%IEDCNFGF   = 'PFTParams_MANDIFORE.xml'
+   NL%IEDCNFGF   = '/mnt/data/crollinson/MANDIFORE_Modeling/MortonArb/0_setup/PFTParams_MortonArb.xml'
    NL%EVENT_FILE = ''
    !---------------------------------------------------------------------------------------!
 
