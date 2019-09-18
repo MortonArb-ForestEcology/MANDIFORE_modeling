@@ -25,3 +25,5 @@ ForestryTests_Ameriflux/0_setup/SiteLocations.png
 ForestryTests_Ameriflux/0_setup/Treatment_Illustration.png
 MortonArb/0_setup/CWBurns_Midgley_soil_data_master_copy.csv
 MortonArb/0_setup/EW soil data for ED2 models.xlsx
+MortonArb/1_runs/*/*/ED2IN
+MortonArb/1_runs/*/*/*.xml
