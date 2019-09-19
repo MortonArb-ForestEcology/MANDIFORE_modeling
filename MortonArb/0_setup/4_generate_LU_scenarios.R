@@ -26,7 +26,7 @@ year.end <- 2100
 block.area <- 1e12 # LU area; dunno what this actually does
 
 exp.design <- list()
-exp.design[["none"]] <- list(Harvest.PFTs=c(8, 9, 10),
+exp.design[["none"]] <- list(Harvest.PFTs=c(9, 10, 11),
                              SLOG.DBH = c(200, 200, 200),
                              SLOG.PROB.G = c(0, 0, 0),
                              SLOG.PROB.L = c(0,0,0),
@@ -34,7 +34,7 @@ exp.design[["none"]] <- list(Harvest.PFTs=c(8, 9, 10),
                              FPLT.PROB.G = c(0, 0, 0),
                              FPLT.PROB.L = c(0,0,0),
                              Harvest.yrs = NULL)
-exp.design[["gaps"]] <- list(Harvest.PFTs=c(8, 9, 10),
+exp.design[["gaps"]] <- list(Harvest.PFTs=c(9, 10, 11),
                              SLOG.DBH = c(20, 20, 20),
                              SLOG.PROB.G = c(1, 1, 1),
                              SLOG.PROB.L = c(1, 1, 1),
@@ -43,7 +43,7 @@ exp.design[["gaps"]] <- list(Harvest.PFTs=c(8, 9, 10),
                              FPLT.PROB.L = c(0,0,0),
                              Harvest.yrs = data.frame(year=2020:2024,
                                                       area=0.05))
-exp.design[["under"]] <- list(Harvest.PFTs=c(8, 9, 10),
+exp.design[["under"]] <- list(Harvest.PFTs=c(9, 10, 11),
                               SLOG.DBH = c(20, 20, 20),
                               SLOG.PROB.G = c(0.01, 0.01, 0.01), # 1% collateral damage
                               SLOG.PROB.L = c(0.75, 0.1, 1), # Get rid of all late successional; leave all oaks; assume 10% collateral
@@ -53,7 +53,7 @@ exp.design[["under"]] <- list(Harvest.PFTs=c(8, 9, 10),
                               Harvest.yrs = data.frame(year=2020:2024,
                                                        area=0.20)) # Some area won't get touched b/c 20% of available land
 
-exp.design[["shelter"]] <- list(Harvest.PFTs=c(8, 9, 10),
+exp.design[["shelter"]] <- list(Harvest.PFTs=c(9, 10, 11),
                                 SLOG.DBH = c(20, 20, 20),
                                 SLOG.PROB.G = c(0.70, 0.30, 0.70), # 1% collateral damage
                                 SLOG.PROB.L = c(1, 1, 1), # Get rid of all understory stems
