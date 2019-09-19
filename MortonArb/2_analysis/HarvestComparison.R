@@ -100,8 +100,18 @@ runs.yr2 <- aggregate(runs.all[runs.all$PFT!=5 & runs.all$DBH>45,c("AGB.wt", "BA
 names(runs.yr2)[8:11] <- c("AGB.g45", "BA.g45", "Density.g45", "Stress.g45")
 summary(runs.yr2); dim(runs.yr2)
 
+
+# Getting some regen stats
+runs.yr3 <- aggregate(runs.all[runs.all$PFT!=5 & runs.all$DBH>1 & runs.all$DBH<10,c("AGB.wt", "BA.wt", "dens.wt", "Stress.wt.pft")],
+                      by=runs.all[runs.all$PFT!=5 & runs.all$DBH>1 & runs.all$DBH<10,c("RunID", "GCM", "RCP", "CO2", "Management", "year", "PFT")],
+                      FUN=sum)
+names(runs.yr2)[8:11] <- c("AGB.sap", "BA.sap", "Density.sap", "Stress.sap")
+summary(runs.yr2); dim(runs.yr2)
+
 runs.yr <- merge(runs.yr, runs.yr2, all.x=T)
 runs.yr[is.na(runs.yr$AGB.g45), c("AGB.g45", "BA.g45", "Density.g45")] <- 0
+runs.yr <- merge(runs.yr, runs.yr3, all.x=T)
+runs.yr[is.na(runs.yr$AGB.sap), c("AGB.sap", "BA.sap", "Density.sap")] <- 0
 summary(runs.yr)
 
 runs.yr.tot <- aggregate(runs.all[runs.all$PFT!=5,c("AGB.wt", "BA.wt", "dens.wt")],
@@ -184,6 +194,17 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   ggtitle("Density Tress >45 cm DBH by PFT") +
   theme_bw()
 dev.off()
+
+png(file.path(path.figs, "Explore_Density_by_PFT_Time_SmallTrees.png"), height=6, width=8, units="in", res=120)
+ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
+  facet_grid(RCP ~ PFT) +
+  geom_rect(xmin=2020, xmax=2025, ymin=0, ymax=max(runs.yr$Density.sap), alpha=0.1) +
+  geom_line(aes(x=year, y=Density.sap, color=Management, linetype=CO2))+
+  scale_y_continuous(name="Stem Density (stems/m2)", limits=c(0, max(runs.yr$Density.g45)), expand=c(0,0)) +
+  ggtitle("Density Saplings 1-10 cm DBH by PFT") +
+  theme_bw()
+dev.off()
+
   
 png(file.path(path.figs, "Explore_AGB_PFT10_Time.png"), height=6, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
@@ -242,3 +263,4 @@ ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   geom_line(aes(x=year, y=Density.g45, color=Management, linetype=CO2))
 
 # ------------------------------------
+ 
