@@ -66,6 +66,7 @@ for(RUNID in runs.done){
 
   runs.all <- rbind(runs.all, df.run)
 }
+runs.all$Management <- factor(runs.all$Management, levels=c("None", "Under", "Shelter", "Gap"))
 runs.all$CO2 <- car::recode(runs.all$CO2, "'CO2'='dynamic'; 'statCO2'='static'")
 runs.all$AGB.wt <- runs.all$AGB*runs.all$dens.wt
 runs.all$BA.wt <- runs.all$BA*runs.all$dens.wt
@@ -105,8 +106,8 @@ summary(runs.yr2); dim(runs.yr2)
 runs.yr3 <- aggregate(runs.all[runs.all$PFT!=5 & runs.all$DBH>1 & runs.all$DBH<10,c("AGB.wt", "BA.wt", "dens.wt", "Stress.wt.pft")],
                       by=runs.all[runs.all$PFT!=5 & runs.all$DBH>1 & runs.all$DBH<10,c("RunID", "GCM", "RCP", "CO2", "Management", "year", "PFT")],
                       FUN=sum)
-names(runs.yr2)[8:11] <- c("AGB.sap", "BA.sap", "Density.sap", "Stress.sap")
-summary(runs.yr2); dim(runs.yr2)
+names(runs.yr3)[8:11] <- c("AGB.sap", "BA.sap", "Density.sap", "Stress.sap")
+summary(runs.yr3); dim(runs.yr2)
 
 runs.yr <- merge(runs.yr, runs.yr2, all.x=T)
 runs.yr[is.na(runs.yr$AGB.g45), c("AGB.g45", "BA.g45", "Density.g45")] <- 0
@@ -142,12 +143,34 @@ ggplot(data=runs.yr) +
   ggtitle("Aboveground Biomass by PFT") +
   theme_bw()
 dev.off()
-  
+
+png(file.path(path.figs, "Explore_AGB_by_PFT_Time_v2.png"), height=6, width=8, units="in", res=120)
+ggplot(data=runs.yr) +
+  facet_grid(RCP ~ PFT) +
+  geom_rect(xmin=2020, xmax=2025, ymin=0, ymax=max(runs.yr$AGB.wt), alpha=0.1) +
+  geom_line(aes(x=year, y=AGB.wt, color=Management, linetype=CO2), size=1.5) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(name="Aboveground Biomass (kgC/m2)", limits=c(0,max(runs.yr$AGB.wt)), expand=c(0,0)) +
+  ggtitle("Aboveground Biomass by PFT") +
+  theme_bw()
+dev.off()
+
 png(file.path(path.figs, "Explore_Stress_by_PFT_Time_All.png"), height=6, width=8, units="in", res=120)
 ggplot(data=runs.yr) +
   facet_grid(RCP ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-1, ymax=max(runs.yr$AGB.wt), alpha=0.1) +
   geom_line(aes(x=year, y=Stress.wt.pft, color=PFT, linetype=CO2)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(name="Stress Index", breaks=c(-0.5, 0, 0.5, 1), labels = c("-0.5\n(Extremely Bad)", "0\n(Very Bad)", "0.5\n(Stressed)", "1.0\n(Happy)")) +
+  ggtitle("Average Stress by PFT") +
+  theme_bw() 
+dev.off()
+
+png(file.path(path.figs, "Explore_Stress_by_PFT_Time_All_v2.png"), height=6, width=8, units="in", res=120)
+ggplot(data=runs.yr) +
+  facet_grid(RCP ~ PFT) +
+  geom_rect(xmin=2020, xmax=2025, ymin=-1, ymax=max(runs.yr$AGB.wt), alpha=0.1) +
+  geom_line(aes(x=year, y=Stress.wt.pft, color=Management, linetype=CO2)) +
   scale_x_continuous(expand=c(0,0)) +
   scale_y_continuous(name="Stress Index", breaks=c(-0.5, 0, 0.5, 1), labels = c("-0.5\n(Extremely Bad)", "0\n(Very Bad)", "0.5\n(Stressed)", "1.0\n(Happy)")) +
   ggtitle("Average Stress by PFT") +
@@ -185,6 +208,16 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   theme_bw()
 dev.off()
 
+png(file.path(path.figs, "Explore_BA_by_PFT_Time_v2.png"), height=6, width=8, units="in", res=120)
+ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
+  facet_grid(RCP ~ PFT) +
+  geom_rect(xmin=2020, xmax=2025, ymin=0, ymax=max(runs.yr$BA.wt), alpha=0.1) +
+  geom_line(aes(x=year, y=BA.wt, color=Management, linetype=CO2)) +
+  scale_y_continuous(name="Basal Area (cm2/m2)") +
+  ggtitle("Basal Area by PFT") +
+  theme_bw()
+dev.off()
+
 png(file.path(path.figs, "Explore_Density_by_PFT_Time_BigTrees.png"), height=6, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(RCP ~ Management) +
@@ -195,12 +228,24 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   theme_bw()
 dev.off()
 
+png(file.path(path.figs, "Explore_Density_by_PFT_Time_BigTrees_v2.png"), height=6, width=8, units="in", res=120)
+ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
+  facet_grid(RCP ~ PFT) +
+  geom_rect(xmin=2020, xmax=2025, ymin=0, ymax=max(runs.yr$Density.g45), alpha=0.1) +
+  geom_line(aes(x=year, y=Density.g45, color=Management, linetype=CO2)) +
+  scale_y_continuous(name="Stem Density (stems/m2)", limits=c(0, max(runs.yr$Density.g45)), expand=c(0,0)) +
+  ggtitle("Density Tress >45 cm DBH by PFT") +
+  theme_bw()
+dev.off()
+
+
 png(file.path(path.figs, "Explore_Density_by_PFT_Time_SmallTrees.png"), height=6, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(RCP ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=0, ymax=max(runs.yr$Density.sap), alpha=0.1) +
-  geom_line(aes(x=year, y=Density.sap, color=Management, linetype=CO2))+
-  scale_y_continuous(name="Stem Density (stems/m2)", limits=c(0, max(runs.yr$Density.g45)), expand=c(0,0)) +
+  geom_line(aes(x=year, y=Density.sap,
+                color=Management, linetype=CO2))+
+  scale_y_continuous(name="Stem Density (stems/m2)", limits=c(0, max(runs.yr$Density.sap)), expand=c(0,0)) +
   ggtitle("Density Saplings 1-10 cm DBH by PFT") +
   theme_bw()
 dev.off()
@@ -219,7 +264,7 @@ dev.off()
 png(file.path(path.figs, "Explore_BA_PFT10_Time.png"), height=6, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(CO2 ~ RCP) +
-  geom_rect(xmin=2020, xmax=2025, ymin=0, ymax=1, alpha=0.1) +
+  geom_rect(xmin=2020, xmax=2025, ymin=0, ymax=max(runs.yr$BA.wt)+10, alpha=0.1) +
   geom_line(aes(x=year, y=BA.wt, color=Management, linetype=CO2), size=1.5) +
   scale_y_continuous(name="Basal Area (cm2/m2)") +
   ggtitle("Oak Basal Area (PFT 10)") +
@@ -257,10 +302,15 @@ ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   theme_bw()
 dev.off()
 
+png(file.path(path.figs, "Explore_Stress_PFT10_Time_SmallTrees.png"), height=6, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(CO2 ~ RCP) +
-  geom_rect(xmin=2020, xmax=2025, ymin=0, ymax=max(runs.yr$Density.g45), alpha=0.1) +
-  geom_line(aes(x=year, y=Density.g45, color=Management, linetype=CO2))
+  geom_rect(xmin=2020, xmax=2025, ymin=-1.1, ymax=1.25, alpha=0.1) + 
+  geom_line(aes(x=year, y=Stress.sap, color=Management, linetype=CO2), size=1) +
+  scale_y_continuous(name="Stress Index", breaks=c(-0.1, 0, 0.025, 0.04), labels = c("-0.1\n(Even Worse)", "0\n(Very Bad)", "0.025\n(Not Much Better)", "0.04\n(Nowhere close;\nGood = 1!)"), limits=c(-0.0025,0.045)) +
+  ggtitle("Average Oak Stress 1-10 cm DBH") +
+  theme_bw()
+dev.off()
 
 # ------------------------------------
  
