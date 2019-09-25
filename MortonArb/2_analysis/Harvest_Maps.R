@@ -93,6 +93,13 @@ dat.management <- list(none=tree.2018,
                        under=tree.2018,
                        shelter=tree.2018,
                        gap=tree.2018)
+
+# Checking harvested area 
+0.2 + (1-0.2)*0.2
+exp(0.2)
+
+
+1-(1-0.2)^2
 # --------------
 # 1) "no management scenario
 # --------------
@@ -113,7 +120,7 @@ harv.under <- data.frame(PFT=c(9, 10, 11),
                          DBH=c(20, 20, 20), 
                          PROB.G = c(0.01, 0.01, 0.01),
                          PROB.L = c(0.75, 0.1, 1),
-                         Area.Cum=(1-0.2)^5)
+                         Area.Cum=1-(1-0.2)^5)
 
 dat.management$under$Management <- "Understory"
 
@@ -134,7 +141,7 @@ harv.shelter <- data.frame(PFT=c(9, 10, 11),
                            DBH=c(20, 20, 20), 
                            PROB.G = c(0.70, 0.30, 0.70),
                            PROB.L = c(1.0, 1.0, 1.0),
-                           Area.Cum=(1-0.2)^5)
+                           Area.Cum=1-(1-0.2)^5)
 
 dat.management$shelter$Management <- "Shelterwood"
 
@@ -155,7 +162,7 @@ harv.gap <- data.frame(PFT=c(9, 10, 11),
                        DBH=c(20, 20, 20), 
                        PROB.G = c(1.0, 1.0, 1.0),
                        PROB.L = c(1.0, 1.0, 1.0),
-                       Area.Cum=(1-0.05)^5)
+                       Area.Cum=1-(1-0.05)^5)
 
 dat.management$gap$Management <- "Gaps"
 
@@ -174,9 +181,39 @@ dat.tree <- rbind(dat.management$none, dat.management$under, dat.management$shel
 dat.tree$BasalArea.Before <- (pi*(dat.tree$DBH/2)^2)*dat.tree$Density
 dat.tree$BasalArea.After <- (pi*(dat.tree$DBH/2)^2)*dat.tree$Density.New
 dat.tree$BasalArea.diff <- dat.tree$BasalArea.After-dat.tree$BasalArea.Before
+dat.tree$Density.diff <- dat.tree$Density.New - dat.tree$Density
 dat.tree$Management <- as.factor(dat.tree$Management)
 dat.tree$Management <- factor(dat.tree$Management, levels=c("None", "Understory", "Shelterwood", "Gaps"))
+dat.tree$PFT <- car::recode(dat.tree$PFT, "'9'='Early Succ.'; '10'='Mid. Succ.'; '11'='Late Succ.'")
+dat.tree$PFT <-factor(dat.tree$PFT, levels=c("Early Succ.", "Mid. Succ.", "Late Succ."))
 summary(dat.tree)
+
+
+
+png(file.path(path.figs, "Harvest_Size_Histograms_PFT.png"), height=6, width=9.5, units="in", res=180)
+ggplot(data=dat.tree) +
+  facet_wrap(~Management) +
+  geom_rect(xmin=0, xmax=Inf, ymin=-Inf, ymax=0, fill="gray80") +
+  geom_histogram(aes(x=DBH, weight=Density.New/length(unique(dat.tree$PlotID))*1e4, fill=PFT), binwidth=10) +
+  geom_histogram(aes(x=DBH, weight=Density.diff/length(unique(dat.tree$PlotID))*1e4, fill=PFT), binwidth=10, alpha=0.70) +
+  # geom_text(x=125, y=-50, label="Harvested", hjust=1, vjust=1, size=rel(2)) +
+  geom_vline(xintercept=20, linetype="dashed", size=0.5) +
+  scale_y_continuous(name="Stems per Hectare") +
+  scale_x_continuous(name="DBH (cm)", expand=c(0,0)) +
+  scale_fill_manual(name="Tree Type", values=c("#1b9e77", "#d95f02", "#7570b3")) +
+  theme(legend.position="top",
+        legend.title = element_text(size=rel(2), face="bold"),
+        legend.text = element_text(size=rel(1.5)),
+        legend.key.size = unit(1.5, "lines"),
+        axis.text = element_text(size=rel(1.5), color="black"),
+        axis.title = element_text(size=rel(2), face="bold"),
+        panel.background = element_rect(fill=NA, color="black"),
+        panel.grid=element_blank(),
+        strip.text = element_text(size=rel(2), face="bold"),
+        strip.background = element_rect(fill=NA),
+        plot.margin = unit(c(2, 2, 2, 2), "lines"))
+dev.off()
+
 
 
 dat.plot <- aggregate(dat.tree[,c("BasalArea.Before", "BasalArea.After", "BasalArea.diff")],
@@ -195,17 +232,38 @@ dat.plot <- merge(dat.plot, dat.tot)
 dat.plot <- merge(dat.plot, dat.gis[,c("PlotID", "x.nad83", "y.nad83", "x.utm16", "y.utm16")], all.x=T)
 summary(dat.plot)
 
-png(file.path(path.figs, "Map_Harvest_by_PFT.png"), height=8, width=10, units="in", res=180)
+png(file.path(path.figs, "Harvest_Map_by_PFT.png"), height=8, width=10, units="in", res=180)
 ggplot(data=dat.plot) +
   coord_equal() +
   facet_grid(PFT ~ Management) +
-  geom_point(aes(x=x.nad83, y=y.nad83, color=BasalArea.After, size=BasalArea.After)) +
-  scale_color_gradientn(colors = rev(c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"))) +
+  geom_point(aes(x=x.nad83, y=y.nad83, color=cut(BasalArea.After, breaks=c(0,20,40, 60, 80,Inf)), size=cut(BasalArea.After, breaks=c(0,20,40, 60, 80,Inf)))) +
+  scale_color_manual(name="Basal Area", values = rev(c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"))) +
+  scale_size_manual(name="Basal Area", values=c(1,1.5,2,2.5,3)*1.5) +
   theme_bw() +
   theme(axis.text  = element_blank(),
         axis.title = element_blank(),
-        axis.ticks = element_blank())
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_rect(fill="gray75"))
 dev.off()
+
+
+png(file.path(path.figs, "Harvest_Map_Loss_by_PFT.png"), height=8, width=10, units="in", res=180)
+ggplot(data=dat.plot) +
+  coord_equal() +
+  facet_grid(PFT ~ Management) +
+  ggtitle("Basal Area Lost") +
+  geom_point(aes(x=x.nad83, y=y.nad83, color=cut(BasalArea.diff, breaks=c(0, -.001, -5, -10, -15, -20, -25)), size=cut(BasalArea.diff, breaks=c(0,-.001,  -5, -10, -15, -20, -25)))) +
+  scale_color_manual(name="Basal Area\nLost", values = c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6", "black")) +
+  scale_size_manual(name="Basal Area\nLost", values=rev(c(1,1,1.5,2,2.5,3)*1.5)) +
+  theme_bw() +
+  theme(axis.text  = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_rect(fill="gray75"))
+dev.off()
+
 # ------------------------------
 
 

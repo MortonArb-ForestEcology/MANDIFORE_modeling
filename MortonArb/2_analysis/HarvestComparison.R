@@ -1,6 +1,7 @@
 # Comparing size distributions between understory and overstory thin attempts
 library(ggplot2)
 
+path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
 
 dat.base <- "../1_runs/MortonArb_ed_runs.v1/"
 runs.done <- dir(dat.base)
@@ -11,8 +12,15 @@ for(RUNID in runs.done){
   
   f.yr <- dir(file.path(dat.base, RUNID, "analy"), "-Y-")
   
+  print("")
+  print(RUNID)
+  pb <- txtProgressBar(min=0, max=length(f.yr), style=3); pb.ind=0
+  df.run <- data.frame()
   df.run <- data.frame()
   for(FILE in f.yr){
+    pb.ind=pb.ind+1
+    setTxtProgressBar(pb, pb.ind)
+
     f.split <- strsplit(FILE, "-")[[1]]
     yr.now <- as.numeric(f.split[4])
     mo.now <- as.numeric(f.split[5])
@@ -74,6 +82,9 @@ runs.all$Stress.wt.pft <- runs.all$Stress*runs.all$pft.wt
 runs.all$Stress.wt.pft.g45 <- runs.all$Stress*runs.all$pft.wt.g45
 summary(runs.all)
 
+write.csv(runs.all, file.path(path.google, "output", "Summary_PFTs_Cohort_Year.csv"), row.names=F)
+
+
 
 # ------------------------------------
 # Glance at and aggregate the data
@@ -126,12 +137,14 @@ runs.yr <- merge(runs.yr, runs.yr.tot, all.x=T)
 runs.yr$AGB.prop <- runs.yr$AGB.wt/runs.yr$AGB.tot
 runs.yr$BA.prop <- runs.yr$BA.wt/runs.yr$BA.tot
 summary(runs.yr)
+
+write.csv(runs.yr, file.path(path.google, "output", "Summary_PFTs_Site_Year.csv"), row.names=F)
 # ------------------------------------
 
 # ------------------------------------
 # Plot the data
 # ------------------------------------
-path.figs <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/figures/"
+path.figs <- file.path(path.google, "figures")
 
 png(file.path(path.figs, "Explore_AGB_by_PFT_Time.png"), height=6, width=8, units="in", res=120)
 ggplot(data=runs.yr) +
