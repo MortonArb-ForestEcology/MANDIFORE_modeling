@@ -209,6 +209,7 @@ ggplot(data=dat.tree) +
         axis.title = element_text(size=rel(2), face="bold"),
         panel.background = element_rect(fill=NA, color="black"),
         panel.grid=element_blank(),
+        panel.spacing.x = unit(1, "lines"),
         strip.text = element_text(size=rel(2), face="bold"),
         strip.background = element_rect(fill=NA),
         plot.margin = unit(c(2, 2, 2, 2), "lines"))
