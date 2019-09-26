@@ -86,12 +86,14 @@ write.csv(runs.all, file.path(path.google, "output", "Summary_Site_Year.csv"), r
 # ------------------------------------
 runs.all <- read.csv(file.path(path.google, "output", "Summary_Site_Year.csv"))
 runs.all$CO2.type <- car::recode(runs.all$CO2.type, "'dynamic'='Dynamic CO2'; 'static'='Static CO2'")
+runs.all$RCP.name <- car::recode(runs.all$RCP, "'rcp45'='Low Change'; 'rcp85'='High Change'")
+runs.all$RCP.name <- factor(runs.all$RCP.name, levels=c("Low Change", "High Change"))
 summary(runs.all)
 
 plot.temp <- ggplot(data=runs.all[runs.all$Management=="None" & runs.all$year>2018,]) +
   facet_grid(. ~ CO2.type) +
-  geom_line(aes(x=year, y=temp.air, color=RCP), size=2) +   
-  scale_color_manual(values=c("#2c7bb6", "#d7191c", "black")) +
+  geom_line(aes(x=year, y=temp.air, color=RCP.name), size=2) +   
+  scale_color_manual(name="Climate Scenario", values=c("#2c7bb6", "#d7191c", "black")) +
   scale_y_continuous(name="Temp.") +
   scale_x_continuous(name="Year", expand=c(0,0)) +
   # guides(color=F) +
@@ -114,8 +116,8 @@ plot.temp <- ggplot(data=runs.all[runs.all$Management=="None" & runs.all$year>20
 
 plot.precip <- ggplot(data=runs.all[runs.all$Management=="None" & runs.all$year>2018,]) +
   facet_grid(. ~ CO2.type) +
-  geom_line(aes(x=year, y=precip, color=RCP), size=2) +
-  scale_color_manual(values=c("#2c7bb6", "#d7191c", "black")) +
+  geom_line(aes(x=year, y=precip, color=RCP.name), size=2) +
+  scale_color_manual(name="Climate Scenario", values=c("#2c7bb6", "#d7191c", "black")) +
   scale_y_continuous(name="Precip.") +
   scale_x_continuous(name="Year", expand=c(0,0)) +
   guides(color=F) +
@@ -138,8 +140,8 @@ plot.precip <- ggplot(data=runs.all[runs.all$Management=="None" & runs.all$year>
 
 plot.CO2 <-  ggplot(data=runs.all[runs.all$Management=="None" & runs.all$year>2018,]) +
   facet_grid(. ~ CO2.type) +
-  geom_line(aes(x=year, y=CO2.air, color=RCP), size=2) +
-  scale_color_manual(name="Scenario", values=c("#2c7bb6", "#d7191c", "black")) +
+  geom_line(aes(x=year, y=CO2.air, color=RCP.name), size=2) +
+  scale_color_manual(name="Climate Scenario", values=c("#2c7bb6", "#d7191c", "black")) +
   scale_y_continuous(name="CO2") +
   scale_x_continuous(name="Year", expand=c(0,0)) +
   guides(color=F) +
