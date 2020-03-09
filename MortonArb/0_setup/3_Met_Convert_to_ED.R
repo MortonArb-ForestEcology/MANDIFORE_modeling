@@ -39,7 +39,7 @@ for(GCM in GCMs){
                   header_folder = file.path(met.base, SITE, gcm.lab),
                   start_date="2006-01-01", 
                   end_date="2099-12-31",
-                  leap_year = FALSE, overwrite=F)
+                  leap_year = TRUE, overwrite=F)
     
   }
 }
