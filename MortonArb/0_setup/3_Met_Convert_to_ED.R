@@ -27,7 +27,7 @@ GCMs <- dir(file.path(in.base))
 GCMs <- GCMs[!GCMs %in% c("NLDAS", "GFDL_CM3_rcp45_r1i1p1", "GFDL_CM3_rcp85_r1i1p1")]
 
 # NEED TO FIX LEAP YEAR -- IT KEEPS SKIPPING!
-for(GCM in met.avail){
+for(GCM in GCMs){
   rcp.avail <- dir(file.path(in.base, GCM))
   for(RCP in rcp.avail){
     path.in <- file.path(in.base, GCM, RCP, paste0(GCM, ".tdm"))
