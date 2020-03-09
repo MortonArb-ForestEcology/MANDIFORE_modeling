@@ -12,6 +12,6 @@ summary(exp.design)
 
 # Not ready to do plantation yet, so we'll just do rows 1-8
 # exp.design <- exp.design[1:8,]
-exp.design
+tail(exp.design)
 
 write.csv(exp.design, file="MortonArb_CaseStudy_Experiment.csv", na="", row.names=F, quote = F, fileEncoding="utf8")
