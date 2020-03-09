@@ -89,8 +89,8 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     flat <- try(ncdf4::ncvar_get(nc, "latitude"), silent = TRUE)
     if (!is.numeric(flat)) {
       flat <- nc$dim[[1]]$vals[1]
-    } 
-    if (!is.na(flat)) {
+    }
+    if (is.na(lat)) {
       lat <- flat
     } else if (lat != flat) {
       # PEcAn.logger::logger.warn("Latitude does not match that of file", lat, "!=", flat)
@@ -100,7 +100,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     if (!is.numeric(flon)) {
       flat <- nc$dim[[2]]$vals[1]
     }
-    if (!is.na(flon)) {
+    if (is.na(lon)) {
       lon <- flon
     } else if (lon != flon) {
       # PEcAn.logger::logger.warn("Longitude does not match that of file", lon, "!=", flon)
