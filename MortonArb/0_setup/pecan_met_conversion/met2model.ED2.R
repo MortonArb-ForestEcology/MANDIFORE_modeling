@@ -72,11 +72,11 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
   day_secs <- udunits2::ud.convert(1, "day", "seconds")
 
   ## loop over files
-  for (year in start_year:end_year) {
-    ncfile <- file.path(in.path, paste(in.prefix, year, "nc", sep = "."))
+  for (YEAR in start_year:end_year) {
+    ncfile <- file.path(in.path, paste(in.prefix, YEAR, "nc", sep = "."))
     if (!file.exists(ncfile)) {
       # PEcAn.logger::logger.severe(
-        # "Input file ", ncfile, "(year ", year, ") ", "not found."
+        # "Input file ", ncfile, "(YEAR ", YEAR, ") ", "not found."
       # )
     }
 
@@ -89,8 +89,8 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     flat <- try(ncdf4::ncvar_get(nc, "latitude"), silent = TRUE)
     if (!is.numeric(flat)) {
       flat <- nc$dim[[1]]$vals[1]
-    }
-    if (is.na(lat)) {
+    } 
+    if (!is.na(flat)) {
       lat <- flat
     } else if (lat != flat) {
       # PEcAn.logger::logger.warn("Latitude does not match that of file", lat, "!=", flat)
@@ -100,7 +100,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     if (!is.numeric(flon)) {
       flat <- nc$dim[[2]]$vals[1]
     }
-    if (is.na(lon)) {
+    if (!is.na(flon)) {
       lon <- flon
     } else if (lon != flon) {
       # PEcAn.logger::logger.warn("Longitude does not match that of file", lon, "!=", flon)
@@ -140,7 +140,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
 
     ncdf4::nc_close(nc)
 
-    dt <- seconds_in_year(year, leap_year) / length(sec)
+    dt <- seconds_in_year(YEAR, leap_year) / length(sec)
 
     toff <- -as.numeric(lst) * 3600 / dt
 
@@ -165,7 +165,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     doy  <- NULL
     hr   <- NULL
     asec <- sec
-    for (y in seq(year, year + nyr - 1)) {
+    for (y in seq(YEAR, YEAR + nyr - 1)) {
       diy <- days_in_year(y, leap_year)
       ytmp <- rep(y, udunits2::ud.convert(diy / dt, "days", "seconds"))
       dtmp <- rep(seq_len(diy), each = day_secs / dt)
@@ -181,7 +181,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
       rng <- length(doy) - length(ytmp):1 + 1
       if (!all(rng >= 0)) {
         skip <- TRUE
-        # PEcAn.logger::logger.warn(year, " is not a complete year and will not be included")
+        # PEcAn.logger::logger.warn(YEAR, " is not a complete year and will not be included")
         break
       }
       asec[rng] <- asec[rng] - asec[rng[1]]
@@ -192,7 +192,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
       rng <- (length(yr) + 1):length(sec)
       if (!all(rng >= 0)) {
         skip <- TRUE
-        # PEcAn.logger::logger.warn(paste(year, "is not a complete year and will not be included"))
+        # PEcAn.logger::logger.warn(paste(YEAR, "is not a complete year and will not be included"))
         break
       }
       yr[rng]  <- rep(y + 1, length(rng))
@@ -242,7 +242,7 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     ## system(paste('mkdir',froot))
 
     ## write by year and month
-    for (y in year + 1:nyr - 1) {
+    for (y in YEAR + 1:nyr - 1) {
       sely <- which(yr == y)
       for (m in unique(mo[sely])) {
         selm <- sely[which(mo[sely] == m)]
@@ -318,8 +318,8 @@ met2model.ED2 <- function(in.path, in.prefix, outfolder, header_folder, start_da
     ))
 
     # check_ed_metheader(ed_metheader)
-    write_ed_metheader(ed_metheader, met_header_file,
-                       header_line = shQuote("Made_by_PEcAn_met2model.ED2"))
+    # write_ed_metheader(ed_metheader, met_header_file,
+    #                    header_line = shQuote("Made_by_PEcAn_met2model.ED2"))
     write_ed_metheader_statCO2(ed_metheader, paste0(met_header_file, "_staticCO2"),
                                header_line = shQuote("Made_by_PEcAn_met2model.ED2"))
   }  ### end loop over met files
