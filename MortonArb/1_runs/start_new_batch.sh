@@ -19,13 +19,13 @@ lu_dir=${file_base}/lu_files # Where some constant setup files are
 
 # Want to do a 25-year spin that ends in the year we want to starts
 startyear=2018
-finalyear=2101 #
-finalfull=2100
+finalyear=2100 #
+finalfull=2099
 
 # The range of met years to cycle for the transient spin
 # We're just going to do the first year
 metfirst=2018
-metlast=2100
+metlast=2099
 
 # Making the file directory if it doesn't already exist
 mkdir -p $file_dir
@@ -116,8 +116,12 @@ do
 	SITE=${sites[FILE]}
 
 	GCM_now=${GCM[FILE]}
-	GCM_now=${GCM_now/"-"/"_"}
-
+	
+    if [ "$GCM_now" = "GFDL-CM3" ]
+    then
+        GCM_now=${GCM_now/"-"/"_"}
+    fi
+    
 	#lat_now=${lat[FILE]}
 	#lon_now=${lon[FILE]}
 
@@ -182,7 +186,13 @@ do
     newbase=${file_dir}/$RUN
     oldbase=${file_dir}/TEST
 	oldname=TESTinit
-	met_path=${met_base}/${sites[FILE]}/${GCM_now}_${scenario[FILE]}_r1i1p1
+    if [ $GCM_now = "GFDL_CM3" ]
+    then
+        met_path=${met_base}/${sites[FILE]}/${GCM_now}_${scenario[FILE]}_r1i1p1
+    else
+        met_path=${met_base}/${sites[FILE]}/${GCM_now}_${scenario[FILE]}
+    fi
+    
 
 
 	file_path=${file_dir}/${RUN}/
