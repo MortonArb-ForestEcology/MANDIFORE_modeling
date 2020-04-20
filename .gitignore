@@ -28,3 +28,4 @@ MortonArb/0_setup/EW soil data for ED2 models.xlsx
 MortonArb/1_runs/*/*/ED2IN
 MortonArb/1_runs/*/*/*.xml
 MortonArb/met_raw
+.DS_Store
