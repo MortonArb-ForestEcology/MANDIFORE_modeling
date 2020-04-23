@@ -61,7 +61,7 @@ path.cmip5 = "/Volumes/Seagate Portable Drive/lfitzpatrick/"
 GCM.scenarios = c("rcp45", "rcp85")
 GCM.list <- dir(path.cmip5)
 cmip5.start = "2006-01-01"
-cmip5.end   = "2100-12-31"
+cmip5.end   = "2101-01-01"
 
 # path.out
 # path.cmip <- "day/atmos/day/r1i1p1/latest/"
