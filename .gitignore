@@ -29,3 +29,4 @@ MortonArb/1_runs/*/*/ED2IN
 MortonArb/1_runs/*/*/*.xml
 MortonArb/met_raw
 .DS_Store
+MortonArb/met_problems.csv
