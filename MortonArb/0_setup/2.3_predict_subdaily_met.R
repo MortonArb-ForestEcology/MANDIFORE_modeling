@@ -76,8 +76,10 @@ path.out <- file.path(wd.base, "subdaily", site.name)
 
 scenarios <- c("rcp45", "rcp85")
 GCM.list <- dir(path.in)
-# GCM.list = c("CCSM4", "MIROC-ESM", "MPI-ESM-P", "bcc-csm1-1")
-# GCM.list = "MIROC-ESM"
+
+# Get rid of known problematic ensemble members
+GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC")]
+
 ens.hr  <- 1 # Number of hourly ensemble members to create
 n.day <- 1 # Number of daily ensemble members to process
 # yrs.plot <- c(2015, 1985, 1920, 1875, 1800, 1000, 850)
