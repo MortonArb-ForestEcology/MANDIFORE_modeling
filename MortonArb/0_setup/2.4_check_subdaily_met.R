@@ -75,17 +75,17 @@ vars.short <- c("tair", "precip", "swdown", "lwdown", "press", "qair", "wind")
 #   we can compare at different levels
 # - We want to double check on both the diurnal cycles as well as making sure we didn't break the day & year cycles
 # -----------------------------------
-all.yr <- data.frame(model=as.factor(rep(GCM.list, each=length(yrs.all)*length(scen.all)*length(vars.CF))),
-                     scenario=as.factor(rep(scen.all, each=length(yrs.all)*length(vars.CF))),
-                     var=as.factor(rep(vars.CF, each=length(yrs.all))),
-                     year=rep(yrs.all, length.out=length(scen.all)*length(GCM.list)*length(vars.CF)*length(yrs.all)))
+all.yr <- data.frame(model=as.factor(rep(GCM.list, each=length(yrs.all)*length(scen.all)*(length(vars.CF)+2))),
+                     scenario=as.factor(rep(scen.all, each=length(yrs.all)*(length(vars.CF)+2))),
+                     var=as.factor(rep(c("air_temperature_maximum", "air_temperature_minimum", vars.CF), each=length(yrs.all))),
+                     year=rep(yrs.all, length.out=length(scen.all)*length(GCM.list)*(length(vars.CF)+2)*length(yrs.all)))
 all.yr[,c("mean", "min", "max")] <- NA
 
 
-all.day <- data.frame(model=as.factor(rep(GCM.list, each=length(doy.all)*length(scen.all)*length(vars.CF))),
-                      scenario=as.factor(rep(scen.all, each=length(doy.all)*length(vars.CF))),
-                      var=as.factor(rep(vars.CF, each=length(doy.all))),
-                      yday=rep(1:365, length.out=length(scen.all)*length(GCM.list)*length(vars.CF)*length(doy.all)))
+all.day <- data.frame(model=as.factor(rep(GCM.list, each=length(doy.all)*length(scen.all)*(length(vars.CF)+2))),
+                      scenario=as.factor(rep(scen.all, each=length(doy.all)*(length(vars.CF)+2))),
+                      var=as.factor(rep(c("air_temperature_maximum", "air_temperature_minimum", vars.CF), each=length(doy.all))),
+                      yday=rep(1:365, length.out=length(scen.all)*length(GCM.list)*(length(vars.CF)+2)*length(doy.all)))
 all.day[,c("mean", "min", "max")] <- NA
 
 all.hr <- data.frame(model=as.factor(rep(GCM.list, each=24*nrow(days.graph)*length(scen.all)*length(vars.CF)*length(yrs.check))),
@@ -96,7 +96,8 @@ all.hr <- data.frame(model=as.factor(rep(GCM.list, each=24*nrow(days.graph)*leng
                      yday=rep(days.graph$yday, each=24),
                      hour=seq(0.5, 24, by=1))
 all.hr$date <- as.POSIXct(paste(all.hr$year, all.hr$yday, all.hr$hour, sep="-"), format=("%Y-%j-%H"), tz="UTC")
-
+all.hr$season <- factor(all.hr$season, levels=c("winter", "spring", "summer", "fall"))
+# summary(all.hr$season)
 
 summary(all.hr[all.hr$season=="fall",])
 # all.day[,c("mean", "min", "max")] <- NA
@@ -198,7 +199,7 @@ for(GCM in GCM.list){
     mod.day[,,3] <- apply(mod.array, c(1,3), max)
     
     # Merge at least th mean data into the data frame
-    for(VAR in vars.CF){
+    for(VAR in c("air_temperature_minimum", "air_temperature_maximum", vars.CF)){
       ind.yr <- which(all.yr$model==GCM & all.yr$scenario==SCEN & all.yr$var==VAR )
       all.yr$mean[ind.yr] <- mod.yr[,VAR,"mean"]
       all.yr$min[ind.yr] <- mod.yr[,VAR,"min"]
@@ -252,7 +253,7 @@ dev.off()
 
 
 pdf(file.path(path.out, "CMIP5_TDM_year_byVar.pdf"), height=11, width=8.5)
-for(VAR in vars.CF){
+for(VAR in c("air_temperature_maximum", "air_temperature_minimum", vars.CF)){
   print(
     ggplot(data=all.yr[all.yr$var==VAR,]) +
       ggtitle(VAR) +
