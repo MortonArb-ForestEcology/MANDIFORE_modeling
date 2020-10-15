@@ -92,10 +92,13 @@ all.hr <- data.frame(model=as.factor(rep(GCM.list, each=24*nrow(days.graph)*leng
                      scenario=as.factor(rep(scen.all, each=24*nrow(days.graph)*length(vars.CF)*length(yrs.check))),
                      var=as.factor(rep(vars.CF, each=24*nrow(days.graph)*length(yrs.check))),
                      year=rep(yrs.check, each=24*nrow(days.graph)),
-                     season=as.factor(rep(days.graph$season, each=24)),
+                     season=as.factor(rep(c("winter", "spring", "summer", "fall"), each=24*daywin)),
                      yday=rep(days.graph$yday, each=24),
                      hour=seq(0.5, 24, by=1))
-summary(all.hr)
+all.hr$date <- as.POSIXct(paste(all.hr$year, all.hr$yday, all.hr$hour, sep="-"), format=("%Y-%j-%H"), tz="UTC")
+
+
+summary(all.hr[all.hr$season=="fall",])
 # all.day[,c("mean", "min", "max")] <- NA
 
 
@@ -189,13 +192,27 @@ for(GCM in GCM.list){
 summary(all.yr)
 summary(all.day)
 summary(all.hr)
-
+summary(all.hr[is.na(all.hr$value),])
 # -----------------------------------
 
 
 # -----------------------------------
-# Aggregating & graphing data
+# Graphing data
 # -----------------------------------
+
+pdf(file.path(path.out, "CMIP5_TDM_year_byModel.pdf"), height=11, width=8.5)
+for(GCM in GCM.list){
+  print(
+    ggplot(data=all.yr[all.yr$model==GCM,]) +
+      ggtitle(GCM) +
+      facet_wrap( ~ var, scales="free_y") +
+      # facet_grid(var ~ scenario, scales="free_y") +
+      geom_ribbon(aes(x=year, ymin=min, ymax=max, fill=scenario), alpha=0.2)+
+      geom_line(aes(x=year, y=mean, color=scenario))
+  )
+}
+dev.off()
+
 pdf(file.path(path.out, "CMIP5_TDM_day_byModel.pdf"), height=11, width=8.5)
 for(GCM in GCM.list){
   print(
@@ -209,4 +226,52 @@ for(GCM in GCM.list){
 }
 dev.off()
 
+
+
+pdf(file.path(path.out, "CMIP5_TDM_year_byVar.pdf"), height=11, width=8.5)
+for(VAR in vars.CF){
+  print(
+    ggplot(data=all.yr[all.yr$var==VAR,]) +
+      ggtitle(VAR) +
+      facet_wrap( ~ model) +
+      # facet_grid(var ~ scenario, scales="free_y") +
+      geom_ribbon(aes(x=year, ymin=min, ymax=max, fill=scenario), alpha=0.2)+
+      geom_line(aes(x=year, y=mean, color=scenario))
+  )
+}
+dev.off()
+
+pdf(file.path(path.out, "CMIP5_TDM_day_byVar.pdf"), height=11, width=8.5)
+for(VAR in vars.CF){
+  print(
+    ggplot(data=all.day[all.day$var==VAR,]) +
+      ggtitle(VAR) +
+      facet_wrap( ~ model) +
+      # facet_grid(var ~ scenario, scales="free_y") +
+      geom_ribbon(aes(x=yday, ymin=min, ymax=max, fill=scenario), alpha=0.2)+
+      geom_line(aes(x=yday, y=mean, color=scenario))
+  )
+}
+dev.off()
+
+
+for(VAR in vars.CF){
+  pdf(file.path(path.out, paste0("CMIP5_TDM_hour_byVar_",VAR, ".pdf")), height=8.5, width=11)
+  for(YR in yrs.check){
+    print(
+      ggplot(data=all.hr[all.hr$year==YR & all.hr$var==VAR,]) +
+        ggtitle(YR) +
+        facet_grid( scenario ~ season, scales="free_x") +
+        # facet_wrap( ~ season, scales="free") +
+        # facet_grid(var ~ scenario, scales="free_y") +
+        # geom_ribbon(aes(x=yday, ymin=min, ymax=max, fill=model, group=scenario), alpha=0.2)+
+        geom_line(aes(x=date, y=value, color=model)) +
+        scale_y_continuous(limits=range(all.hr[all.hr$year==YR & all.hr$var==VAR,"value"], na.rm=T))
+    )
+  }
+  dev.off()
+}
+
+
 # -----------------------------------
+
