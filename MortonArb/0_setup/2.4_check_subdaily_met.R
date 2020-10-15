@@ -126,8 +126,31 @@ for(GCM in GCM.list){
       dat.temp <- data.frame(GCM=GCM, scenario=SCEN, year = YR, yday = rep(1:365, each=24), hour=rep(seq(0.5, 24, by=1)))
       dat.temp$date <- strptime(paste(dat.temp$year, dat.temp$yday, dat.temp$hour, sep="-"), format=("%Y-%j-%H"), tz="UTC")
       
-      for(v in 1:length(vars.CF)){
-        dat.temp[,vars.CF[v]] <- ncdf4::ncvar_get(ncT, vars.CF[v], start=c(1,1,1), count=c(1,1,365*24))
+      for(VAR in vars.CF){
+        if(VAR %in% names(ncT$var)){
+
+          if(GCM=="GFDL_CM3"){
+            tmp <- ncdf4::ncvar_get(ncT, VAR, start=c(1,1,1), count=c(1,1,365*8))
+            dat.temp[,VAR] <- rep(tmp, each=3)
+          } else {
+            dat.temp[,VAR] <- ncdf4::ncvar_get(ncT, VAR, start=c(1,1,1), count=c(1,1,365*24))
+          }
+        } else if(VAR=="wind_speed" & "eastward_wind" %in% names(ncT$var)){
+          ew <- ncdf4::ncvar_get(ncT, "eastward_wind", start=c(1,1,1), count=c(1,1,max(doy.all)))
+          nw <- ncdf4::ncvar_get(ncT, "northward_wind", start=c(1,1,1), count=c(1,1,max(doy.all)))
+          
+          # Calculate wind speed from ew/nw using pythagorean theorem
+          wnd <- sqrt(ew^2 + nw^2)
+          
+          if(GCM=="GFDL_CM3"){
+            dat.temp[,VAR] <- rep(wnd, each=8)
+          } else {
+            dat.temp[,VAR] <- wnd 
+          }
+
+        } else next
+        
+         
       }
       nc_close(ncT)
       
