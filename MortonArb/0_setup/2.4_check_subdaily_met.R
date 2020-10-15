@@ -39,15 +39,31 @@ path.out <- file.path(wd.base, "figures_qaqc")
 
 dir.create(path.out, recursive=T, showWarnings = F)
 # GCM.list <- c("bcc-csm1-1", "CCSM4", "MIROC-ESM", "MPI-ESM-P")
-GCM.list <- c("bcc-csm1-1", "CCSM4", "MIROC-ESM")
+# GCM.list <- c("bcc-csm1-1", "CCSM4", "MIROC-ESM")
+GCM.list <- dir(path.dat)
+GCM.list <- GCM.list[!GCM.list %in% c("NLDAS", "figures_qaqc")]
 
-n.day <- 1 # How many parent ensembles we want to graph
-n.hr <- 3 # How many independent hourly ensembles we want to show
+scen.all <- c("rcp45", "rcp85")
 
-# yrs.check <- c(2015, 1990, 1900, 1850, 1800, 1300, 1000, 850)
-yrs.check <- c(2015, 1985, 1920, 1875, 1800)
+yrs.all <- 2006:2099
+yrs.check <- c(2006, 2025, 2050, 2075, 2099)
+
+doy.all <- 1:365
+
 # yrs.check <- 2015
-days.graph <- data.frame(winter=(45-3):(45+3), spring=(135-3):(135+3), summer=(225-3):(225+3), fall=(315-3):(315+3))
+daywin = 7
+# days.graph <- data.frame(winter=(45-(daywin-1)/2):(45+(daywin-1)/2),
+#                          spring=(135-(daywin-1)/2):(135+(daywin-1)/2),
+#                          summer=(225-(daywin-1)/2):(225+(daywin-1)/2),
+#                          fall=(315-(daywin-1)/2):(315+(daywin-1)/2))
+
+days.graph <- data.frame(season=rep(c("winter", "spring", "summer", "fall"), 
+                                    each=length(daywin)),
+                         yday=c((45-(daywin-1)/2):(45+(daywin-1)/2),
+                                (135-(daywin-1)/2):(135+(daywin-1)/2),
+                                (225-(daywin-1)/2):(225+(daywin-1)/2),
+                                (315-(daywin-1)/2):(315+(daywin-1)/2)))
+
 
 vars.CF <- c("air_temperature", "precipitation_flux", "surface_downwelling_shortwave_flux_in_air", "surface_downwelling_longwave_flux_in_air", "air_pressure", "specific_humidity", "wind_speed")
 vars.short <- c("tair", "precip", "swdown", "lwdown", "press", "qair", "wind")
@@ -57,108 +73,140 @@ vars.short <- c("tair", "precip", "swdown", "lwdown", "press", "qair", "wind")
 # Extract the Met data
 # - we're going to extract everything and store it in memory so 
 #   we can compare at different levels
+# - We want to double check on both the diurnal cycles as well as making sure we didn't break the day & year cycles
 # -----------------------------------
-met.plot <- list()
-dat.hr <- NULL
-for(GCM in GCM.list){
-  met.plot[[GCM]] <- list()
-  
-  # Get a list of the *unique* daily ensemble members and then randomly sample 
-  # *up to* n.day for plotting
-  ens.all <- dir(file.path(path.dat, GCM))
-  ens.names <- str_split(ens.all, "[.]")
-  ens.names <- matrix(unlist(ens.names), ncol=length(ens.names[[1]]), byrow=T)
-  parent.day <- unique(ens.names[,1])
-  
-  # Randomly picking up to n.day ensemble members for plotting
-  day.plot <- parent.day[sample(1:length(parent.day), min(length(parent.day), n.day))]
-  
-  # Extracting the hourly members
-  for(ens.day in day.plot){
-    # Get a list of the ensemble members
-    hr.all <- dir(file.path(path.dat, GCM), ens.day)
-    hr.plot <- hr.all[sample(1:length(hr.all), min(length(hr.all), n.hr))]
-    
-    # Extract our hourly info for the years we want and store in a dataframe
-    for(ens.now in hr.all){
-      for(yr in yrs.check){
-        nday <- ifelse(lubridate::leap_year(yr), 366, 365)
-        
-        nc.now <- dir(file.path(path.dat, GCM, ens.now), paste(yr))
-        if(length(nc.now)==0) next 
+all.yr <- data.frame(model=as.factor(rep(GCM.list, each=length(yrs.all)*length(scen.all)*length(vars.CF))),
+                     scenario=as.factor(rep(scen.all, each=length(yrs.all)*length(vars.CF))),
+                     var=as.factor(rep(vars.CF, each=length(yrs.all))),
+                     year=rep(yrs.all, length.out=length(scen.all)*length(GCM.list)*length(vars.CF)*length(yrs.all)))
+all.yr[,c("mean", "min", "max")] <- NA
 
-        ncT <- ncdf4::nc_open(file.path(path.dat, GCM, ens.now, nc.now))
-        time.nc <- ncdf4::ncvar_get(ncT, "time")
+
+all.day <- data.frame(model=as.factor(rep(GCM.list, each=length(doy.all)*length(scen.all)*length(vars.CF))),
+                      scenario=as.factor(rep(scen.all, each=length(doy.all)*length(vars.CF))),
+                      var=as.factor(rep(vars.CF, each=length(doy.all))),
+                      yday=rep(1:365, length.out=length(scen.all)*length(GCM.list)*length(vars.CF)*length(doy.all)))
+all.day[,c("mean", "min", "max")] <- NA
+
+all.hr <- data.frame(model=as.factor(rep(GCM.list, each=24*nrow(days.graph)*length(scen.all)*length(vars.CF)*length(yrs.check))),
+                     scenario=as.factor(rep(scen.all, each=24*nrow(days.graph)*length(vars.CF)*length(yrs.check))),
+                     var=as.factor(rep(vars.CF, each=24*nrow(days.graph)*length(yrs.check))),
+                     year=rep(yrs.check, each=24*nrow(days.graph)),
+                     season=as.factor(rep(days.graph$season, each=24)),
+                     yday=rep(days.graph$yday, each=24),
+                     hour=seq(0.5, 24, by=1))
+summary(all.hr)
+# all.day[,c("mean", "min", "max")] <- NA
+
+
+for(GCM in GCM.list){
+  print(paste0("Processing Model: ", GCM))
+
+  scenarios <- dir(file.path(path.dat, GCM))
+  for(SCEN in scenarios){
+    print(paste0("     Scenario: ", SCEN))
+    
+    ens.now <- dir(file.path(path.dat, GCM, SCEN))
+    
+    mod.array <- array(dim=c(365, length(yrs.all), length(vars.CF)+2))
+    dimnames(mod.array) <- list(day=1:365, year=yrs.all, var=c("air_temperature_minimum", "air_temperature_maximum", vars.CF))
+    
+    for(YR in yrs.all){
+      # nday <- ifelse(lubridate::leap_year(yr), 366, 365)
+      
+      nc.now <- dir(file.path(path.dat, GCM, SCEN, ens.now), paste(YR))
+      if(length(nc.now)==0) next 
+      
+      ncT <- ncdf4::nc_open(file.path(path.dat, GCM, SCEN, ens.now, nc.now))
+      time.nc <- ncdf4::ncvar_get(ncT, "time")
+      
+      dat.temp <- data.frame(GCM=GCM, scenario=SCEN, year = YR, yday = rep(1:365, each=24), hour=rep(seq(0.5, 24, by=1)))
+      dat.temp$date <- strptime(paste(dat.temp$year, dat.temp$yday, dat.temp$hour, sep="-"), format=("%Y-%j-%H"), tz="UTC")
+      
+      for(v in 1:length(vars.CF)){
+        dat.temp[,vars.CF[v]] <- ncdf4::ncvar_get(ncT, vars.CF[v], start=c(1,1,1), count=c(1,1,365*24))
+      }
+      nc_close(ncT)
+      
+      
+      # If a year we want to check hourly on, write the hourly data to the data frame
+      if(YR %in% yrs.check){
+        tmp.hr <- dat.temp[dat.temp$yday %in% days.graph$yday,]
         
-        dat.temp <- data.frame(GCM=GCM, ens.day=ens.day, ens.hr=ens.now, year = yr, doy = rep(1:nday, each=24), hour=rep(seq(0.5, 24, by=1), nday))
-        dat.temp$date <- strptime(paste(dat.temp$year, dat.temp$doy, dat.temp$hour, sep="-"), format=("%Y-%j-%H"), tz="UTC")
-        
-        for(v in 1:length(vars.CF)){
-          dat.temp[,vars.CF[v]] <- ncdf4::ncvar_get(ncT, vars.CF[v])
+        # Write to data frame
+        for(VAR in vars.CF){
+          ind.hr <- which(all.hr$model==GCM & all.hr$scenario==SCEN & all.hr$year==YR & all.hr$var==VAR )
+          all.hr[ind.hr,"value"] <- tmp.hr[,VAR]
         }
-        nc_close(ncT)
-        dat.temp <- dat.temp[dat.temp$doy %in% unlist(days.graph),]
         
-        if(is.null(dat.hr)){
-          dat.hr <- dat.temp
-        } else {
-          dat.hr <- rbind(dat.hr, dat.temp)
-        }
         
       }
+      
+      # For all years, aggregate to daily & store in the model array so we can 
+      # easily do the post-hoc calculations to compare to the input data
+      # tmp.day <- data.frame(yday=1:365)
+      tmp.day <- aggregate(dat.temp[,vars.CF],by=dat.temp[,c("year","yday")], FUN=mean)
+      tmp.day$air_temperature_minimum <- aggregate(air_temperature ~ yday, data=dat.temp, FUN=min)$air_temperature
+      tmp.day$air_temperature_maximum <- aggregate(air_temperature ~ yday, data=dat.temp, FUN=max)$air_temperature
+      
+      for(VAR in dimnames(mod.array)[[3]]){
+        mod.array[,paste(YR), VAR] <- tmp.day[,VAR]
+      }
+      
+    } # End yr loop
+    mod.yr <- array(dim=c(dim(mod.array)[2:3], 3))
+    mod.day <- array(dim=c(dim(mod.array)[c(1,3)], 3))
+    
+    dimnames(mod.yr)[[1]] <- dimnames(mod.array)[[2]]
+    dimnames(mod.yr)[[2]] <- dimnames(mod.array)[[3]]
+    dimnames(mod.yr)[[3]] <- c("mean", "min", "max")
+    dimnames(mod.day)[[1]] <- dimnames(mod.array)[[1]]
+    dimnames(mod.day)[[2]] <- dimnames(mod.array)[[3]]
+    dimnames(mod.day)[[3]] <- c("mean", "min", "max")
+    
+    mod.yr[,,1] <- apply(mod.array, c(2,3), mean)
+    mod.day[,,1] <- apply(mod.array, c(1,3), mean)
+    mod.yr[,,2] <- apply(mod.array, c(2,3), min)
+    mod.day[,,2] <- apply(mod.array, c(1,3), min)
+    mod.yr[,,3] <- apply(mod.array, c(2,3), max)
+    mod.day[,,3] <- apply(mod.array, c(1,3), max)
+    
+    # Merge at least th mean data into the data frame
+    for(VAR in vars.CF){
+      ind.yr <- which(all.yr$model==GCM & all.yr$scenario==SCEN & all.yr$var==VAR )
+      all.yr$mean[ind.yr] <- mod.yr[,VAR,"mean"]
+      all.yr$min[ind.yr] <- mod.yr[,VAR,"min"]
+      all.yr$max[ind.yr] <- mod.yr[,VAR,"max"]
+      
+      ind.day <- which(all.day$model==GCM & all.day$scenario==SCEN & all.day$var==VAR)
+      all.day$mean[ind.day] <- mod.day[,VAR,"mean"]
+      all.day$min[ind.day] <- mod.day[,VAR,"min"]
+      all.day$max[ind.day] <- mod.day[,VAR,"max"]
     }
-  }
-  
-}
+  } # End Scenario Loop
+} # End GCM loop
 
-dim(dat.hr)
+summary(all.yr)
+summary(all.day)
+summary(all.hr)
+
 # -----------------------------------
 
 
 # -----------------------------------
 # Aggregating & graphing data
 # -----------------------------------
-dat.hr$season <- ifelse(dat.hr$doy %in% days.graph$winter, "winter", 
-                        ifelse(dat.hr$doy %in% days.graph$spring, "spring", 
-                               ifelse(dat.hr$doy %in% days.graph$summer, "summer", "fall")))
-dat.hr$season <- factor(dat.hr$season, levels=c("winter", "spring", "summer", "fall"))
-dat.ind <- stack(dat.hr[,vars.CF])
-names(dat.ind) <- c("mean", "ind")
-dat.ind[,c("lwr", "upr")] <- NA
-dat.ind[,c("GCM", "ens.day", "ens.hr", "year", "season", "doy", "hour", "date")] <- dat.hr[,c("GCM", "ens.day", "ens.hr", "year", "season", "doy", "hour", "date")]
-dat.ind$doy2 <- dat.ind$doy+dat.ind$hour
-summary(dat.ind)
-
-dat.ens <- aggregate(dat.ind[,"mean"], by=dat.ind[,c("ind", "GCM", "ens.day", "year", "season", "doy", "hour")], FUN=mean)
-names(dat.ens)[which(names(dat.ens)=="x")] <- "mean"
-dat.ens$lwr <- aggregate(dat.ind[,"mean"], by=dat.ind[,c("ind", "GCM", "ens.day", "year", "season", "doy", "hour")], FUN=quantile, 0.025)$x
-dat.ens$upr <- aggregate(dat.ind[,"mean"], by=dat.ind[,c("ind", "GCM", "ens.day", "year", "season", "doy", "hour")], FUN=quantile, 0.975)$x
-dat.ens$date <- strptime(paste(dat.ens$year, dat.ens$doy, dat.ens$hour, sep="-"), format=("%Y-%j-%H"), tz="UTC")
-summary(dat.ens)
-# dat.ind <- dat
-
-library(ggplot2)
-for(v in unique(dat.ens$ind)){
-  pdf(file.path(path.out, paste0(v, "_ensembles.pdf")), width=10, height=8)
-  for(yr in yrs.check[yrs.check %in% unique(dat.ens$year)]){
-    print(
-      ggplot(data=dat.ens[dat.ens$ind==v & dat.ens$year==yr,]) + facet_wrap(~season, scales="free_x") +
-        geom_ribbon(aes(x=date, ymin=lwr, ymax=upr, fill=ens.day), alpha=0.5) +
-        geom_line(aes(x=date, y=mean, color=ens.day)) +
-        ggtitle(paste(v, yr, sep=" - "))
-    )
-  }
-  dev.off()
-
-  pdf(file.path(path.out, paste0(v, "_members.pdf")), width=10, height=8)
-  for(yr in yrs.check[yrs.check %in% unique(dat.ens$year)]){
-    print(
-      ggplot(data=dat.ind[dat.ind$ind==v & dat.ind$year==yr,]) + facet_wrap(~season, scales="free_x") +
-        geom_line(aes(x=date, y=mean, color=ens.day, group=ens.hr)) +
-        ggtitle(paste(v, yr, sep=" - "))
-    )
-  }
-  dev.off()
-  
+pdf(file.path(path.out, "CMIP5_TDM_day_byModel.pdf"), height=11, width=8.5)
+for(GCM in GCM.list){
+  print(
+    ggplot(data=all.day[all.day$model==GCM,]) +
+      ggtitle(GCM) +
+      facet_wrap( ~ var, scales="free_y") +
+      # facet_grid(var ~ scenario, scales="free_y") +
+      geom_ribbon(aes(x=yday, ymin=min, ymax=max, fill=scenario), alpha=0.2)+
+      geom_line(aes(x=yday, y=mean, color=scenario))
+  )
 }
+dev.off()
+
 # -----------------------------------
