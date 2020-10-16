@@ -30,3 +30,4 @@ MortonArb/1_runs/*/*/*.xml
 MortonArb/met_raw
 .DS_Store
 MortonArb/met_problems.csv
+*.1-opt

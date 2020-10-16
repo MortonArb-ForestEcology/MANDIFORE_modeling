@@ -21,7 +21,7 @@ source("pecan_met_conversion/download.GFDL.R")
 # ------------
 # Using the default GCM
 # ------------
-ENS.all <- c("CM3", "ESM2M", "ESM2G")
+# ENS.all <- c("CM3", "ESM2M", "ESM2G")
 # ENS.all <- c("CM3")
 # CM3: https://www.gfdl.noaa.gov/coupled-physical-model-cm3/
 
@@ -57,11 +57,11 @@ extract.local.NLDAS(outfolder=file.path(path.out, "subdaily", site.name, "NLDAS"
 # Additional Datasets Downloaded by Lucien
 # -------------------------------
 source(file.path(path.pecan, "modules/data.atmosphere/R", "extract_local_CMIP5.R"))
-path.cmip5 = "/Volumes/Seagate Portable Drive/lfitzpatrick/"
+path.cmip5 = "/Volumes/Seagate Portable Drive/lfitzpatrick/GCM/"
 GCM.scenarios = c("rcp45", "rcp85")
 GCM.list <- dir(path.cmip5)
 cmip5.start = "2006-01-01"
-cmip5.end   = "2101-01-01"
+cmip5.end   = "2099-12-31"
 
 # path.out
 # path.cmip <- "day/atmos/day/r1i1p1/latest/"

@@ -124,7 +124,8 @@ for(GCM in GCM.list){
                            in.prefix=GCM, lm.models.base=path.lm,
                            path.train=path.train, direction.filter="forward", yrs.predict=yrs.sim,
                            ens.labs = "tdm", resids = FALSE,
-                           overwrite = FALSE, seed=seed.vec[1], print.progress = TRUE)
+                           adjust.pr=10,
+                           overwrite = TRUE, seed=seed.vec[1], print.progress = TRUE)
   }
 }
 # -----------------------------------
