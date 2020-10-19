@@ -24,7 +24,7 @@ site.lon = -88.04
 if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
 
 GCMs <- dir(file.path(in.base))
-GCMs <- GCMs[!GCMs %in% c("NLDAS", "GFDL_CM3_rcp45_r1i1p1", "GFDL_CM3_rcp85_r1i1p1")]
+GCMs <- GCMs[!GCMs %in% c("NLDAS", "figures_qaqc")]
 
 # NEED TO FIX LEAP YEAR -- IT KEEPS SKIPPING!
 for(GCM in GCMs){
