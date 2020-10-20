@@ -1,6 +1,6 @@
 # Plot the raw model outputs for assessment
 
-path.out = "../met_raw"
+path.out = "../met_raw.v2"
 
 site.name= "MortonArb"
 site.lat = 41.82
@@ -104,8 +104,10 @@ summary(all.day)
 
 summary(all.yr[is.na(all.yr$mean),])
 summary(all.day[is.na(all.day$mean),])
+summary(all.day[is.na(all.day$mean),])
 
-summary(all.yr[is.na(all.yr$mean) & all.yr$model=="ACCESS1-3",])
+summary(all.day[is.na(all.day$mean) & all.day$model=="ACCESS1-0",])
+summary(all.yr[is.na(all.yr$mean) & all.yr$model=="ACCESS1-0",])
 summary(all.yr[is.na(all.yr$mean) & all.yr$model=="HadGEM2-CC",])
 summary(all.yr[is.na(all.yr$mean) & all.yr$model=="HadGEM2-ES",])
 
@@ -115,6 +117,7 @@ names(yrs.bad)[names(yrs.bad)=="year"] <- "yr.min"
 yrs.bad$yr.max <- aggregate(year ~ model + scenario + var, data=all.yr[is.na(all.yr$mean),], FUN=max)$year
 yrs.bad <- yrs.bad[order(yrs.bad$model, yrs.bad$scenario, yrs.bad$var),]
 yrs.bad
+yrs.bad[yrs.bad$scenario=="rcp45",]
 
 write.csv(yrs.bad, "../met_problems.csv", row.names=F)
 
@@ -130,9 +133,9 @@ ggplot(data=all.day) +
   geom_line(aes(x=yday, y=mean, color=model))
 
 
-if(!dir.exists("../met_raw_qaqc")) dir.create("../met_raw_qaqc")
+if(!dir.exists(file.path(path.out, "met_raw_qaqc"))) dir.create(file.path(path.out, "met_raw_qaqc"))
 
-pdf("../met_raw_qaqc/CMIP5_raw_year_byModel.pdf", height=11, width=8.5)
+pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_year_byModel.pdf"), height=11, width=8.5)
 for(MOD in mods.raw){
   print(
   ggplot(data=all.yr[all.yr$model==MOD,]) +
@@ -146,7 +149,7 @@ for(MOD in mods.raw){
 dev.off()
 
 
-pdf("../met_raw_qaqc/CMIP5_raw_day_byModel.pdf", height=11, width=8.5)
+pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_day_byModel.pdf"), height=11, width=8.5)
 for(MOD in mods.raw){
   print(
     ggplot(data=all.day[all.day$model==MOD,]) +
@@ -160,7 +163,7 @@ for(MOD in mods.raw){
 dev.off()
 
 
-pdf("../met_raw_qaqc/CMIP5_raw_year_byVar.pdf", height=11, width=8.5)
+pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_year_byVar.pdf"), height=11, width=8.5)
 for(VAR in vars.all){
   print(
     ggplot(data=all.yr[all.yr$var==VAR,]) +
@@ -173,7 +176,7 @@ for(VAR in vars.all){
 }
 dev.off()
 
-pdf("../met_raw_qaqc/CMIP5_raw_day_byVar.pdf", height=11, width=8.5)
+pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_day_byVar.pdf"), height=11, width=8.5)
 for(VAR in vars.all){
   print(
     ggplot(data=all.day[all.day$var==VAR,]) +

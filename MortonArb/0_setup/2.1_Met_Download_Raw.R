@@ -66,6 +66,9 @@ cmip5.end   = "2099-12-31"
 # path.out
 # path.cmip <- "day/atmos/day/r1i1p1/latest/"
 
+GCM.done <- dir(file.path(path.out, "daily", site.name))
+GCM.list <- GCM.list[!GCM.list %in% GCM.done]
+
 for(GCM in GCM.list){
   for(scenario in GCM.scenarios){
     
@@ -77,6 +80,7 @@ for(GCM in GCM.list){
                         site_id = site.name, lat.in = site.lat, lon.in = site.lon, 
                         model = GCM, scenario = scenario, ensemble_member = "r1i1p1",
                         adjust.pr=10)   
+    print("")
   } # end GCM.scenarios
-} # End GM lop
+} # End GCM lop
 # -------------------------------
