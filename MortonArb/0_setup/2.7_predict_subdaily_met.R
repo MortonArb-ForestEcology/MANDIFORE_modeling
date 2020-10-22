@@ -60,7 +60,7 @@ path.pecan <- "../../../pecan/"
 # path.pecan <- "~/Desktop/Research/pecan"
 
 # Hard-coding numbers for Morton Arb
-vers=".v1"
+vers=".v2"
 site.name= "MortonArb"
 site.lat = 41.82
 site.lon = -88.04
@@ -78,7 +78,7 @@ scenarios <- c("rcp45", "rcp85")
 GCM.list <- dir(path.in)
 
 # Get rid of known problematic ensemble members
-GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC")]
+GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC", "IPSL-CM5A-MR")]
 
 ens.hr  <- 1 # Number of hourly ensemble members to create
 n.day <- 1 # Number of daily ensemble members to process

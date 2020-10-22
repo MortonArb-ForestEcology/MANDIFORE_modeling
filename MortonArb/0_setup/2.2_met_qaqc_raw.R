@@ -9,6 +9,7 @@ site.lon = -88.04
 # Get a list of everything we have to work with
 dir.mods <- file.path(path.out, "daily", site.name)
 mods.raw <- dir(dir.mods)
+# mods.raw <- mods.raw[1:(length(mods.raw)-1)]
 
 yrs.all <- 2006:2099
 vars.all <- c("air_temperature_maximum", "air_temperature_minimum", "precipitation_flux", "surface_downwelling_longwave_flux_in_air", "surface_downwelling_shortwave_flux_in_air", "air_pressure", "specific_humidity", "wind_speed")
@@ -106,8 +107,8 @@ summary(all.yr[is.na(all.yr$mean),])
 summary(all.day[is.na(all.day$mean),])
 summary(all.day[is.na(all.day$mean),])
 
-summary(all.day[is.na(all.day$mean) & all.day$model=="ACCESS1-0",])
-summary(all.yr[is.na(all.yr$mean) & all.yr$model=="ACCESS1-0",])
+summary(all.yr[is.na(all.yr$mean) & all.yr$model=="ACCESS1-3",])
+summary(all.day[is.na(all.day$mean) & all.day$model=="bcc-csm1-1",])
 summary(all.yr[is.na(all.yr$mean) & all.yr$model=="HadGEM2-CC",])
 summary(all.yr[is.na(all.yr$mean) & all.yr$model=="HadGEM2-ES",])
 
