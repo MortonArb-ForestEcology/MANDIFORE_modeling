@@ -48,13 +48,14 @@ rm(list=ls())
 
 # wd.base <- "~/Desktop/Research/met_ensembles/"
 # setwd(wd.base)
-wd.base = "../met_raw"
 
 
-vers=".v1"
+vers=".v2"
 site.name= "MortonArb"
 site.lat = 41.82
 site.lon = -88.04
+
+wd.base = file.path("..", paste0("met_raw", vers))
 
 path.train <- file.path(wd.base, "subdaily", site.name, "NLDAS")
 yrs.train=NULL
