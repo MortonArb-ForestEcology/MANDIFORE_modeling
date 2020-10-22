@@ -50,7 +50,7 @@ site.lon = -88.04
 
 ens=1
 n.ens=1
-ens.mems=".bc"
+ens.mems="bc"
 
 # Set up the appropriate seeds to use when adding ensembles
 set.seed(1159)
@@ -77,10 +77,10 @@ source(file.path(path.pecan, "modules/data.atmosphere/R", "debias_met_regression
 # 1. Debias 
 # --------------------------
 GCM.list <- dir(raw.base)
+scenarios=c("rcp45", "rcp85")
 
 # Remove NLDAS and known trouble makers
 GCM.list <- GCM.list[!GCM.list %in% c("NLDAS", "ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC", "IPSL-CM5A-MR")]
-scenarios=c("rcp45", "rcp85")
 
 # 1. Align daily aggregated NLDAS with Ameriflux 1 hr
 train.path <- file.path(raw.base, "NLDAS")
@@ -104,10 +104,10 @@ for(GCM in GCM.list){
     }
     
     # 2. Pass the training & source met data into the bias-correction functions; this will get written to the ensemble
-    debias.met.regression(train.data=met.out$dat.train, source.data=met.out$dat.source, n.ens=10, vars.debias=NULL, CRUNCEP=FALSE,
+    debias.met.regression(train.data=met.out$dat.train, source.data=met.out$dat.source, n.ens=n.ens, vars.debias=NULL, CRUNCEP=FALSE,
                           pair.anoms = FALSE, pair.ens = FALSE, uncert.prop="mean", resids = FALSE, seed=Sys.Date(),
-                          outfolder=file.path(out.base, SCEN), 
-                          yrs.save=NULL, ens.name=ens.ID, ens.mems=ens.mems, lat.in=site.lat, lon.in=site.lon,
+                          outfolder=file.path(out.base), 
+                          yrs.save=NULL, ens.name=paste(ens.ID, SCEN, sep="_"), ens.mems=ens.mems, lat.in=site.lat, lon.in=site.lon,
                           save.diagnostics=TRUE, path.diagnostics=file.path(out.base, "bias_correct_qaqc"),
                           parallel = FALSE, n.cores = NULL, overwrite = TRUE, verbose = FALSE) 
     
