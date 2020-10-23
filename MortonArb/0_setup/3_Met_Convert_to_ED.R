@@ -33,11 +33,13 @@ for(GCM in GCM.list){
   # rcp.avail <- dir(file.path(in.base, GCM))
   # for(RCP in rcp.avail){
     path.in <- file.path(in.base, GCM)
-    # gcm.lab <- paste(GCM, RCP, sep="_")
-    # gcm.lab <- GCM
+
+    # Setting up a dynamic prefix; assumes suffix for everhting is .YYYY.nc
+    GCM.pref <- dir(path.in)[1]
+    GCM.pref <- substr(GCM.pref, 1, nchar(GCM.pref)-8)
     
     met2model.ED2(in.path=path.in, 
-                  in.prefix=GCM, 
+                  in.prefix=GCM.pref, 
                   outfolder=file.path(outfolder, SITE, GCM), 
                   header_folder = file.path(met.base, SITE, GCM),
                   start_date="2006-01-01", 
