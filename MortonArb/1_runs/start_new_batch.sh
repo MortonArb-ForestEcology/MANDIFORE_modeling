@@ -8,10 +8,10 @@ n=4 # 4 = 1 site x 1 management x 1 GCM x 2 rcps x 2 CO2 scenarios
 # Define constants & file paths for the scripts
 file_base=/mnt/data/crollinson/MANDIFORE_modeling/MortonArb # whatever you want the base output file path to be
 EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
-met_base=${file_base}/met_ed/
+met_base=${file_base}/met_ed.v2/
 
 ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_runs/MortonArb_ed_runs.v1 # Where everything will go
+file_dir=${file_base}/1_runs/MortonArb_ed_runs.v2 # Where everything will go
 setup_dir=${file_base}/0_setup # Where some constant setup files are
 site_file=${setup_dir}/MortonArb_CaseStudy_Experiment.csv # # Path to list of ED sites w/ status
 # init_dir=${file_base}/1_spin/ed_spin.v3
@@ -77,7 +77,7 @@ scenario=()
 mgmt=()
 co2=()
 
-for((i=0;i<${#runs_all[@]};i++)); do 
+for((i=0;i<${#runs_all[@]};i++)); do
 	RUN=${runs_all[i]}
     TEST=( ${file_done[@]/$RUN/} ) # Remove element from array
 
@@ -97,8 +97,8 @@ for((i=0;i<${#runs_all[@]};i++)); do
 		#fire+=("${fire_all[i]}")
 		#ianth+=("${ianth_all[i]}")
 		mgmt+=("${mgmt_all[i]}")
-		co2+=("${co2_all[i]}")		
-	fi    
+		co2+=("${co2_all[i]}")
+	fi
 
 done
 
@@ -116,12 +116,12 @@ do
 	SITE=${sites[FILE]}
 
 	GCM_now=${GCM[FILE]}
-	
-    if [ "$GCM_now" = "GFDL-CM3" ]
-    then
-        GCM_now=${GCM_now/"-"/"_"}
-    fi
-    
+
+    # if [ "$GCM_now" = "GFDL-CM3" ]
+    # then
+    #     GCM_now=${GCM_now/"-"/"_"}
+    # fi
+
 	#lat_now=${lat[FILE]}
 	#lon_now=${lon[FILE]}
 
@@ -138,7 +138,7 @@ do
 	depth_min=(-0.15) # Setting an artificial minimum soil depth of 15 cm; note: this gets us a min of 3 soil layers
 
 
-	# If the actual soil depth is less than what we specified as the minimum, use our 
+	# If the actual soil depth is less than what we specified as the minimum, use our
 	# artificial minimum (default = 0.15 cm)
 	BOTTOM=${depth[FILE]}
 	if [[(("${BOTTOM}" < "${depth_min}"))]]
@@ -181,93 +181,92 @@ do
 	# ---------------------------------------------
 
 	# File Paths
-    new_analy="'${file_dir}/${RUN}/analy/${RUN}'"
-    new_histo="'${file_dir}/${RUN}/histo/${RUN}'"
-    newbase=${file_dir}/$RUN
-    oldbase=${file_dir}/TEST
+  new_analy="'${file_dir}/${RUN}/analy/${RUN}'"
+  new_histo="'${file_dir}/${RUN}/histo/${RUN}'"
+  newbase=${file_dir}/$RUN
+  oldbase=${file_dir}/TEST
 	oldname=TESTinit
-    if [ $GCM_now = "GFDL_CM3" ]
-    then
-        met_path=${met_base}/${sites[FILE]}/${GCM_now}_${scenario[FILE]}_r1i1p1
-    else
-        met_path=${met_base}/${sites[FILE]}/${GCM_now}_${scenario[FILE]}
-    fi
-    
+  if [ $GCM_now = "GFDL-CM3" ]
+  then
+      met_path=${met_base}/${sites[FILE]}/${GCM_now}_${scenario[FILE]}_r1i1p1
+  else
+      met_path=${met_base}/${sites[FILE]}/${GCM_now}_${scenario[FILE]}_bc.tdm
+  fi
+
 
 
 	file_path=${file_dir}/${RUN}/
 
-	mkdir -p ${file_path} 
-	
+	mkdir -p ${file_path}
+
 	pushd ${file_path}
 		# Creating the default file structure and copying over the base files to be modified
 		mkdir -p histo analy
 		ln -s $ed_exec
 		cp ${setup_dir}/ED2IN_Base_MortonArb ED2IN
 		cp ${setup_dir}/PFTParams_MortonArb.xml .
-		
-		# ED2IN Changes	    
+
+		# ED2IN Changes
 		#sed -i "s/NL%EXPNME =.*/NL%EXPNME = 'MANDIFORE TEST'/" ED2IN # change the experiment name
 
 		sed -i "s,/dummy/path,${file_dir},g" ED2IN # set the file path
 		sed -i "s,/met/path,${met_path},g" ED2IN # set the file path
 
 
-	    sed -i "s,TEST,${SITE},g" ED2IN #change site ID
-	    sed -i "s,METSITE,${sites[FILE]},g" ED2IN #change site ID
+    sed -i "s,TEST,${SITE},g" ED2IN #change site ID
+    sed -i "s,METSITE,${sites[FILE]},g" ED2IN #change site ID
 
-	    sed -i "s/NL%RUNTYPE  = .*/NL%RUNTYPE  = 'INITIAL'/" ED2IN # change from bare ground to .css/.pss run
-        sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 6/" ED2IN # change from bare ground to .css/.pss run
-        sed -i "s,SFILIN   = .*,SFILIN   = '${file_base}/init_files/${finit[FILE]}',g" ED2IN # set initial file path to the SAS spin folder
+    sed -i "s/NL%RUNTYPE  = .*/NL%RUNTYPE  = 'INITIAL'/" ED2IN # change from bare ground to .css/.pss run
+    sed -i "s/NL%IED_INIT_MODE   = .*/NL%IED_INIT_MODE   = 6/" ED2IN # change from bare ground to .css/.pss run
+    sed -i "s,SFILIN   = .*,SFILIN   = '${file_base}/init_files/${finit[FILE]}',g" ED2IN # set initial file path to the SAS spin folder
 
-        sed -i "s/NL%IYEARA   = .*/NL%IYEARA   = ${startyear}/" ED2IN # Set first year
-        sed -i "s/NL%IMONTHA  = .*/NL%IMONTHA  = 06/" ED2IN # Set first month
-        sed -i "s/NL%IDATEA   = .*/NL%IDATEA   = 01/" ED2IN # Set first day
+    sed -i "s/NL%IYEARA   = .*/NL%IYEARA   = ${startyear}/" ED2IN # Set first year
+    sed -i "s/NL%IMONTHA  = .*/NL%IMONTHA  = 06/" ED2IN # Set first month
+    sed -i "s/NL%IDATEA   = .*/NL%IDATEA   = 01/" ED2IN # Set first day
 		sed -i "s/NL%IYEARH   = .*/NL%IYEARH   = ${startyear}/" ED2IN # Set first year
 		sed -i "s/NL%IMONTHH  = .*/NL%IMONTHH  = 06/" ED2IN # Set first month
 		sed -i "s/NL%IDATEH   = .*/NL%IDATEH   = 01/" ED2IN # Set first day
 
-        sed -i "s/NL%IYEARZ   = .*/NL%IYEARZ   = ${finalyear}/" ED2IN # Set last year
-        sed -i "s/NL%IMONTHZ  = .*/NL%IMONTHZ  = 01/" ED2IN # Set last month
-        sed -i "s/NL%IDATEZ   = .*/NL%IDATEZ   = 01/" ED2IN # Set last day
+    sed -i "s/NL%IYEARZ   = .*/NL%IYEARZ   = ${finalyear}/" ED2IN # Set last year
+    sed -i "s/NL%IMONTHZ  = .*/NL%IMONTHZ  = 01/" ED2IN # Set last month
+    sed -i "s/NL%IDATEZ   = .*/NL%IDATEZ   = 01/" ED2IN # Set last day
 
 		sed -i "s,NL%ED_MET_DRIVER_DB = .*,NL%ED_MET_DRIVER_DB = '${met_path}/ED_MET_DRIVER_HEADER',g" ED2IN # set the file path
 
 		sed -i "s,NL%FFILOUT = .*,NL%FFILOUT = ${new_analy},g" ED2IN # set the file path
 		sed -i "s,NL%SFILOUT = .*,NL%SFILOUT = ${new_histo},g" ED2IN # set the file path
 
-        sed -i "s/NL%METCYC1     =.*/NL%METCYC1     = $metfirst/" ED2IN # Set met start
-        sed -i "s/NL%METCYCF     =.*/NL%METCYCF     = $metlast/" ED2IN # Set met end
+    sed -i "s/NL%METCYC1     =.*/NL%METCYC1     = $metfirst/" ED2IN # Set met start
+    sed -i "s/NL%METCYCF     =.*/NL%METCYCF     = $metlast/" ED2IN # Set met end
 
-	    #sed -i "s/POI_LAT  =.*/POI_LAT  = $lat_now/" ED2IN # set site latitude
-        #sed -i "s/POI_LON  =.*/POI_LON  = $lon_now/" ED2IN # set site longitude
-        sed -i "s/SLXCLAY =.*/SLXCLAY = ${clay[FILE]}/" ED2IN # set fraction soil clay
-        sed -i "s/SLXSAND =.*/SLXSAND = ${sand[FILE]}/" ED2IN # set fraction soil sand
-        sed -i "s/NZG =.*/NZG = $NZG/" ED2IN # set number soil layers
-        sed -i "s/SLZ     =.*/SLZ = $SLZ/" ED2IN # set soil depths
-        sed -i "s/SLMSTR  =.*/SLMSTR = $SLMSTR/" ED2IN # set initial soil moisture
-        sed -i "s/STGOFF  =.*/STGOFF = $STGOFF/" ED2IN # set initial soil temp offset
+    #sed -i "s/POI_LAT  =.*/POI_LAT  = $lat_now/" ED2IN # set site latitude
+    #sed -i "s/POI_LON  =.*/POI_LON  = $lon_now/" ED2IN # set site longitude
+    sed -i "s/SLXCLAY =.*/SLXCLAY = ${clay[FILE]}/" ED2IN # set fraction soil clay
+    sed -i "s/SLXSAND =.*/SLXSAND = ${sand[FILE]}/" ED2IN # set fraction soil sand
+    sed -i "s/NZG =.*/NZG = $NZG/" ED2IN # set number soil layers
+    sed -i "s/SLZ     =.*/SLZ = $SLZ/" ED2IN # set soil depths
+    sed -i "s/SLMSTR  =.*/SLMSTR = $SLMSTR/" ED2IN # set initial soil moisture
+    sed -i "s/STGOFF  =.*/STGOFF = $STGOFF/" ED2IN # set initial soil temp offset
 
-        #sed -i "s/NL%INCLUDE_THESE_PFT =.*/NL%INCLUDE_THESE_PFT = $pft_now/" ED2IN # set possible PFTs
-        #sed -i "s/NL%IEDCNFGF   =.*/NL%IEDCNFGF   = 'PFTParams_MANDIFORE_${SITE}.xml'/" ED2IN # set possible PFTs
+    #sed -i "s/NL%INCLUDE_THESE_PFT =.*/NL%INCLUDE_THESE_PFT = $pft_now/" ED2IN # set possible PFTs
+    #sed -i "s/NL%IEDCNFGF   =.*/NL%IEDCNFGF   = 'PFTParams_MANDIFORE_${SITE}.xml'/" ED2IN # set possible PFTs
 
-	    # sed -i "s/NL%SM_FIRE         = .*/NL%SM_FIRE         = ${fire[FILE]}/" ED2IN # adjust fire threshold
-	    # sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
-	    #if [[ ${ianth[FILE]} == 2 ]]; then
-	    	mgmt_path="${lu_dir}/${mgmt[FILE]}"
-	    	sed -i "s,LANDUSEFILE,${mgmt_path},g" ED2IN # set the file path
-	    #fi
-	    	    
-	    # If we're turning of CO2, that requires using a met header that SHOULD use a constant CO2 of 380 ppm
-	    if [[ ${co2[FILE]} == 380 ]]; then
-	    	sed -i "s,NL%ED_MET_DRIVER_DB = .*,NL%ED_MET_DRIVER_DB = '${met_path}/ED_MET_DRIVER_HEADER_staticCO2',g" ED2IN # set the file path
-	    fi
+    # sed -i "s/NL%SM_FIRE         = .*/NL%SM_FIRE         = ${fire[FILE]}/" ED2IN # adjust fire threshold
+    # sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
+    #if [[ ${ianth[FILE]} == 2 ]]; then
+  	mgmt_path="${lu_dir}/${mgmt[FILE]}"
+  	sed -i "s,LANDUSEFILE,${mgmt_path},g" ED2IN # set the file path
+    #fi
 
-	popd	
+    # If we're turning of CO2, that requires using a met header that SHOULD use a constant CO2 of 380 ppm
+    if [[ ${co2[FILE]} == 380 ]]; then
+    	sed -i "s,NL%ED_MET_DRIVER_DB = .*,NL%ED_MET_DRIVER_DB = '${met_path}/ED_MET_DRIVER_HEADER_staticCO2',g" ED2IN # set the file path
+    fi
+
+	popd
 
 	chmod -R a+rwx ${file_path}
 
 done
 
 # git stash # stash the pulled file so we don't get confilcts
-

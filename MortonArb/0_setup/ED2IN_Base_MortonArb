@@ -160,7 +160,7 @@ $ED_NL
     NL%N_POI    =    1
     NL%POI_LAT  =  41.82
     NL%POI_LON  = -88.04
-    NL%POI_RES  = 0.125   
+    NL%POI_RES  = 0.125
    !---------------------------------------------------------------------------------------!
 
 
@@ -205,7 +205,7 @@ $ED_NL
    NL%IQOUTPUT  =  0
    NL%IYOUTPUT  =  3
    NL%ITOUTPUT  =  0
-   NL%IOOUTPUT  =  0   
+   NL%IOOUTPUT  =  0
    NL%ISOUTPUT  =  3
    !---------------------------------------------------------------------------------------!
 
@@ -229,7 +229,7 @@ $ED_NL
    ! f. And it will be entirely your fault.                                                !
    !                                                                                       !
    !     Either way, polygon-level averages are always included, and so are the instan-    !
-   ! taneous site-, patch-, and cohort-level variables needed for resuming the run.        ! 
+   ! taneous site-, patch-, and cohort-level variables needed for resuming the run.        !
    !                                                                                       !
    ! IADD_SITE_MEANS   --  Add site-level averages to the output   (0 = no; 1 = yes)       !
    ! IADD_PATCH_MEANS  --  Add patch-level averages to the output  (0 = no; 1 = yes)       !
@@ -339,7 +339,7 @@ $ED_NL
    !        (including a mix of regional and POI runs, each file ending at a different     !
    !        date).  This will not check date nor grid structure, it will simply read all   !
    !        polygons and match the nearest neighbour to each polygon of your run.  SFILIN  !
-   !        must have the directory common to all history files that are sought to be used,! 
+   !        must have the directory common to all history files that are sought to be used,!
    !        up to the last character the files have in common.  For example if your files  !
    !        are                                                                            !
    !        /mypath/P0001-S-2000-01-01-000000-g01.h5,                                      !
@@ -386,7 +386,7 @@ $ED_NL
    !              path+prefix will be used, as the history for every grid must have come   !
    !              from the same simulation.                                                !
    !---------------------------------------------------------------------------------------!
-   NL%SFILIN   = '/mnt/data/crollinson/MANDIFORE_modeling/init_files/MortonArb_EastWoods_All'
+   NL%SFILIN   = '/mnt/data/crollinson/MANDIFORE_modeling/MortonArb/init_files/MortonArb_EastWoods_All'
    !---------------------------------------------------------------------------------------!
 
 
@@ -414,7 +414,7 @@ $ED_NL
    !  NZS    - maximum number of snow/water pounding layers.  This is used only for        !
    !           snow, if only liquid water is standing, the water will be all collapsed     !
    !           into a single layer, so if you are running for places where it doesn't snow !
-   !           a lot, leave this set to 1.  One value for all grids.                       ! 
+   !           a lot, leave this set to 1.  One value for all grids.                       !
    !---------------------------------------------------------------------------------------!
    NL%NZG = 8
    NL%NZS = 4
@@ -781,7 +781,7 @@ $ED_NL
    !  New scheme: plants shed their leaves once a 10-day running average of available      !
    !              water becomes less than a critical value.                                !
    !---------------------------------------------------------------------------------------!
-   NL%IPHEN_SCHEME    = 0     
+   NL%IPHEN_SCHEME    = 0
    !---------------------------------------------------------------------------------------!
 
 
@@ -941,7 +941,7 @@ $ED_NL
 
    !---------------------------------------------------------------------------------------!
    !  PLANT_HYDRO_SCHEME -- Whether to track plant hydrodynamics.                          !
-   !                        0. No hydraulics (leaf and wood are always saturated)          ! 
+   !                        0. No hydraulics (leaf and wood are always saturated)          !
    !                        1. Track plant hydrodynamics using parameters from             !
    !                           Christofferson et al. 2016 GMD                              !
    !                        2. Track plant hydrodynamics using parameters from             !
@@ -1022,7 +1022,7 @@ $ED_NL
    !                1         DDMORT_CONST         1 - DDMORT_CONST                        !
    !           ------------ = ------------------ + ------------------                      !
    !           CBR - CBR_SS   CBR_LIGHT - CBR_SS   CBR_MOIST - CBR_SS                      !
-   !                                                                                       ! 
+   !                                                                                       !
    !---------------------------------------------------------------------------------------!
    NL%IDDMORT_SCHEME  = 1
    NL%DDMORT_CONST    = 0.9
@@ -1180,7 +1180,7 @@ $ED_NL
    !---------------------------------------------------------------------------------------!
    NL%INCLUDE_FIRE    = 0
    NL%FIRE_PARAMETER  = 0.5
-   NL%SM_FIRE         = 0.05 ! 
+   NL%SM_FIRE         = 0.05 !
    !---------------------------------------------------------------------------------------!
 
 
@@ -1333,7 +1333,7 @@ $ED_NL
    !                  1.  Add the PFT in the INCLUDE_THESE_PFT list                        !
    !                  2.  Ignore the cohort                                                !
    !---------------------------------------------------------------------------------------!
-   NL%PFT_1ST_CHECK = 1 
+   NL%PFT_1ST_CHECK = 1
    !---------------------------------------------------------------------------------------!
 
 
