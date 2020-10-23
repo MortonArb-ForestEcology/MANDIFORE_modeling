@@ -50,11 +50,9 @@ rm(list=ls())
 
 # wd.base <- "/home/crollinson/met_ensemble/"
 # wd.base <- "~/Desktop/Research/met_ensembles/"
-wd.base = "../met_raw"
 
 # setwd(wd.base)
 
-dat.base <- file.path(wd.base, "data")
 path.pecan <- "../../../pecan/"
 # path.pecan <- "/home/crollinson/pecan"
 # path.pecan <- "~/Desktop/Research/pecan"
@@ -65,12 +63,15 @@ site.name= "MortonArb"
 site.lat = 41.82
 site.lon = -88.04
 
+wd.base = file.path("..", paste0("met_raw", vers))
+# dat.base <- file.path(wd.base, "data")
+
 # 
 
 path.train <- file.path(wd.base, "subdaily", site.name, "NLDAS")
 path.lm <- file.path(wd.base, "mods.tdm")
-path.in <- file.path(wd.base, "daily", site.name)
-path.out <- file.path(wd.base, "subdaily", site.name)
+path.in <- file.path(wd.base, "daily_bc", site.name)
+path.out <- file.path(wd.base, "subdaily_tdm", site.name)
 # path.in <- file.path(dat.base, "met_ensembles", paste0(site.name, vers), "day/ensembles")
 # path.out <- file.path(dat.base, "met_ensembles", paste0(site.name, vers), "1hr/ensembles")
 
@@ -78,7 +79,8 @@ scenarios <- c("rcp45", "rcp85")
 GCM.list <- dir(path.in)
 
 # Get rid of known problematic ensemble members
-GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC", "IPSL-CM5A-MR")]
+# GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC", "IPSL-CM5A-MR")]
+GCM.list <- GCM.list[!GCM.list %in% c("bias_correct_qaqc")]
 
 ens.hr  <- 1 # Number of hourly ensemble members to create
 n.day <- 1 # Number of daily ensemble members to process
@@ -113,19 +115,22 @@ for(GCM in GCM.list){
   # GCM="Ameriflux"
   # tic()
   # Set the directory where the output is & load the file
-  path.gcm <- file.path(path.in, GCM)
+  # path.gcm <- file.path(path.in, GCM)
   
+  # gcm.splt <- strsplit(GCM, "_")[[1]]
+  # MOD=gcm.splt[1]
+  # SCEN=gcm.splt[2]
   
   # Doing this one ensemble member at at time
   # Figure out what's been done already
-  for(SCEN in scenarios){
-      out.scen <- file.path(path.out, GCM, SCEN)
-      predict_subdaily_met(outfolder=out.scen, in.path=file.path(path.in, GCM, SCEN),
+  # for(SCEN in scenarios){
+      # out.scen <- file.path(path.out, GCM, SCEN)
+      predict_subdaily_met(outfolder=path.out, in.path=file.path(path.in, GCM),
                            in.prefix=GCM, lm.models.base=path.lm,
                            path.train=path.train, direction.filter="forward", yrs.predict=yrs.sim,
                            ens.labs = "tdm", resids = FALSE,
-                           adjust.pr=10,
+                           adjust.pr=1,
                            overwrite = TRUE, seed=seed.vec[1], print.progress = TRUE)
-  }
+  # }
 }
 # -----------------------------------

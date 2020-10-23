@@ -28,20 +28,24 @@ library(stringr)
 
 # Ensemble directories
 # wd.base <- "/home/crollinson/met_ensemble"
-wd.base <- "../met_raw/subdaily/MortonArb/"
-# site.name = "MortonArb"
-# vers=".v1"
+site.name = "MortonArb"
+vers=".v1"
 site.lat  = 45.54127
 site.lon  = -95.5313
 
-path.dat <- file.path(wd.base)
-path.out <- file.path(wd.base, "figures_qaqc")
+wd.base <- paste0("..", paste0("met_raw", vers))
+path.dat <- file.path(wd.base, "subdaily_tdm", site.name)
+path.out <- file.path(wd.base, "met_tdm_qaqc")
 
 dir.create(path.out, recursive=T, showWarnings = F)
 # GCM.list <- c("bcc-csm1-1", "CCSM4", "MIROC-ESM", "MPI-ESM-P")
 # GCM.list <- c("bcc-csm1-1", "CCSM4", "MIROC-ESM")
 GCM.list <- dir(path.dat)
-GCM.list <- GCM.list[!GCM.list %in% c("NLDAS", "figures_qaqc")]
+# GCM.list <- GCM.list[!GCM.list %in% c("NLDAS", "figures_qaqc")]
+
+mods.df <- data.frame(matrix(unlist(strsplit(GCM.list, "_")), byrow = T, nrow=length(GCM.list)))
+names(mods.df) <- c("model", "scenario", "type")
+
 
 scen.all <- c("rcp45", "rcp85")
 
@@ -75,20 +79,22 @@ vars.short <- c("tair", "precip", "swdown", "lwdown", "press", "qair", "wind")
 #   we can compare at different levels
 # - We want to double check on both the diurnal cycles as well as making sure we didn't break the day & year cycles
 # -----------------------------------
-all.yr <- data.frame(model=as.factor(rep(GCM.list, each=length(yrs.all)*length(scen.all)*(length(vars.CF)+2))),
+mods.all <- unique(mods.df$model)
+scen.all <- unique(mods.df$scenario)
+all.yr <- data.frame(model=as.factor(rep(mods.all, each=length(yrs.all)*length(scen.all)*(length(vars.CF)+2))),
                      scenario=as.factor(rep(scen.all, each=length(yrs.all)*(length(vars.CF)+2))),
                      var=as.factor(rep(c("air_temperature_maximum", "air_temperature_minimum", vars.CF), each=length(yrs.all))),
-                     year=rep(yrs.all, length.out=length(scen.all)*length(GCM.list)*(length(vars.CF)+2)*length(yrs.all)))
+                     year=rep(yrs.all, length.out=length(scen.all)*length(mods.all)*(length(vars.CF)+2)*length(yrs.all)))
 all.yr[,c("mean", "min", "max")] <- NA
 
 
-all.day <- data.frame(model=as.factor(rep(GCM.list, each=length(doy.all)*length(scen.all)*(length(vars.CF)+2))),
+all.day <- data.frame(model=as.factor(rep(mods.all, each=length(doy.all)*length(scen.all)*(length(vars.CF)+2))),
                       scenario=as.factor(rep(scen.all, each=length(doy.all)*(length(vars.CF)+2))),
                       var=as.factor(rep(c("air_temperature_maximum", "air_temperature_minimum", vars.CF), each=length(doy.all))),
-                      yday=rep(1:365, length.out=length(scen.all)*length(GCM.list)*(length(vars.CF)+2)*length(doy.all)))
+                      yday=rep(1:365, length.out=length(scen.all)*length(mods.all)*(length(vars.CF)+2)*length(doy.all)))
 all.day[,c("mean", "min", "max")] <- NA
 
-all.hr <- data.frame(model=as.factor(rep(GCM.list, each=24*nrow(days.graph)*length(scen.all)*length(vars.CF)*length(yrs.check))),
+all.hr <- data.frame(model=as.factor(rep(mods.all, each=24*nrow(days.graph)*length(scen.all)*length(vars.CF)*length(yrs.check))),
                      scenario=as.factor(rep(scen.all, each=24*nrow(days.graph)*length(vars.CF)*length(yrs.check))),
                      var=as.factor(rep(vars.CF, each=24*nrow(days.graph)*length(yrs.check))),
                      year=rep(yrs.check, each=24*nrow(days.graph)),
@@ -103,14 +109,16 @@ summary(all.hr[all.hr$season=="fall",])
 # all.day[,c("mean", "min", "max")] <- NA
 
 
-for(GCM in GCM.list){
-  print(paste0("Processing Model: ", GCM))
+for(i in 1:length(GCM.list)){
+  print(paste0("Processing Model: ", GCM.list[i]))
+  GCM=mods.df$model[i]
+  SCEN=mods.df$scenario[i]
 
-  scenarios <- dir(file.path(path.dat, GCM))
-  for(SCEN in scenarios){
-    print(paste0("     Scenario: ", SCEN))
+  # scenarios <- dir(file.path(path.dat, GCM))
+  # for(SCEN in scenarios){
+    # print(paste0("     Scenario: ", SCEN))
     
-    ens.now <- dir(file.path(path.dat, GCM, SCEN))
+    # ens.now <- dir(file.path(path.dat, GCM.list[i]))
     
     mod.array <- array(dim=c(365, length(yrs.all), length(vars.CF)+2))
     dimnames(mod.array) <- list(day=1:365, year=yrs.all, var=c("air_temperature_minimum", "air_temperature_maximum", vars.CF))
@@ -118,10 +126,10 @@ for(GCM in GCM.list){
     for(YR in yrs.all){
       # nday <- ifelse(lubridate::leap_year(yr), 366, 365)
       
-      nc.now <- dir(file.path(path.dat, GCM, SCEN, ens.now), paste(YR))
+      nc.now <- dir(file.path(path.dat, GCM.list[i]), paste(YR))
       if(length(nc.now)==0) next 
       
-      ncT <- ncdf4::nc_open(file.path(path.dat, GCM, SCEN, ens.now, nc.now))
+      ncT <- ncdf4::nc_open(file.path(path.dat, GCM.list[i], nc.now))
       time.nc <- ncdf4::ncvar_get(ncT, "time")
       
       dat.temp <- data.frame(GCM=GCM, scenario=SCEN, year = YR, yday = rep(1:365, each=24), hour=rep(seq(0.5, 24, by=1)))
@@ -130,7 +138,7 @@ for(GCM in GCM.list){
       for(VAR in vars.CF){
         if(VAR %in% names(ncT$var)){
 
-          if(GCM=="GFDL_CM3"){
+          if(GCM=="GFDL-CM3"){
             tmp <- ncdf4::ncvar_get(ncT, VAR, start=c(1,1,1), count=c(1,1,365*8))
             dat.temp[,VAR] <- rep(tmp, each=3)
           } else {
@@ -143,7 +151,7 @@ for(GCM in GCM.list){
           # Calculate wind speed from ew/nw using pythagorean theorem
           wnd <- sqrt(ew^2 + nw^2)
           
-          if(GCM=="GFDL_CM3"){
+          if(GCM=="GFDL-CM3"){
             dat.temp[,VAR] <- rep(wnd, each=8)
           } else {
             dat.temp[,VAR] <- wnd 
@@ -210,7 +218,7 @@ for(GCM in GCM.list){
       all.day$min[ind.day] <- mod.day[,VAR,"min"]
       all.day$max[ind.day] <- mod.day[,VAR,"max"]
     }
-  } # End Scenario Loop
+  # } # End Scenario Loop
 } # End GCM loop
 
 summary(all.yr)
@@ -225,7 +233,7 @@ summary(all.hr[is.na(all.hr$value),])
 # -----------------------------------
 
 pdf(file.path(path.out, "CMIP5_TDM_year_byModel.pdf"), height=11, width=8.5)
-for(GCM in GCM.list){
+for(GCM in unique(all.yr$model)){
   print(
     ggplot(data=all.yr[all.yr$model==GCM,]) +
       ggtitle(GCM) +
@@ -238,7 +246,7 @@ for(GCM in GCM.list){
 dev.off()
 
 pdf(file.path(path.out, "CMIP5_TDM_day_byModel.pdf"), height=11, width=8.5)
-for(GCM in GCM.list){
+for(GCM in unique(all.day$model)){
   print(
     ggplot(data=all.day[all.day$model==GCM,]) +
       ggtitle(GCM) +

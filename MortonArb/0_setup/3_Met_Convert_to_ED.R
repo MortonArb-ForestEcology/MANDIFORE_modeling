@@ -13,33 +13,36 @@ source(file.path(path.pecan, "models/ed/R/check_ed_metheader.R"))
 source("pecan_met_conversion/met2model.ED2.R")
 
 
-met.base="/mnt/data/crollinson/MANDIFORE_modeling/MortonArb/met_ed"
-in.base="../met_raw/subdaily/MortonArb"
-outfolder="../met_ed/"
 
 SITE=site.name= "MortonArb"
+vers=".v2"
 site.lat = 41.82
 site.lon = -88.04
 
+met.base=file.path("/mnt/data/crollinson/MANDIFORE_modeling/MortonArb", paste0("met_ed", vers))
+in.base=file.path("..", paste0("met_raw", vers), "subdaily_tdm", SITE)
+outfolder=file.path("..",paste0("met_ed", vers))
+
 if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
 
-GCMs <- dir(file.path(in.base))
-GCMs <- GCMs[!GCMs %in% c("NLDAS", "figures_qaqc", "GFDL-CM3")]
+GCM.list <- dir(file.path(in.base))
+# GCMs <- GCMs[!GCMs %in% c("NLDAS", "figures_qaqc", "GFDL-CM3")]
 
 # NEED TO FIX LEAP YEAR -- IT KEEPS SKIPPING!
-for(GCM in GCMs){
-  rcp.avail <- dir(file.path(in.base, GCM))
-  for(RCP in rcp.avail){
-    path.in <- file.path(in.base, GCM, RCP, paste0(GCM, ".tdm"))
-    gcm.lab <- paste(GCM, RCP, sep="_")
+for(GCM in GCM.list){
+  # rcp.avail <- dir(file.path(in.base, GCM))
+  # for(RCP in rcp.avail){
+    path.in <- file.path(in.base, GCM)
+    # gcm.lab <- paste(GCM, RCP, sep="_")
+    # gcm.lab <- GCM
     
     met2model.ED2(in.path=path.in, 
-                  in.prefix=paste0(GCM, ".tdm"), 
-                  outfolder=file.path(outfolder, SITE, gcm.lab), 
-                  header_folder = file.path(met.base, SITE, gcm.lab),
+                  in.prefix=GCM, 
+                  outfolder=file.path(outfolder, SITE, GCM), 
+                  header_folder = file.path(met.base, SITE, GCM),
                   start_date="2006-01-01", 
                   end_date="2099-12-31",
-                  leap_year = TRUE, overwrite=F)
+                  leap_year = TRUE, overwrite=T)
     
   }
 }

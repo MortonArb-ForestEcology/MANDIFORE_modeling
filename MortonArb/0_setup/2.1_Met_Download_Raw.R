@@ -48,7 +48,7 @@ source(file.path(path.pecan, "modules/data.atmosphere/R", "extract_local_NLDAS.R
 ldas.type = "NLDAS"
 path.nldas = "/Volumes/Celtis/Meteorology/LDAS/NLDAS_FORA0125_H.002/netcdf/"
 extract.local.NLDAS(outfolder=file.path(path.out, "subdaily", site.name, "NLDAS"), in.path=path.nldas, 
-                    start_date="2017-01-01", end_date="2019-12-31", 
+                    start_date="1980-01-01", end_date="2019-12-31", 
                     site_id=site.name, lat.in=site.lat, lon.in=site.lon)
 # -------------------------------
 

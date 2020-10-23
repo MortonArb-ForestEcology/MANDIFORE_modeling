@@ -32,3 +32,4 @@ MortonArb/met_raw
 MortonArb/met_problems.csv
 *.1-opt
 met_raw*
+met_ed*
