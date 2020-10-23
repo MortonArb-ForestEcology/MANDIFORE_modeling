@@ -26,7 +26,7 @@ outfolder=file.path("..",paste0("met_ed", vers))
 if(!dir.exists(outfolder)) dir.create(outfolder, recursive = T)
 
 GCM.list <- dir(file.path(in.base))
-# GCMs <- GCMs[!GCMs %in% c("NLDAS", "figures_qaqc", "GFDL-CM3")]
+GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-0_rcp45_bc.tdm")]
 
 # NEED TO FIX LEAP YEAR -- IT KEEPS SKIPPING!
 for(GCM in GCM.list){
@@ -38,7 +38,7 @@ for(GCM in GCM.list){
     GCM.pref <- dir(path.in)[1]
     GCM.pref <- substr(GCM.pref, 1, nchar(GCM.pref)-8)
     
-    leap <- ifelse(substr(GCM, 1, 7)=="GCM-CM3", FALSE, TRUE)
+    # leap <- ifelse(substr(GCM, 1, 7)=="GCM-CM3", FALSE, TRUE)
     
     met2model.ED2(in.path=path.in, 
                   in.prefix=GCM.pref, 
@@ -46,7 +46,7 @@ for(GCM in GCM.list){
                   header_folder = file.path(met.base, SITE, GCM),
                   start_date="2006-01-01", 
                   end_date="2099-12-31",
-                  leap_year = leap, overwrite=F)
+                  leap_year = FALSE, overwrite=T)
     
   # } # End RCP loop
 } # End GCM loop
