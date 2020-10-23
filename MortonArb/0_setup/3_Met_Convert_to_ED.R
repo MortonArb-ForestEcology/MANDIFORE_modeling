@@ -38,13 +38,15 @@ for(GCM in GCM.list){
     GCM.pref <- dir(path.in)[1]
     GCM.pref <- substr(GCM.pref, 1, nchar(GCM.pref)-8)
     
+    leap <- ifelse(substr(GCM, 1, 7)=="GCM-CM3", FALSE, TRUE)
+    
     met2model.ED2(in.path=path.in, 
                   in.prefix=GCM.pref, 
                   outfolder=file.path(outfolder, SITE, GCM), 
                   header_folder = file.path(met.base, SITE, GCM),
                   start_date="2006-01-01", 
                   end_date="2099-12-31",
-                  leap_year = TRUE, overwrite=T)
+                  leap_year = leap, overwrite=F)
     
   # } # End RCP loop
 } # End GCM loop
