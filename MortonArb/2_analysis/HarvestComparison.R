@@ -3,7 +3,7 @@ library(ggplot2)
 
 path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
 
-dat.base <- "../1_runs/MortonArb_ed_runs.v1/"
+dat.base <- "../1_runs/MortonArb_ed_runs.v2/"
 runs.done <- dir(dat.base, "statCO2")
 
 runs.all <- data.frame()
@@ -213,7 +213,7 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
   geom_line(aes(x=year, y=AGB.tot, color=Management), size=1.5) +
-  scale_y_continuous(name="Aboveground Biomass (kgC/m2)") +
+  scale_y_continuous(name="Aboveground Biomass (kgC/m2)", limits=c(0, max(runs.yr$AGB.tot, na.rm=T))) +
   ggtitle("Total Aboveground Biomass") +
   theme_bw()
 dev.off()
