@@ -222,7 +222,7 @@ png(file.path(path.figs, "Explore_BA_by_PFT_Time.png"), height=6, width=8, units
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
-  geom_line(aes(x=year, y=BA.wt, color=PFT)) +
+  geom_line(aes(x=year, y=BA.wt, color=PFT, linetype=RCP)) +
   scale_y_continuous(name="Basal Area (cm2/m2)") +
   ggtitle("Basal Area by PFT") +
   theme_bw()
@@ -232,7 +232,7 @@ png(file.path(path.figs, "Explore_BA_by_PFT_Time_v2.png"), height=6, width=8, un
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
-  geom_line(aes(x=year, y=BA.wt, color=Management, linetype=CO2)) +
+  geom_line(aes(x=year, y=BA.wt, color=Management, linetype=RCP)) +
   scale_y_continuous(name="Basal Area (cm2/m2)") +
   ggtitle("Basal Area by PFT") +
   theme_bw()
@@ -240,9 +240,9 @@ dev.off()
 
 png(file.path(path.figs, "Explore_Density_by_PFT_Time_BigTrees.png"), height=6, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
-  facet_grid(RCP ~ Management) +
+  facet_grid(GCM ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
-  geom_line(aes(x=year, y=Density.g45, color=PFT, linetype=CO2))+
+  geom_line(aes(x=year, y=Density.g45, color=PFT, linetype=RCP))+
   scale_y_continuous(name="Stem Density (stems/m2)", limits=c(0, max(runs.yr$Density.g45)), expand=c(0,0)) +
   ggtitle("Density Tress >45 cm DBH by PFT") +
   theme_bw()
@@ -252,7 +252,7 @@ png(file.path(path.figs, "Explore_Density_by_PFT_Time_BigTrees_v2.png"), height=
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
-  geom_line(aes(x=year, y=Density.g45, color=Management, linetype=CO2)) +
+  geom_line(aes(x=year, y=Density.g45, color=Management, linetype=RCP)) +
   scale_y_continuous(name="Stem Density (stems/m2)", limits=c(0, max(runs.yr$Density.g45)), expand=c(0,0)) +
   ggtitle("Density Tress >45 cm DBH by PFT") +
   theme_bw()
@@ -264,7 +264,7 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
   geom_line(aes(x=year, y=Density.sap,
-                color=Management, linetype=CO2))+
+                color=Management, linetype=RCP))+
   scale_y_continuous(name="Stem Density (stems/m2)", limits=c(0, max(runs.yr$Density.sap)), expand=c(0,0)) +
   ggtitle("Density Saplings 1-10 cm DBH by PFT") +
   theme_bw()
@@ -275,7 +275,7 @@ png(file.path(path.figs, "Explore_AGB_PFT10_Time.png"), height=6, width=8, units
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
-  geom_line(aes(x=year, y=AGB.wt, color=Management, linetype=CO2), size=1.5) +
+  geom_line(aes(x=year, y=AGB.wt, color=Management, linetype=RCP), size=1.5) +
   scale_y_continuous(name="Aboveground Biomass (kgC/m2)") +
   ggtitle("Oak Aboveground Biomass (PFT 10)") +
   theme_bw()
