@@ -152,7 +152,7 @@ write.csv(runs.yr, file.path(path.google, "output", "Summary_PFTs_Site_Year.csv"
 path.figs <- file.path(path.google, "figures/ensemble/explore")
 # dir.exists(path.figs)
 
-png(file.path(path.figs, "Explore_AGB_by_PFT_Time.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_AGB_by_PFT_Time.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[,]) +
   facet_grid(GCM ~ Management) +
   # facet_wrap( ~ Management) +
@@ -164,7 +164,7 @@ ggplot(data=runs.yr[,]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_AGB_by_PFT_Time_v2.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_AGB_by_PFT_Time_v2.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[,]) +
   facet_grid(GCM ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -175,7 +175,7 @@ ggplot(data=runs.yr[,]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_Stress_by_PFT_Time_All.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Stress_by_PFT_Time_All.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[,]) +
   facet_grid(GCM ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -186,7 +186,7 @@ ggplot(data=runs.yr[,]) +
   theme_bw() 
 dev.off()
 
-png(file.path(path.figs, "Explore_Stress_by_PFT_Time_All_v2.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Stress_by_PFT_Time_All_v2.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[,]) +
   facet_grid(GCM ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -197,7 +197,7 @@ ggplot(data=runs.yr[,]) +
   theme_bw() 
 dev.off()
 
-png(file.path(path.figs, "Explore_Stress_by_PFT_Time_BigTrees.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Stress_by_PFT_Time_BigTrees.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[,]) +
   facet_grid(GCM ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -208,7 +208,7 @@ ggplot(data=runs.yr[,]) +
   theme_bw() 
 dev.off()
 
-png(file.path(path.figs, "Explore_AGB_Total_Time.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_AGB_Total_Time.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -218,7 +218,7 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_BA_by_PFT_Time.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_BA_by_PFT_Time.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -228,7 +228,7 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_BA_by_PFT_Time_v2.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_BA_by_PFT_Time_v2.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -238,7 +238,7 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_Density_by_PFT_Time_BigTrees.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Density_by_PFT_Time_BigTrees.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -248,7 +248,7 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_Density_by_PFT_Time_BigTrees_v2.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Density_by_PFT_Time_BigTrees_v2.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -259,7 +259,7 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
 dev.off()
 
 
-png(file.path(path.figs, "Explore_Density_by_PFT_Time_SmallTrees.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Density_by_PFT_Time_SmallTrees.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
   facet_grid(GCM ~ PFT) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -271,7 +271,7 @@ ggplot(data=runs.yr[runs.yr$PFT!="5",]) +
 dev.off()
 
   
-png(file.path(path.figs, "Explore_AGB_PFT10_Time.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_AGB_PFT10_Time.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -281,7 +281,7 @@ ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_BA_PFT10_Time.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_BA_PFT10_Time.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -291,7 +291,7 @@ ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_PropBA_PFT10_Time.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_PropBA_PFT10_Time.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -301,7 +301,7 @@ ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_Stress_PFT10_Time_All.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Stress_PFT10_Time_All.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -312,7 +312,7 @@ ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
 dev.off()
 
 
-png(file.path(path.figs, "Explore_Stress_PFT10_Time_BigTrees.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Stress_PFT10_Time_BigTrees.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
@@ -322,7 +322,7 @@ ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "Explore_Stress_PFT10_Time_SmallTrees.png"), height=6, width=8, units="in", res=120)
+png(file.path(path.figs, "Explore_Stress_PFT10_Time_SmallTrees.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   facet_grid(GCM ~ RCP) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
