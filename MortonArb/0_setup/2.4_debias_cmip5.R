@@ -43,7 +43,7 @@ library(lubridate)
 path.pecan <- "~/Desktop/Research/pecan"
 
 # Defining a site name -- this can go into a function later
-vers=".v2"
+vers=".v3"
 site.name= "MortonArb"
 site.lat = 41.82
 site.lon = -88.04
@@ -92,7 +92,7 @@ for(GCM in GCM.list){
     
     # We're now pulling an ensemble because we've set up the file paths and copied LDAS over 
     # (even though all ensemble members will be identical here)
-    met.out <- align.met(train.path, source.path, yrs.train=2006:2016, yrs.source=NULL, n.ens=n.ens, seed=201708, pair.mems = FALSE, mems.train=paste(ens.ID, ens.mems, sep="_"))
+    met.out <- align.met(train.path, source.path, yrs.train=1980:2019, yrs.source=NULL, n.ens=n.ens, seed=201708, pair.mems = FALSE, mems.train=paste(ens.ID, ens.mems, sep="_"))
     
     # Calculate wind speed if it's not already there
     # Note: right now only set up to do total windspeed and not north/east components
@@ -108,7 +108,8 @@ for(GCM in GCM.list){
                           pair.anoms = FALSE, pair.ens = FALSE, uncert.prop="mean", resids = FALSE, seed=Sys.Date(),
                           outfolder=file.path(out.base), 
                           yrs.save=NULL, ens.name=paste(ens.ID, SCEN, sep="_"), ens.mems=ens.mems, lat.in=site.lat, lon.in=site.lon,
-                          save.diagnostics=TRUE, path.diagnostics=file.path(out.base, "bias_correct_qaqc"),
+                          save.diagnostics=TRUE, path.diagnostics=file.path(out.base, "bias_correct_qaqc"), 
+                          force.sanity=TRUE, sanity.tries=25, sanity.sd=6,
                           parallel = FALSE, n.cores = NULL, overwrite = TRUE, verbose = FALSE) 
     
   }

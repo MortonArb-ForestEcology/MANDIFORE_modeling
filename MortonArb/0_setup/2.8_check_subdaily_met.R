@@ -29,11 +29,11 @@ library(stringr)
 # Ensemble directories
 # wd.base <- "/home/crollinson/met_ensemble"
 site.name = "MortonArb"
-vers=".v1"
+vers=".v3"
 site.lat  = 45.54127
 site.lon  = -95.5313
 
-wd.base <- paste0("..", paste0("met_raw", vers))
+wd.base <- file.path("..", paste0("met_raw", vers))
 path.dat <- file.path(wd.base, "subdaily_tdm", site.name)
 path.out <- file.path(wd.base, "met_tdm_qaqc")
 

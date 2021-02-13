@@ -58,7 +58,7 @@ path.pecan <- "../../../pecan/"
 # path.pecan <- "~/Desktop/Research/pecan"
 
 # Hard-coding numbers for Morton Arb
-vers=".v2"
+vers=".v3"
 site.name= "MortonArb"
 site.lat = 41.82
 site.lon = -88.04

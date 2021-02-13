@@ -3,7 +3,7 @@
 
 
 site.name= "MortonArb"
-vers=".v2"
+vers=".v3"
 site.lat = 41.82
 site.lon = -88.04
 
