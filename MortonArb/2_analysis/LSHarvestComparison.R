@@ -106,3 +106,44 @@ runs.all$Stress.wt.pft.g45 <- runs.all$Stress*runs.all$pft.wt.g45
 summary(runs.all)
 
 write.csv(runs.all, file.path("../data/Summary_PFTs_Cohort_Year.csv"), row.names=F)
+
+runs.yr <- aggregate(runs.all[runs.all$PFT!=5,c("AGB.wt", "BA.wt", "dens.wt", "Stress.wt.pft", "Stress.wt.pft.g45")],
+                     by=runs.all[runs.all$PFT!=5,c("RunID", "GCM", "RCP", "CO2", "Management", "year", "PFT")],
+                     FUN=sum, na.rm=T)
+summary(runs.yr); dim(runs.yr)
+
+
+# Getting the number of 45cm (~18") DBH stems; same as above, but just for big trees
+runs.yr2 <- aggregate(runs.all[runs.all$PFT!=5 & runs.all$DBH>45,c("AGB.wt", "BA.wt", "dens.wt", "Stress.wt.pft.g45")],
+                      by=runs.all[runs.all$PFT!=5 & runs.all$DBH>45,c("RunID", "GCM", "RCP", "CO2", "Management", "year", "PFT")],
+                      FUN=sum)
+names(runs.yr2)[8:11] <- c("AGB.g45", "BA.g45", "Density.g45", "Stress.g45")
+summary(runs.yr2); dim(runs.yr2)
+
+
+# Same as above, but for saplings; including <1 cm is things that die very quickly (seedlings)
+runs.yr3 <- aggregate(runs.all[runs.all$PFT!=5 & runs.all$DBH>1 & runs.all$DBH<10,c("AGB.wt", "BA.wt", "dens.wt", "Stress.wt.pft")],
+                      by=runs.all[runs.all$PFT!=5 & runs.all$DBH>1 & runs.all$DBH<10,c("RunID", "GCM", "RCP", "CO2", "Management", "year", "PFT")],
+                      FUN=sum)
+names(runs.yr3)[8:11] <- c("AGB.sap", "BA.sap", "Density.sap", "Stress.sap")
+summary(runs.yr3); dim(runs.yr2)
+
+runs.yr <- merge(runs.yr, runs.yr2, all.x=T)
+runs.yr[is.na(runs.yr$AGB.g45), c("AGB.g45", "BA.g45", "Density.g45")] <- 0
+runs.yr <- merge(runs.yr, runs.yr3, all.x=T)
+runs.yr[is.na(runs.yr$AGB.sap), c("AGB.sap", "BA.sap", "Density.sap")] <- 0
+summary(runs.yr)
+
+runs.yr.tot <- aggregate(runs.all[runs.all$PFT!=5,c("AGB.wt", "BA.wt", "dens.wt")],
+                         by=runs.all[runs.all$PFT!=5,c("RunID", "GCM", "RCP", "CO2", "Management", "year")],
+                         FUN=sum)
+names(runs.yr.tot)[7:9] <- c("AGB.tot", "BA.tot", "Density.Tot")
+summary(runs.yr.tot)
+
+
+runs.yr <- merge(runs.yr, runs.yr.tot, all.x=T)
+runs.yr$AGB.prop <- runs.yr$AGB.wt/runs.yr$AGB.tot
+runs.yr$BA.prop <- runs.yr$BA.wt/runs.yr$BA.tot
+summary(runs.yr)
+
+write.csv(runs.yr, file.path("../data/Summary_PFTs_Site_Year.csv"), row.names=F)
