@@ -15,7 +15,7 @@ source("pecan_met_conversion/met2model.ED2.R")
 
 
 SITE=site.name= "MortonArb"
-vers=".v2"
+vers=".v3"
 site.lat = 41.82
 site.lon = -88.04
 

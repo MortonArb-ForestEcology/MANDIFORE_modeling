@@ -1,6 +1,6 @@
 # Plot the raw model outputs for assessment
 
-path.out = "../met_raw.v2"
+path.out = "../met_raw.v3"
 
 site.name= "MortonArb"
 site.lat = 41.82

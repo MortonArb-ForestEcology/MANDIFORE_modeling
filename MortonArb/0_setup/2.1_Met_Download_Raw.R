@@ -1,7 +1,7 @@
 # Download/Extract Met Products
 # Note: GFDL needs to be downloaded & stored locally for extraction.  go here: to find/queue up products: https://esgf-node.llnl.gov/search/cmip5/ 
 # path.pecan <- "~/Desktop/Research/pecan/"
-path.out = "../met_raw.v2"
+path.out = "../met_raw.v3"
 
 # Path to pecan repository where functions now live
 # path.pecan <- "~/Desktop/Research/pecan/"

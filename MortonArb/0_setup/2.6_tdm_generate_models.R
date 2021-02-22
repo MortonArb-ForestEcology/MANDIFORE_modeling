@@ -50,7 +50,7 @@ rm(list=ls())
 # setwd(wd.base)
 
 
-vers=".v2"
+vers=".v3"
 site.name= "MortonArb"
 site.lat = 41.82
 site.lon = -88.04

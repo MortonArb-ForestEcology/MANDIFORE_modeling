@@ -36,7 +36,7 @@ library(lubridate)
 path.pecan <- "../../../pecan"
 
 # Defining a site name -- this can go into a function later
-vers=".v2"
+vers=".v3"
 site.name= "MortonArb"
 site.lat = 41.82
 site.lon = -88.04
