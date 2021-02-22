@@ -2,7 +2,7 @@
 
 dat.base <- "../../../../crollinson/MANDIFORE_modeling/MortonArb/1_runs/MortonArb_ed_runs.v2/"
 runs.done <- dir(dat.base, "statCO2")  # This gets a list of model ensemble members for static CO2 only; adding increases in CO2 that will make trees more efficient has been a low priority because ED is unrealistically sensitive
-
+runs.done <- runs.done[-(81:88)]
 runs.all <- data.frame()
 for(RUNID in runs.done){
   run.splt <- stringr::str_split(RUNID, "_")[[1]] # Splits apart the run name to extract different bits of info
@@ -17,6 +17,7 @@ for(RUNID in runs.done){
   
   print("")
   print(RUNID)
+  f.yr
   
   # Setting up a loop to go through each year of model output
   df.run <- data.frame()
