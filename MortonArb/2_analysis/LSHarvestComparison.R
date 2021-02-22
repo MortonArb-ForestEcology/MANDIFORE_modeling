@@ -1,5 +1,5 @@
 #Server Harvest Comparison
-install.packages("car")
+
 dat.base <- "../../../../crollinson/MANDIFORE_modeling/MortonArb/1_runs/MortonArb_ed_runs.v2/"
 runs.done <- dir(dat.base, "statCO2")  # This gets a list of model ensemble members for static CO2 only; adding increases in CO2 that will make trees more efficient has been a low priority because ED is unrealistically sensitive
 runs.done <- runs.done[-(81:88)]
@@ -98,7 +98,7 @@ for(RUNID in runs.done){
 # Clean up: Turning things into factors; unit transformations; prettier labels
 # NOTE: This is output at the cohort level and is very unweildy; probably don't want to make a single csv as we build the data.
 runs.all$Management <- factor(runs.all$Management, levels=c("None", "Under", "Shelter", "Gap"))
-runs.all$CO2 <- car::recode(runs.all$CO2, "'CO2'='dynamic'; 'statCO2'='static'")
+#runs.all$CO2 <- car::recode(runs.all$CO2, "'CO2'='dynamic'; 'statCO2'='static'")
 runs.all$AGB.wt <- runs.all$AGB*runs.all$dens.wt
 runs.all$BA.wt <- runs.all$BA*runs.all$dens.wt
 runs.all$Stress.wt.pft <- runs.all$Stress*runs.all$pft.wt
