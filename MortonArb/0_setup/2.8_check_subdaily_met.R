@@ -29,7 +29,7 @@ library(stringr)
 # Ensemble directories
 # wd.base <- "/home/crollinson/met_ensemble"
 site.name = "MortonArb"
-vers=".v3"
+vers=".v2"
 site.lat  = 45.54127
 site.lon  = -95.5313
 
@@ -225,6 +225,9 @@ summary(all.yr)
 summary(all.day)
 summary(all.hr)
 summary(all.hr[is.na(all.hr$value),])
+
+write.csv(all.yr, file.path(path.out, "CMIP5_TDM_year_byModel.csv"), row.names=F)
+write.csv(all.day, file.path(path.out, "CMIP5_TDM_day_byModel.csv"), row.names=F)
 # -----------------------------------
 
 
