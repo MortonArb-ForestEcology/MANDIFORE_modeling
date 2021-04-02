@@ -32,11 +32,12 @@ clay.weight <- sum(clay*area.weight)
 # Get the 2018 East Woods Inventory tree data:
 # ------------------------------
 path.ew <- "/Volumes/GoogleDrive/My Drive/East Woods"
-path.2018 <- file.path(path.ew, "Inventory 2018/Final Data from AES/Final data (4th round) from AES.10.24.2018")
+path.2018 <- file.path(path.ew, "East Woods Inventory 2018/Final Data from AES/Final data (4th round) from AES.10.24.2018")
 # path.out <- file.path(path.ew, "Inventory 2018/Analyses_Rollinson")
 
 # 2018 Trees
-tree.2018 <- readxl::read_excel(file.path(path.2018, "18-0073 Morton 2018 Spring Veg Data_AES-edits_Oct-22 (1).xlsx"), sheet = "Tree Layer")
+# tree.2018 <- readxl::read_excel("/Volumes/GoogleDrive/My Drive/East Woods/East Woods Inventory 2018/Final Data from AES/Final data (4th round) from AES.10.24.2018/18-0073 Morton 2018 Spring Veg Data_AES-edits_Oct-22.xlsx")
+tree.2018 <- readxl::read_excel(file.path(path.2018, "18-0073 Morton 2018 Spring Veg Data_AES-edits_Oct-22.xlsx"), sheet = "Tree Layer")
 names(tree.2018) <- c("Date", "Sampler", "PlotID", "Spp.Code", "Spp.Name", "DBH", "Canopy", "Decay", "Vigor", "Notes")
 tree.2018$Sampler <- as.factor(tree.2018$Sampler)
 tree.2018$PlotID <- as.factor(tree.2018$PlotID)
@@ -82,7 +83,7 @@ summary(dat.plot)
 
 
 # Add in our management units
-dat.gis <- read.csv(file.path(path.ew, "Inventory 2018/Analyses_Rollinson/data_processed", "point_info_GIS.csv"))
+dat.gis <- read.csv(file.path(path.ew, "East Woods Inventory 2018/Analyses_Rollinson/data_processed", "point_info_GIS.csv"))
 dat.gis$PlotID2 <- dat.gis$PlotID
 dat.gis$PlotID <- as.factor(gsub("-", "", dat.gis$PlotID))
 dat.gis$MgmtUnit <- ifelse(is.na(dat.gis$wooded), "Non-Wooded", 
