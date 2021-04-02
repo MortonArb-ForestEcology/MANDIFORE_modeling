@@ -29,7 +29,7 @@ library(stringr)
 # Ensemble directories
 # wd.base <- "/home/crollinson/met_ensemble"
 site.name = "MortonArb"
-vers=".v2"
+vers=".v3"
 site.lat  = 45.54127
 site.lon  = -95.5313
 
