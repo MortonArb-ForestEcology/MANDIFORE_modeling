@@ -8,23 +8,23 @@ n=4 # 4 = 1 site x 1 management x 1 GCM x 2 rcps x 2 CO2 scenarios
 # Define constants & file paths for the scripts
 file_base=/mnt/data/crollinson/MANDIFORE_modeling/MortonArb # whatever you want the base output file path to be
 EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
-met_base=${file_base}/met_ed.v2/
+met_base=${file_base}/met_ed.v3/
 
 ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_runs/MortonArb_ed_runs.v2 # Where everything will go
+file_dir=${file_base}/1_runs/MortonArb_ed_runs.v3 # Where everything will go
 setup_dir=${file_base}/0_setup # Where some constant setup files are
 site_file=${setup_dir}/MortonArb_CaseStudy_Experiment.csv # # Path to list of ED sites w/ status
 # init_dir=${file_base}/1_spin/ed_spin.v3
 lu_dir=${file_base}/lu_files # Where some constant setup files are
 
 # Want to do a 25-year spin that ends in the year we want to starts
-startyear=2018
+startyear=2006
 finalyear=2100 #
 finalfull=2099
 
 # The range of met years to cycle for the transient spin
 # We're just going to do the first year
-metfirst=2018
+metfirst=2006
 metlast=2099
 
 # Making the file directory if it doesn't already exist
