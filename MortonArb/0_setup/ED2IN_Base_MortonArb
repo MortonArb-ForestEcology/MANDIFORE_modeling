@@ -1504,8 +1504,8 @@ $ED_NL
    NL%ISHUFFLE    = 0
    NL%METCYC1     = 2006
    NL%METCYCF     = 2100
-   NL%IMETAVG     = -1
-   NL%IMETRAD     = 1
+   NL%IMETAVG     = 3
+   NL%IMETRAD     = 0
    NL%INITIAL_CO2 = 380
    !---------------------------------------------------------------------------------------!
 
