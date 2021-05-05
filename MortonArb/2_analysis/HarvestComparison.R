@@ -1,7 +1,8 @@
 # Comparing size distributions between understory and overstory thin attempts
 library(ggplot2)
 
-path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
+#path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
+path.google <- "G:/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
 
 dat.base <- "../1_runs/MortonArb_ed_runs.v2/"
 runs.done <- dir(dat.base, "statCO2")  # This gets a list of model ensemble members for static CO2 only; adding increases in CO2 that will make trees more efficient has been a low priority because ED is unrealistically sensitive
