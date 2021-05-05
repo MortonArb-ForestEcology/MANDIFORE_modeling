@@ -2,9 +2,11 @@ library(ggplot2)
 
 runs.start <- read.csv("../data/Summary_PFTs_Site_Year.csv")
 
+runs.start <- runs.start[runs.start$GCM != "ACCESS1-0", ]
+
 met.temp <- read.csv("../data/CMIP5_TDM_year_byModel.csv")
 
-met.temp <- met.temp[met.temp$var == "air_temperature",]
+met.temp <- met.temp[met.temp$var == "precipitation_flux",]
 
 runs.all <- merge(runs.start, met.temp, by.x= c('GCM', 'RCP', 'year'), by.y= c('model', 'scenario', 'year'))
 
@@ -122,22 +124,31 @@ for(GCM in unique(both.num$GCM)){
 }  
 Rel.AGB <- dplyr::bind_rows(pred.list)
 
-png(file.path("Total_AGB_bplot_RCP45.png"), height=10, width=8, units="in", res=120)
-  ggplot(data=Rel.AGB[Rel.AGB$RCP == "rcp45",])+
-    facet_grid(rows = vars(GCM), cols =vars(Management))+
+
+#DF key before I clean this better
+#AGB.num = has first and last decade in one row
+#both.num = has first and last decade as sepearte rows with identifier type 
+#diff.AGB = Is a relative version of AGB.num that sets everything relative to the control
+#Rel.AGB = Is a relative version of both.num that sets everythign relative to the control
+
+
+
+png(file.path("Total_AGB_bplot.png"), height=10, width=8, units="in", res=120)
+  ggplot(data=Rel.AGB)+
+    facet_grid(rows = vars(RCP), cols =vars(Management))+
     geom_boxplot(aes(x=DEC, y=AGB.tot))+
-    ggtitle("Mean Total AGB for first and last decade after harvest RCP45")
+    ggtitle("Mean Total AGB for first and last decade after harvest")
 dev.off()
   
-png(file.path("Total_AGB_bplot_RCP85.png"), height=10, width=8, units="in", res=120)
+#png(file.path("Total_AGB_bplot_RCP85.png"), height=10, width=8, units="in", res=120)
   ggplot(data=Rel.AGB[Rel.AGB$RCP == "rcp85",])+
     facet_grid(rows = vars(GCM), cols =vars(Management))+
     geom_boxplot(aes(x=DEC, y=AGB.tot))+
     ggtitle("Mean Total AGB for first and last decade after harvest RCP85")
-dev.off()
+#dev.off()
   
 png(file.path("Rel_Total_ABG_Mean_Diff.png"), height=10, width=8, units="in", res=120)
-ggplot(data=diff.AGB)+
+ ggplot(data=diff.AGB)+
   facet_wrap(~RCP)+
   geom_boxplot(aes(x=Management, y=AGB.diff, color = Management))+
   geom_boxplot(aes(x= Management, y=temp.diff))+
@@ -149,12 +160,37 @@ png(file.path("Rel_AGB_v_Temp.png"), height=10, width=8, units="in", res=120)
 ggplot(data=diff.AGB)+
   geom_smooth(aes(x=temp.diff, y=AGB.diff, color = Management), method='lm')+
   geom_point(aes(x=temp.diff, y=AGB.diff, color = Management))+
+  geom_line(aes(x=temp.diff, y=AGB.diff, color = Management))+
   ggtitle("Difference from control in post harvest Total AGB between first decade and last")+
   ylab("Difference to difference of control")
 dev.off()
 
+png(file.path("AGB_v_Temp.png"), height=10, width=8, units="in", res=120)
+ggplot(data=AGB.num)+
+  facet_wrap(~RCP, scales = "free")+
+  #geom_smooth(aes(x=temp.diff, y=AGB.diff, color = Management), method='lm')+
+  geom_point(aes(x=temp.diff, y=AGB.diff, color = Management))+
+  geom_line(aes(x=temp.diff, y=AGB.diff, color = Management))+
+  ggtitle("Difference in post harvest Total AGB between first decade and last")+
+  ylab("Difference")
+dev.off()
 
 
+M.test <- aov(AGB.diff ~ Management, AGB.num)
+G.test <- aov(AGB.diff ~ GCM, AGB.num)
+T.test <- aov(AGB.diff ~ temp.diff, AGB.num)
+doub.test <- lm(AGB.diff ~ temp.diff * Management, AGB.num)
+library("nlme")
+lm.test <- lme(AGB.diff ~ temp.diff*Management, random=list(RCP=~1, GCM=~1), data=AGB.num)
+
+anova(lm.test)
+
+summary(M.test)
+anova(doub.test)
+M.reg <- lm(AGB.diff ~ Management, AGB.num)
+T.reg <- lm(AGB.diff ~ temp.diff, AGB.num)
+G.reg <- lm(AGB.diff ~ GCM, AGB.num)
+summary(T.reg)
 
 
   
