@@ -8,10 +8,11 @@ library(ggplot2); library(gganimate)
 path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
 path.figs <- file.path(path.google, "figures")
 
+
 # -----------------------------------------------------------
 # Read in and play with the data
 # -----------------------------------------------------------
-dat.co <- read.csv(file.path(path.google, "output", "Summary_PFTs_Cohort_Year.csv"))
+dat.co <- read.csv(file.path("../data/Summary_PFTs_Cohort_Year.csv"))
 dat.co <- dat.co[dat.co$CO2=="static" & dat.co$PFT!=5,]
 dat.co$Management <- factor(dat.co$Management, levels=c("None", "Under", "Shelter", "Gap"))
 dat.co$PFT <- car::recode(dat.co$PFT, "'9'='Early Succ.'; '10'='Mid. Succ.'; '11'='Late Succ.'")
@@ -52,7 +53,7 @@ anim_save(filename="Model_Size_Histogram_PFT_time.gif", animation = dbh.dist, en
 # -----------------------------------------------------------
 # Looking at some of the higher-level variables
 # -----------------------------------------------------------
-dat.pft <- read.csv(file.path(path.google, "output", "Summary_PFTs_Site_Year.csv"))
+dat.pft <- read.csv(file.path("../data/Summary_PFTs_Site_Year.csv"))
 dat.pft$PFT <- car::recode(dat.pft$PFT, "'9'='Early Succ.'; '10'='Mid. Succ.'; '11'='Late Succ.'")
 dat.pft$PFT <-factor(dat.pft$PFT, levels=c("Early Succ.", "Mid. Succ.", "Late Succ."))
 dat.pft$Management <- factor(dat.pft$Management, levels=c("None", "Under", "Shelter", "Gap"))
