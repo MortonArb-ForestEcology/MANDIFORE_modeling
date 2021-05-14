@@ -119,7 +119,7 @@ write.csv(runs.all, file.path("../data/Summary_PFTs_Cohort_Year.csv"), row.names
 
 # Aggregating data from cohorts to PFT-scale (so 1 value per PFT per year)
 runs.pch <- aggregate(runs.all[runs.all$PFT!=5,c("AGB.wt", "BA.wt", "dens.wt", "Stress.wt.pft", "Stress.wt.pft.g45")],
-                     by=runs.all[runs.all$PFT!=5,c("RunID", "GCM", "RCP", "CO2", "Management", "year", "month", "patchID", "PFT")],
+                     by=runs.all[runs.all$PFT!=5,c("RunID", "GCM", "RCP", "CO2", "Management", "year", "patchID", "PFT")],
                      FUN=sum, na.rm=T)
 summary(runs.pch); dim(runs.pch)
 
