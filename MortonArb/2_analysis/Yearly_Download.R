@@ -111,7 +111,7 @@ runs.all$Stress.wt.pft <- runs.all$Stress*runs.all$pft.wt
 runs.all$Stress.wt.pft.g45 <- runs.all$Stress*runs.all$pft.wt.g45
 summary(runs.all)
 
-write.csv(runs.all, file.path("../data/Summary_PFTs_Cohort_Month.csv"), row.names=F)
+write.csv(runs.all, file.path("../data/Summary_PFTs_Cohort_Year.csv"), row.names=F)
 
 #--------------------------#
 #FOR PATCH LEVEL CSV
@@ -157,7 +157,7 @@ runs.pch$AGB.prop <- runs.pch$AGB.wt/runs.pch$AGB.tot
 runs.pch$BA.prop <- runs.pch$BA.wt/runs.pch$BA.tot
 summary(runs.pch)
 
-write.csv(runs.pch, file.path("../data/Summary_PFTs_Patch_Month.csv"), row.names=F)
+write.csv(runs.pch, file.path("../data/Summary_PFTs_Patch_Year.csv"), row.names=F)
 
 #--------------------------#
 #FOR SITE LEVEL CSV
@@ -202,6 +202,6 @@ runs.site$AGB.prop <- runs.site$AGB.wt/runs.site$AGB.tot
 runs.site$BA.prop <- runs.site$BA.wt/runs.site$BA.tot
 summary(runs.site)
 
-write.csv(runs.site, file.path("../data/Summary_PFTs_Patch_Month.csv"), row.names=F)
+write.csv(runs.site, file.path("../data/Summary_PFTs_Patch_Year.csv"), row.names=F)
 # ------------------------------------
 
