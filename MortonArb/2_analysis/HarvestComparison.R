@@ -1,4 +1,3 @@
-
 # ------------------------------------
 # Plot the data
 # These figures aren't great, but are what's in the google drive folder
@@ -198,6 +197,3 @@ ggplot(data=runs.yr[runs.yr$PFT=="10",]) +
   ggtitle("Average Oak Stress 1-10 cm DBH") +
   theme_bw()
 dev.off()
-
-# ------------------------------------
- 
