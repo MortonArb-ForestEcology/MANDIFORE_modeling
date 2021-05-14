@@ -2,15 +2,19 @@ library("nlme")
 
 runs.start <- read.csv("../data/Summary_PFTs_Site_Year.csv")
 
-runs.start <- runs.start[runs.start$GCM != "ACCESS1-0", ]
+#runs.start <- runs.start[runs.start$GCM != "ACCESS1-0", ]
 
-met.vars <- read.csv("../data/CMIP5_TDM_year_byModel.csv")
+met.vars <- read.csv("../met_raw.v3/met_tdm_qaqc/CMIP5_TDM_year_byModel.csv")
 
 var.list <- list()
 for(VAR in unique(met.vars$var)){
   met.temp <- met.vars[met.vars$var == VAR,]
 
   runs.all <- merge(runs.start, met.temp, by.x= c('GCM', 'RCP', 'year'), by.y= c('model', 'scenario', 'year'))
+  
+  runs.all <- runs.all[runs.all$GCM != "MIROC-ESM-CHEM",]
+  
+  runs.all <- runs.all[runs.all$GCM != "MIROC-ESM",]
   
   runs.first <- runs.all[runs.all$year < 2036 & runs.all$year > 2025,]
 
