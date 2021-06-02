@@ -18,6 +18,9 @@ for(RUNID in runs.done){
   pch.df  <- data.frame()
   site.df <- data.frame()
   
+  # Check to see if we've already extracted this output
+  if(any(grepl(RUNID, dir(path.out)))) next
+  
   run.splt <- stringr::str_split(RUNID, "_")[[1]] # Splits apart the run name to extract different bits of info
   
   # Some models have different num. hypens, so use model name as index
@@ -27,6 +30,8 @@ for(RUNID in runs.done){
   #  -- Right now I'm also saving monthly output and we could do daily or subdaily if we wanted, 
   #     but that slows it down and requires MASSIVE storage space for runs like we're doing
   f.mo <- dir(file.path(dat.base, RUNID, "analy"), "-E-")
+  
+  if(length(f.mo)==0) next
   
   # Checking to make sure that it ran to 2099 if we're going to work on it
   if(strsplit(strsplit(f.mo[length(f.mo)], "_")[[1]][6], "-")[[1]][3]!="2099") next
