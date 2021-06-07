@@ -188,6 +188,16 @@ for(RUNID in runs.raw){
     # Trees / patch * patch/forest = trees/forest in units trees/m2
     co.list[[lab.now]]$dens.site <- co.list[[lab.now]]$dens.pch*co.list[[lab.now]]$patch.area
     co.list[[lab.now]]$dens.wt.site <- co.list[[lab.now]]$dens.site/sum(co.list[[lab.now]]$dens.site)
+    
+    
+    # Extracting the tree data to make life easier
+    dat.tree <- data.frame(pft=co.list[[lab.now]]$pft[co.list[[lab.now]]$pft %in% pfts.trees],
+                           dbh=co.list[[lab.now]]$dbh[co.list[[lab.now]]$pft %in% pfts.trees],
+                           hts=co.list[[lab.now]]$height[co.list[[lab.now]]$pft %in% pfts.trees],
+                           pch=co.list[[lab.now]]$patchID[co.list[[lab.now]]$pft %in% pfts.trees],
+                           wt.pch =co.list[[lab.now]]$dens.wt.pch[co.list[[lab.now]]$pft %in% pfts.trees],
+                           wt.site=co.list[[lab.now]]$dens.wt.site[co.list[[lab.now]]$pft %in% pfts.trees]
+                           )
     # -----------------
 
     # -----------------
@@ -199,8 +209,23 @@ for(RUNID in runs.raw){
     #      w=test.df$dens/sum(test.df$dens)
     #      sqrt(sum(w * (x-weighted.mean(x, w))^2))
     # -----------------
-    pch.list[[lab.now]][,c("height.max", "dbh.max")] <- aggregate(cbind(height, dbh) ~ patchID, data=co.list[[lab.now]], FUN=max)
+    # Just doing this patches as a loop to make life easier at the moment
+    pch.list[[lab.now]][,c("height.max", "height.mean", "height.sd", "dbh.max", "dbh.mean", "dbh.sd")] <- NA
     
+    for(j in 1:nrow(pch.list[[lab.now]])){
+      dat.pch <- dat.tree[dat.tree$pch==j,]
+      
+      pch.list[[lab.now]]$height.max[j] <- max(dat.pch$hts)
+      pch.list[[lab.now]]$height.mean[j] <- weighted.mean(dat.pch$hts, dat.pch$wt.pch)
+      pch.list[[lab.now]]$height.sd[j] <- sqrt(sum(dat.pch$wt.pch * (dat.pch$hts-pch.list[[lab.now]]$height.mean[j])^2))
+      
+      pch.list[[lab.now]]$dbh.max[j] <- max(dat.pch$dbh)
+      pch.list[[lab.now]]$dbh.mean[j] <- weighted.mean(dat.pch$dbh, dat.pch$wt.pch)
+      pch.list[[lab.now]]$dbh.sd[j] <- sqrt(sum(dat.pch$wt.pch * (dat.pch$dbh-pch.list[[lab.now]]$dbh.mean[j])^2))
+      
+    }
+    
+    # summary(pch.list[[lab.now]])
     # -----------------
     
     # -----------------
@@ -208,14 +233,11 @@ for(RUNID in runs.raw){
     # To get to the site level total from cohort level: sum(x * dens.wt)
     # -----------------
     # AGB, BAtree, mean/max/sd height, mean/max/sd DBH
-    tree.dbh <- co.list[[lab.now]]$dbh[co.list[[lab.now]]$pft %in% pfts.trees]
-    tree.hts <- co.list[[lab.now]]$height[co.list[[lab.now]]$pft %in% pfts.trees]
-    tree.wts <- co.list[[lab.now]]$dens.wt.site[co.list[[lab.now]]$pft %in% pfts.trees]
-    site.list[[lab.now]]$height.mean <- weighted.mean(tree.hts, tree.wts)
-    site.list[[lab.now]]$height.sd <- sqrt(sum(tree.wts * (tree.hts-site.list[[lab.now]]$height.mean)^2))
+    site.list[[lab.now]]$height.mean <- weighted.mean(dat.tree$hts, dat.tree$wt.site)
+    site.list[[lab.now]]$height.sd <- sqrt(sum(dat.tree$wt.site * (dat.tree$hts-site.list[[lab.now]]$height.mean)^2))
 
-    site.list[[lab.now]]$dbh.mean <- weighted.mean(tree.dbh, tree.wts)
-    site.list[[lab.now]]$dbh.sd <- sqrt(sum(tree.wts * (tree.dbh-site.list[[lab.now]]$dbh.mean)^2))
+    site.list[[lab.now]]$dbh.mean <- weighted.mean(dat.tree$dbh, dat.tree$wt.site)
+    site.list[[lab.now]]$dbh.sd <- sqrt(sum(dat.tree$wt.site * (dat.tree$dbh-site.list[[lab.now]]$dbh.mean)^2))
     # -----------------
     
     
@@ -227,6 +249,8 @@ for(RUNID in runs.raw){
   rm(site.list, pch.list, co.list)
   
   write.csv(site.df, file.path(path.google, "output", paste(RUNID, "Site.csv", sep="_")), row.names=F) # Just save the site-level data on Google Too
+  
+  # Save locally (smallest file to biggest file)
   write.csv(site.df, file.path(path.out, paste(RUNID, "Site.csv", sep="_")), row.names=F)
   write.csv(pch.df, file.path(path.out, paste(RUNID, "Patch.csv", sep="_")), row.names=F)
   write.csv(co.df, file.path(path.out, paste(RUNID, "Cohort.csv", sep="_")), row.names=F)
