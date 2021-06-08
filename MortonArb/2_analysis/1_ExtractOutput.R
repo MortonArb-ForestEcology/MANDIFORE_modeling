@@ -214,6 +214,7 @@ for(RUNID in runs.raw){
     
     for(j in 1:nrow(pch.list[[lab.now]])){
       dat.pch <- dat.tree[dat.tree$pch==j,]
+      if(nrow(dat.pch)==0) next
       
       pch.list[[lab.now]]$height.max[j] <- max(dat.pch$hts)
       pch.list[[lab.now]]$height.mean[j] <- weighted.mean(dat.pch$hts, dat.pch$wt.pch)
