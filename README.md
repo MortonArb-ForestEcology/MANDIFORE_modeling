@@ -24,8 +24,8 @@ soil.depth | SLZ | | m3/m3???
 
  Column name   |   Mandifore Name  |  Plain text |  Unit   
 ---------------|-------------------|-------------|-------------|
-tair | MMEAN_ATM_TEMP_PY | Mean Air Temperature |  K
-precipf | MMEAN_PCPG_PY | Mean Precipitation | kg/m2/mo
+tair | MMEAN_ATM_TEMP_PY | Air Temperature |  K
+precipf | MMEAN_PCPG_PY | Precipitation | kg/m2/mo
 lwdown | MMEAN_ATM_RLONG_PY | Longwave radiation | W/m2
 swdown | MMEAN_ATM_RSHORT_PY | Shortwave radiation | W/m2
 qair | MMEAN_ATM_SHV_PY | |kg/kg
@@ -35,7 +35,7 @@ CO2 | MMEAN_ATM_TEMP_PY | | umol/umol
 basal.area.tree | BASAL_AREA_PY | | cm2/m2??
 density.tree | NPLANT_PY | | tree/m2??
 agb | AGB_PY | | kg/m2??
-gpp | MMEAN_GPP_PY | Mean Gross Primary Product | kgC/m2/mo
+gpp | MMEAN_GPP_PY | Gross Primary Product | kgC/m2/mo
 npp | MMEAN_NPP_PY | | kgC/m2/mo
 nee | MMEAN_NEP_PY | | kgC/m2/mo
 cwd | MMEAN_CWD_C_PY | | kgC/m2
