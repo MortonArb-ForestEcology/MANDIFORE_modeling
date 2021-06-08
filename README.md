@@ -5,6 +5,16 @@
 
 # Units
 
+## Mandifore
+
+Fix | Description 
+-------|------------
+MMEAN | Monthly Average
+PY | Polygon-level averages
+SI | Site-level averages
+PA | Patch-level averages
+CO | Cohort-level averages
+
 Something level
  Column name   |   Mandifore Name  |  Plain text |  Unit   
 ---------------|-------------------|-------------|-------------|
@@ -48,16 +58,17 @@ swe | MMEAN_SFCW_MASS_PY | | kg/m2
 albedo | MMEAN_ALBEDO_PY | | 
 lai | MMEAN_LAI_PY | leaf area index | 
 
-
 ## Patch Level
+
  Column name   |   Mandifore Name  |  Plain text |  Unit   
 ---------------|-------------------|-------------|-------------|
 age | AGE | | 
 area.patch | AREA | | 
-n.cohorts | PACO_N | number of cohorts | 
-patch.co.start | PACO_ID | ID of patch | 
+n.cohorts | PACO_N | Number of cohorts for each patch | 
+patch.co.start | PACO_ID | Index of the first cohort of each patch | 
 
 ## Cohort Level
+
  Column name   |   Mandifore Name  |  Plain text |  Unit   
 ---------------|-------------------|-------------|-------------|
 pft | PFT | Plant Functional Type | 5=grass; 9=early hard; 10=mid hard; 11=late hard
@@ -65,7 +76,7 @@ dbh | DBH | Diameter at Breast Height | cm
 ba | BA_CO | Basal Area | cm2/tree
 carbs | CB | Carbon Balance | scale 0 to 1; 1 = not stressed
 stress | CBR_BAR | Running mean relative carbon balance | scale = -1 to 1
-height | HITE | Hieght | m
+height | HITE | Height | m
 lai | LAI_CO | leaf area index |
 agb | AGB_CO | kgC/tree |
 dens.pch | NPLANT | trees/m2 |
