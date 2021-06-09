@@ -18,15 +18,15 @@ CO | Cohort-level averages
 
 ## Site Level
 
- Column Name   |   ED Name  |  Long Name |  Unit   
----------------|-------------------|-------------|-------------|
+ Column Name   |   ED Name  |  Long Name |  Unit  |  Notes  | 
+---------------|-------------------|-------------|-------------|-------------|
 tair | MMEAN_ATM_TEMP_PY | Air Temperature |  K
 precipf | MMEAN_PCPG_PY | Precipitation | kg/m2/mo
 lwdown | MMEAN_ATM_RLONG_PY | Longwave radiation: Atmosphere | W/m2
 swdown | MMEAN_ATM_RSHORT_PY | Shortwave radiation: Atmosphere | W/m2
 qair | MMEAN_ATM_SHV_PY | Specific humidity: Atmosphere |kg/kg
 psurf | MMEAN_ATM_PRSS_PY | Air pressure: Atmosphere | Pa
-wind | MMEAN_ATM_VELS_PY | Wind speed: atmosphere | m/s
+wind | MMEAN_ATM_VELS_PY | Wind speed: Atmosphere | m/s
 CO2 | MMEAN_ATM_TEMP_PY | | umol/umol
 basal.area.tree | BASAL_AREA_PY | Basal area | cm2/m2
 density.tree | NPLANT_PY | Plant density | plants/m2
@@ -72,7 +72,7 @@ ba | BA_CO | Basal Area | cm2/tree
 carbs | CB | Carbon Balance | scale 0 to 1; 1 = not stressed
 stress | CBR_BAR | Running mean relative carbon balance | scale = -1 to 1
 height | HITE | Height | m
-lai | LAI_CO | leaf area index | m2leaf/m2
+lai | LAI_CO | Leaf area index | m2leaf/m2
 agb | AGB_CO | Above-Ground biomass |  kgC/tree
 dens.pch | NPLANT | plant/m2 | trees/m2
 
