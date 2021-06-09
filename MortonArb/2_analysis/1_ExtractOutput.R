@@ -117,8 +117,6 @@ for(RUNID in runs.raw){
                                        snow.depth=ncdf4::ncvar_get(fnow, "MMEAN_SFCW_DEPTH_PY"), # m
                                        swe=ncdf4::ncvar_get(fnow, "MMEAN_SFCW_MASS_PY"), # kg/m2
                                        
-                                       # Energetics
-                                       albedo=ncdf4::ncvar_get(fnow, "MMEAN_ALBEDO_PY"),
                                        
                                        # Other
                                        lai=sum(ncdf4::ncvar_get(fnow, "MMEAN_LAI_PY"))
