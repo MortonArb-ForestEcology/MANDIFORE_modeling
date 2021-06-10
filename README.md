@@ -24,7 +24,7 @@ swdown | MMEAN_ATM_RSHORT_PY | Shortwave radiation: Atmosphere | W/m2
 qair | MMEAN_ATM_SHV_PY | Specific humidity: Atmosphere |kg/kg
 psurf | MMEAN_ATM_PRSS_PY | Air pressure: Atmosphere | Pa
 wind | MMEAN_ATM_VELS_PY | Wind speed: Atmosphere | m/s
-CO2 | MMEAN_ATM_TEMP_PY | | umol/umol
+CO2 | MMEAN_ATM_CO2_PY | CO2 mixing ratio: Atmosphere | umol/mol
 basal.area.tree | BASAL_AREA_PY | Basal area | cm2/m2 | Trees only
 density.tree | NPLANT_PY | Trees density | plants/m2 | Trees only
 agb | AGB_PY | Above-Ground biomass | kgC/m2
