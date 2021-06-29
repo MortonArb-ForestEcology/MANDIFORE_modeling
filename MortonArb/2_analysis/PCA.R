@@ -5,7 +5,7 @@
 # Inputs: ED2 Morton Arb site data 
 # Outputs: Multiple PCA biplots for different variables
 # Notes: I'm unsure if the scaling done in the PCA functions is enough Christy seems to do more in her scripts
-
+#        I would love to use ggbiplot but it isn't available for my version of R
 #----------------------------------------------------------------------------------------------------------------------#
 
 library(vegan)
@@ -77,7 +77,7 @@ summary(malus.pca2)
 #----------------------------------------------------------------------------------------#
 runs.all <- runs.yr
 
-col <- colnames(runs.all[c(17:35, 37:44)])
+col <- colnames(runs.all[c(9:35, 37:44)])
 
 dat.diff <- data.frame(matrix(NA, nrow = 116, ncol = 1))
 colnames(dat.diff) <- c("RunID")
