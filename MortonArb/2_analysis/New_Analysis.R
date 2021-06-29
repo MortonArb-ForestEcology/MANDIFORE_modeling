@@ -1,3 +1,11 @@
+#----------------------------------------------------------------------------------------------------------------------#
+# Script by : Lucien Fitzpatrick
+# Project: Mandifore Morton arb casee study
+# Purpose: This script crates plots and tables exploring variables of interest
+# Inputs: ED2 Morton Arb site data 
+# Outputs: Plots mmostly exploring agb, basal tree area, and density
+# Notes: 
+#----------------------------------------------------------------------------------------------------------------------#
 library(readbulk)
 
 path.script <- "C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis"
@@ -231,3 +239,23 @@ for(COL in col){
 
 }
 write.csv(dat.interact, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/Interactive_Effects.csv"), row.names = F)
+
+
+#Evaluating Tree density over time
+col <- colnames(runs.yr)
+
+col <- col[c(3, 5, 7, 8, 17:35, 37:44)]
+
+runs.mng <- subset(runs.yr, select = c(col))
+
+runs.mng <- aggregate(.~Management+year+month+rcp, runs.mng, mean)
+
+png(file.path(path.figs, "Explore_Tree_Density_Total_Time.png"), height=10, width=8, units="in", res=120)
+ggplot(data=runs.mng[]) +
+  facet_wrap(~ rcp) +
+  geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
+  geom_smooth(aes(x=year, y=basal.area.tree, color=Management), size=1.5) +
+  scale_y_continuous(name="Tree Density") +
+  ggtitle("Tree Density") +
+  theme_bw()
+dev.off()
