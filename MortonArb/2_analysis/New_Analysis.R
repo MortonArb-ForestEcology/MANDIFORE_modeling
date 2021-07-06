@@ -7,6 +7,7 @@
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
 library(readbulk)
+library(ggplot2)
 
 path.script <- "C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis"
 
@@ -61,11 +62,19 @@ for(COL in ED.interest){
     
     
     #Another aggreagate abomination creates differnet data frame structure for another visual. Can compare first and last
-    ED.num$ED.diff <-  ED.num$last.mean.ED - ED.num$first.mean.ED
+    #ED.num$ED.diff <-  ED.num$last.mean.ED - ED.num$first.mean.ED
     ED.num$temp.diff <- ED.num$last.mean.temp - ED.num$first.mean.temp
-    
+  
+  
+    for(GCM in unique(ED.num$GCM)){
+      for(RCP in unique(ED.num$rcp)){
+        for(MNG in unique(ED.num$Management)){
+            ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == MNG, "Delta_MNG"] <- ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == MNG, "last.mean.ED"] - ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == "MgmtNone", "first.mean.ED"]
+        }
+      }
+    }
     ED.num$Management <- factor(ED.num$Management, levels = c("MgmtNone", "MgmtGap", "MgmtShelter", "MgmtUnder"))
-    lm.test <- lme(ED.diff ~ temp.diff*Management, random=list(rcp=~1, GCM=~1), data=ED.num)
+    lm.test <- lme(Delta_MNG ~ temp.diff*Management, random=list(rcp=~1, GCM=~1), data=ED.num)
     hold <- anova(lm.test)
     
     sum <- summary(lm.test)
@@ -84,8 +93,9 @@ for(COL in ED.interest){
     diff.list[[paste0(COL, VAR, sep = "-")]]$rcp <- ED.num$rcp
     diff.list[[paste0(COL, VAR, sep = "-")]]$Weather.VAR <- VAR
     diff.list[[paste0(COL, VAR, sep = "-")]]$ED.VAR <- COL
-    diff.list[[paste0(COL, VAR, sep = "-")]]$ED.diff <- ED.num$ED.diff
+    #diff.list[[paste0(COL, VAR, sep = "-")]]$ED.diff <- ED.num$ED.diff
     diff.list[[paste0(COL, VAR, sep = "-")]]$Weather.diff <- ED.num$temp.diff
+    diff.list[[paste0(COL, VAR, sep = "-")]]$Delta_MNG <- ED.num$Delta_MNG
   }
   dat.diff <- dplyr::bind_rows(diff.list)
   
@@ -111,27 +121,32 @@ write.csv(dat.interact, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_mod
 dat.value <-  dat.value %>%
   separate(MVAR, c("ED.VAR", "Weather.VAR"), sep = ":")
 
-
+dat.tbl <- data.frame()
 for(MVAR in unique(dat.interact$MVAR)){
   dat.temp <- dat.interact[dat.interact$MVAR == MVAR,]
   for(WVAR in unique(dat.temp$WeatherVAR)){
     dat.figs <- dat.all[dat.all$ED.VAR == MVAR & dat.all$Weather.VAR == WVAR, ]
-    dat.tbl <- dat.value[dat.value$ED.VAR == MVAR & dat.value$Weather.VAR == WVAR,]
-    write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_and_", WVAR, "_lme", ".csv")), row.names = F)
+    dat.tbl.temp <- dat.value[dat.value$ED.VAR == MVAR & dat.value$Weather.VAR == WVAR,]
+   
     png(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_interactive_with_", WVAR , ".png")))
-    figs <- ggplot(dat.figs)+
-      geom_point(aes(x = Weather.diff, y = ED.diff, color = Management))+
-      geom_smooth(aes(x = Weather.diff, y = ED.diff, color = Management, fill = Management),method = "lm")+
+    scatter <- ggplot(dat.figs)+
+      geom_point(aes(x = Weather.diff, y = Delta_MNG, color = Management))+
+      geom_smooth(aes(x = Weather.diff, y = Delta_MNG, color = Management, fill = Management),method = "lm")+
       ggtitle(paste0(MVAR, " Interactive effects with ", WVAR))+
       xlab(WVAR)+
       ylab(MVAR)
-    ggsave(figs, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_interactive_with_", WVAR , ".png"))))
-    #dev.off()
+    ggplot(dat.figs)+
+      geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
+      geom_point(aes(x = Management, y = Delta_MNG, color = Management))+
+      ggtitle(paste0(MVAR, " Interactive effects with ", WVAR))+
+      xlab(WVAR)+
+      ylab(MVAR)
+    ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_interactive_with_", WVAR , ".png"))))
+    dat.tbl <- rbind(dat.tbl, dat.tbl.temp)
   }
+  write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_lme.csv")), row.names = F)
 }
 
-
-library(ggplot2)
 # ------------------------------------
 # Plot the data
 # These figures aren't great, but are what's in the google drive folder

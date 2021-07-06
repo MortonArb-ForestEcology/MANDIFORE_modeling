@@ -1,0 +1,9 @@
+"ED.VAR","Weather.VAR","Fixedeff","Value","pvalue"
+"nee","qair","(Intercept)",0.0171813516262287,0.0196761276668896
+"nee","qair","qair",7.61987290591319,0.0428475871559487
+"nee","qair","Management(qair)MgmtGap",0.00046791751267094,0.870535067876663
+"nee","qair","Management(qair)MgmtShelter",-0.00199050298549551,0.488752307794353
+"nee","qair","Management(qair)MgmtUnder",-0.000587510981404718,0.837865899753709
+"nee","qair","qair:Management(qair)MgmtGap",-8.34917594754691,0.0056128784138343
+"nee","qair","qair:Management(qair)MgmtShelter",-6.83802502347113,0.0222265651194787
+"nee","qair","qair:Management(qair)MgmtUnder",-4.81043316475752,0.104776791341797
