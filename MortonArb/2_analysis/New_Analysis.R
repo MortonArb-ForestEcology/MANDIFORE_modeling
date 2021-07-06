@@ -28,8 +28,7 @@ runs.start <- runs.yr
 met.vars <- read.csv("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/met_raw.v3/met_tdm_qaqc/CMIP5_TDM_year_byModel.csv")
 
 #col <- colnames(runs.start[c(17:35, 37:44)])
-interest <- c("basal.area.tree", "density.tree", "agb", "nee", "soil.moist.surf", "soil.moist.deep", 
-              "soil.moistpot.surf", "soil.moistpot.deep", "soil.temp.surf", "soil.temp.deep")
+interest <- c("basal.area.tree", "density.tree", "agb", "nee", "soil.moist.surf", "soil.moist.deep")
 
 dat.interact <- data.frame()
 dat.all <- data.frame()
