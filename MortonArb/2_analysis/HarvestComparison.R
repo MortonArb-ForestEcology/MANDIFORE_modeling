@@ -1,3 +1,4 @@
+library(ggplot2)
 # ------------------------------------
 # Plot the data
 # These figures aren't great, but are what's in the google drive folder
