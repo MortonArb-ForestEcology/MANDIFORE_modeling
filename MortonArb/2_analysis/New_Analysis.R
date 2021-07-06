@@ -14,33 +14,26 @@ path.read <- "C:/Users/lucie/Documents/MANDIFORE/"
 
 setwd(path.read)
 
-runs.yr <- read_bulk(directory = "output", extension = ".csv", header = TRUE)
+runs.all <- read_bulk(directory = "output", extension = ".csv", header = TRUE)
 
 setwd(path.script)
 
 
 library("nlme")
 
-runs.start <- runs.yr
-
-#runs.start <- runs.start[runs.start$GCM != "ACCESS1-0", ]
-
-met.vars <- read.csv("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/met_raw.v3/met_tdm_qaqc/CMIP5_TDM_year_byModel.csv")
+met.var <- c("tair", "precipf", "qair")
 
 #col <- colnames(runs.start[c(17:35, 37:44)])
-interest <- c("basal.area.tree", "density.tree", "agb", "nee", "soil.moist.surf", "soil.moist.deep")
+ED.interest <- c("basal.area.tree", "density.tree", "agb", "nee", "soil.moist.surf", "soil.moist.deep")
 
 dat.interact <- data.frame()
 dat.all <- data.frame()
 dat.value <- data.frame()
 diff.list <- list()
-for(COL in interest){
+for(COL in ED.interest){
   var.list <- list()
-  for(VAR in unique(met.vars$var)){
-    met.temp <- met.vars[met.vars$var == VAR,]
-    
-    runs.all <- merge(runs.start, met.temp, by.x= c('GCM', 'rcp', 'year'), by.y= c('model', 'scenario', 'year'))
-    
+  for(VAR in unique(met.var)){
+
     runs.all <- runs.all[runs.all$GCM != "MIROC-ESM-CHEM",]
     
     runs.all <- runs.all[runs.all$GCM != "MIROC-ESM",]
@@ -54,8 +47,8 @@ for(COL in interest){
     ED.num <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.first,
                          FUN = mean)
     
-    ED.num[,c("first.mean.temp")] <- aggregate(mean~Management+GCM+rcp, data =runs.first,
-                                                FUN = mean)[,c("mean")]
+    ED.num[,c("first.mean.temp")] <- aggregate(eval(as.symbol(VAR))~Management+GCM+rcp, data =runs.first,
+                                                FUN = mean)[,c("eval(as.symbol(VAR))")]
     
     colnames(ED.num) <- c("Management", "GCM", "rcp", "first.mean.ED", "first.mean.temp")
     
@@ -63,8 +56,8 @@ for(COL in interest){
     ED.num[,c("last.mean.ED")] <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.last,
                                               FUN = mean)["eval(as.symbol(COL))"]
     
-    ED.num[,c("last.mean.temp")] <- aggregate(mean~Management+GCM+rcp, data =runs.last,
-                                               FUN = mean)[,c("mean")]
+    ED.num[,c("last.mean.temp")] <- aggregate(eval(as.symbol(VAR))~Management+GCM+rcp, data =runs.last,
+                                               FUN = mean)[,c("eval(as.symbol(VAR))")]
     
     
     #Another aggreagate abomination creates differnet data frame structure for another visual. Can compare first and last
