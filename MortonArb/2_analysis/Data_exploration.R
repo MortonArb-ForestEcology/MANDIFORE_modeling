@@ -2,13 +2,17 @@ library(ggplot2)
 
 runs.start <- read.csv("../data/Summary_PFTs_Site_Year.csv")
 
-runs.start <- runs.start[runs.start$GCM != "ACCESS1-0", ]
+#runs.start <- runs.start[runs.start$GCM != "ACCESS1-0", ]
 
-met.temp <- read.csv("../data/CMIP5_TDM_year_byModel.csv")
+met.temp <- read.csv("../met_raw.v3/met_tdm_qaqc/CMIP5_TDM_year_byModel.csv")
 
 met.temp <- met.temp[met.temp$var == "precipitation_flux",]
 
 runs.all <- merge(runs.start, met.temp, by.x= c('GCM', 'RCP', 'year'), by.y= c('model', 'scenario', 'year'))
+
+runs.all <- runs.all[runs.all$GCM != "MIROC-ESM-CHEM",]
+
+runs.all <- runs.all[runs.all$GCM != "MIROC-ESM",]
 
 runs.first <- runs.all[runs.all$year < 2036 & runs.all$year > 2025,]
 
