@@ -57,8 +57,8 @@ png(file.path(path.figs, "Explore_AGB_Total_Time.png"), height=10, width=8, unit
 ggplot(data=runs.yr[]) +
   facet_grid(GCM ~ rcp) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
-  geom_line(aes(x=year, y=agb, color=Management), size=1.5) +
-  scale_y_continuous(name="Aboveground Biomass (kgC/m2)", limits=c(0, max(runs.yr$agb, na.rm=T))) +
+  geom_line(aes(x=year, y=soil.moistpot.deep, color=Management), size=1.5) +
+  scale_y_continuous(name="Aboveground Biomass (kgC/m2)") +
   ggtitle("Total Aboveground Biomass") +
   theme_bw()
 dev.off()
@@ -185,10 +185,15 @@ runs.start <- runs.yr
 
 met.vars <- read.csv("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/met_raw.v3/met_tdm_qaqc/CMIP5_TDM_year_byModel.csv")
 
-col <- colnames(runs.start[c(17:35, 37:44)])
+#col <- colnames(runs.start[c(17:35, 37:44)])
+interest <- c("basal.area.tree", "density.tree", "agb", "soil.moist.surf", "soil.moist.deep", 
+              "soil.moistpot.surf", "soil.moistpot.deep", "soil.temp.surf", "soil.temp.deep")
 
 dat.interact <- data.frame()
-for(COL in col){
+dat.all <- data.frame()
+dat.value <- data.frame()
+diff.list <- list()
+for(COL in interest){
   var.list <- list()
   for(VAR in unique(met.vars$var)){
     met.temp <- met.vars[met.vars$var == VAR,]
@@ -205,41 +210,89 @@ for(COL in col){
     
     
     #This is an abomination of aggregate functions that could be combined but I wrote this quick to get an abstract out.
-    AGB.num <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.first,
+    ED.num <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.first,
                          FUN = mean)
     
-    AGB.num[,c("first.mean.temp")] <- aggregate(mean~Management+GCM+rcp, data =runs.first,
+    ED.num[,c("first.mean.temp")] <- aggregate(mean~Management+GCM+rcp, data =runs.first,
                                                 FUN = mean)[,c("mean")]
     
-    colnames(AGB.num) <- c("Management", "GCM", "rcp", "first.mean.AGB", "first.mean.temp")
+    colnames(ED.num) <- c("Management", "GCM", "rcp", "first.mean.ED", "first.mean.temp")
     
     
-    AGB.num[,c("last.mean.AGB")] <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.last,
+    ED.num[,c("last.mean.ED")] <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.last,
                                               FUN = mean)["eval(as.symbol(COL))"]
     
-    AGB.num[,c("last.mean.temp")] <- aggregate(mean~Management+GCM+rcp, data =runs.last,
+    ED.num[,c("last.mean.temp")] <- aggregate(mean~Management+GCM+rcp, data =runs.last,
                                                FUN = mean)[,c("mean")]
     
     
     #Another aggreagate abomination creates differnet data frame structure for another visual. Can compare first and last
-    AGB.num$AGB.diff <-  AGB.num$last.mean.AGB - AGB.num$first.mean.AGB
-    AGB.num$temp.diff <- AGB.num$last.mean.temp - AGB.num$first.mean.temp
+    ED.num$ED.diff <-  ED.num$last.mean.ED - ED.num$first.mean.ED
+    ED.num$temp.diff <- ED.num$last.mean.temp - ED.num$first.mean.temp
     
-    lm.test <- lme(AGB.diff ~ temp.diff*Management, random=list(rcp=~1, GCM=~1), data=AGB.num)
+    ED.num$Management <- factor(ED.num$Management, levels = c("MgmtNone", "MgmtGap", "MgmtShelter", "MgmtUnder"))
+    lm.test <- lme(ED.diff ~ temp.diff*Management, random=list(rcp=~1, GCM=~1), data=ED.num)
     hold <- anova(lm.test)
-    var.list[[paste(VAR, sep="-")]]$MVAR <- COL
-    var.list[[paste(VAR, sep="-")]]$value <- c(paste(VAR, "Intercept"), paste(VAR, "additive"), paste(VAR, "Mangement Additive"), paste(VAR, "Mangement Interactive"))
-    var.list[[paste(VAR, sep="-")]]$'p-value' <- hold$`p-value`
+    
+    sum <- summary(lm.test)
+    df.eff <- as.data.frame(sum$tTable)
+    df.eff$Fixedeff <- rownames(df.eff)
+    df.eff$Fixedeff <- gsub("temp.diff", VAR , df.eff$Fixedeff)
+    df.eff$Fixedeff <- gsub("Management", paste0("Management(", VAR, ")" ) , df.eff$Fixedeff)
+    
+    var.list[[paste(COL, VAR, sep="-")]]$MVAR <- paste(COL, VAR, sep=":")
+    var.list[[paste(COL, VAR, sep="-")]]$Fixedeff <- df.eff$Fixedeff
+    var.list[[paste(COL, VAR, sep="-")]]$Value <- df.eff$Value
+    var.list[[paste(COL, VAR, sep="-")]]$pvalue <- df.eff$`p-value`
+    
+    diff.list[[paste0(COL, VAR, sep = "-")]]$GCM <- ED.num$GCM
+    diff.list[[paste0(COL, VAR, sep = "-")]]$Management <- ED.num$Management
+    diff.list[[paste0(COL, VAR, sep = "-")]]$rcp <- ED.num$rcp
+    diff.list[[paste0(COL, VAR, sep = "-")]]$Weather.VAR <- VAR
+    diff.list[[paste0(COL, VAR, sep = "-")]]$ED.VAR <- COL
+    diff.list[[paste0(COL, VAR, sep = "-")]]$ED.diff <- ED.num$ED.diff
+    diff.list[[paste0(COL, VAR, sep = "-")]]$Weather.diff <- ED.num$temp.diff
   }
-  dat.var <- dplyr::bind_rows(var.list)
-  dat.worth <- dat.var[dat.var$`p-value` < .05,]
+  dat.diff <- dplyr::bind_rows(diff.list)
   
-  dat.worth <- dat.worth[grepl("Interactive", dat.worth$value),]
+  dat.var <- dplyr::bind_rows(var.list)
+  dat.value <- rbind(dat.value, dat.var)
+  dat.worth <- dat.var[dat.var$pvalue < .05,]
+  
+  dat.worth <- dat.worth[grepl(":M", dat.worth$Fixedeff),]
+  dat.all <- rbind(dat.all, dat.diff)
   dat.interact <- rbind(dat.interact, dat.worth)
 
 }
+
+library(tidyr)
+dat.interact <-  dat.interact %>%
+  separate(Fixedeff, c("WeatherVAR", "Management"), sep = ":")
+dat.interact$Management <- gsub(".*)","", dat.interact$Management )
+
 write.csv(dat.interact, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/Interactive_Effects.csv"), row.names = F)
 
+dat.value <-  dat.value %>%
+  separate(MVAR, c("ED.VAR", "Weather.VAR"), sep = ":")
+
+
+for(MVAR in unique(dat.interact$MVAR)){
+  dat.temp <- dat.interact[dat.interact$MVAR == MVAR,]
+  for(WVAR in unique(dat.temp$WeatherVAR)){
+    dat.figs <- dat.all[dat.all$ED.VAR == MVAR & dat.all$Weather.VAR == WVAR, ]
+    dat.tbl <- dat.value[dat.value$ED.VAR == MVAR & dat.value$Weather.VAR == WVAR,]
+    write.csv(dat.interact, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_and_", WVAR, "_lme", ".csv")), row.names = F)
+    png(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_interactive_with_", WVAR , ".png")))
+    figs <- ggplot(dat.figs)+
+      geom_point(aes(x = Weather.diff, y = ED.diff, color = Management))+
+      geom_smooth(aes(x = Weather.diff, y = ED.diff, color = Management, fill = Management),method = "lm")+
+      ggtitle(paste0(MVAR, " Interactive effects with ", WVAR))+
+      xlab(WVAR)+
+      ylab(MVAR)
+    ggsave(figs, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_interactive_with_", WVAR , ".png"))))
+    #dev.off()
+  }
+}
 
 #Evaluating Tree density over time
 col <- colnames(runs.yr)
@@ -259,3 +312,31 @@ ggplot(data=runs.mng[]) +
   ggtitle("Tree Density") +
   theme_bw()
 dev.off()
+
+
+#Evaluating Tree density over time
+col <- colnames(runs.yr)
+
+col <- col[c(3, 5, 7, 8:35, 37:44)]
+
+runs.mng <- subset(runs.yr, select = c(col))
+
+runs.mng <- aggregate(.~Management+year+month+rcp, runs.mng, mean)
+
+png(file.path(path.figs, "Explore_Surface_Pressure_Total_Time.png"), height=10, width=8, units="in", res=120)
+ggplot(data=runs.mng[]) +
+  facet_wrap(~ rcp) +
+  geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
+  geom_smooth(aes(x=year, y=psurf, color=Management), size=1.5) +
+  scale_y_continuous(name="Surface_Pressure") +
+  ggtitle("Surface_Pressure") +
+  theme_bw()
+dev.off()
+
+sum <- summary(lm.test)
+df.eff <- as.data.frame(sum$tTable)
+df.eff$Fixedeff <- rownames(df.eff)
+
+
+
+
