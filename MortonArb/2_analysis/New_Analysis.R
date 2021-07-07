@@ -115,37 +115,92 @@ dat.interact <-  dat.interact %>%
 dat.interact$Management <- gsub(".*)","", dat.interact$Management )
 dat.interact$MVAR <- gsub("\\:.*","", dat.interact$MVAR)
 
-
 write.csv(dat.interact, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/Interactive_Effects.csv"), row.names = F)
 
 dat.value <-  dat.value %>%
   separate(MVAR, c("ED.VAR", "Weather.VAR"), sep = ":")
 
-dat.tbl <- data.frame()
-for(MVAR in unique(dat.interact$MVAR)){
-  dat.temp <- dat.interact[dat.interact$MVAR == MVAR,]
-  for(WVAR in unique(dat.temp$WeatherVAR)){
-    dat.figs <- dat.all[dat.all$ED.VAR == MVAR & dat.all$Weather.VAR == WVAR, ]
-    dat.tbl.temp <- dat.value[dat.value$ED.VAR == MVAR & dat.value$Weather.VAR == WVAR,]
-   
-    png(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_interactive_with_", WVAR , ".png")))
-    scatter <- ggplot(dat.figs)+
-      geom_point(aes(x = Weather.diff, y = Delta_MNG, color = Management))+
-      geom_smooth(aes(x = Weather.diff, y = Delta_MNG, color = Management, fill = Management),method = "lm")+
-      ggtitle(paste0(MVAR, " Interactive effects with ", WVAR))+
-      xlab(WVAR)+
-      ylab(MVAR)
-    ggplot(dat.figs)+
-      geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
-      geom_point(aes(x = Management, y = Delta_MNG, color = Management))+
-      ggtitle(paste0(MVAR, " Interactive effects with ", WVAR))+
-      xlab(WVAR)+
-      ylab(MVAR)
-    ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_interactive_with_", WVAR , ".png"))))
-    dat.tbl <- rbind(dat.tbl, dat.tbl.temp)
-  }
-  write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures", paste0(MVAR, "_lme.csv")), row.names = F)
-}
+
+dat.nee <- dat.all[dat.all$ED.VAR == "nee" & dat.all$Weather.VAR == "qair", ]
+
+scatter <- ggplot(dat.nee)+
+    geom_point(aes(x = Weather.diff, y = Delta_MNG, color = Management))+
+    geom_smooth(aes(x = Weather.diff, y = Delta_MNG, color = Management, fill = Management),method = "lm")+
+    ggtitle("NEE Interactive effects with qair")+
+    xlab("qair")+
+    ylab(paste("Delta nee"))
+boxplot <- ggplot(dat.nee)+
+    facet_wrap(~GCM) +
+    geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
+    geom_point(aes(x = Management, y = Delta_MNG, color = Management))+
+    ggtitle("NEE change over time")+
+    xlab("Management")+
+    ylab(MVAR)
+ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_interactive_with_qair.png")))
+ggsave(boxplot, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_boxplot.png")))
+
+
+dat.tbl <- dat.value[dat.value$ED.VAR == "nee",]# & dat.value$Weather.VAR == "qair",]
+write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/nee_lme.csv"), row.names = F)
+
+
+
+dat.agb <- dat.all[dat.all$ED.VAR == "agb" & dat.all$Weather.VAR == "qair", ]
+
+scatter <- ggplot(dat.agb)+
+  geom_point(aes(x = Weather.diff, y = Delta_MNG, color = Management))+
+  geom_smooth(aes(x = Weather.diff, y = Delta_MNG, color = Management, fill = Management),method = "lm")+
+  ggtitle("AGB Interactive effects with qair")+
+  xlab("qair")+
+  ylab("Delta agb")
+
+boxplot <- ggplot(dat.agb)+
+  facet_wrap(~GCM) +
+  geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
+  geom_point(aes(x = Management, y = Delta_MNG, color = Management))+
+  ggtitle("AGB change over time")+
+  xlab("Management")+
+  ylab("Delta agb")
+
+ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/AGB_interactive_with_qair.png")))
+ggsave(boxplot, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/AGB_boxplot.png")))
+
+
+dat.tbl <- dat.value[dat.value$ED.VAR == "agb",]# & dat.value$Weather.VAR == "qair",]
+write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/agb_lme.csv"), row.names = F)
+
+
+png(file.path(path.figs, "Explore_NEE_Total_Time.png"), height=10, width=8, units="in", res=120)
+ggplot(data=runs.all[]) +
+  facet_grid(GCM ~ rcp) +
+  geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
+  geom_line(aes(x=year, y=nee, color=Management), size=1.5) +
+  scale_y_continuous(name="nee") +
+  ggtitle("Nee over time") +
+  theme_bw()
+dev.off()
+
+png(file.path(path.figs, "Explore_qair_Total_Time.png"), height=10, width=8, units="in", res=120)
+ggplot(data=runs.all[]) +
+  facet_grid(GCM ~ rcp) +
+  geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
+  geom_line(aes(x=year, y=nee, color=Management), size=1.5) +
+  scale_y_continuous(name="qair") +
+  ggtitle("Specific Humidity over time") +
+  theme_bw()
+dev.off()
+
+
+png(file.path(path.figs, "Explore_AGB_Total_Time.png"), height=10, width=8, units="in", res=120)
+ggplot(data=runs.all[]) +
+  facet_grid(GCM ~ rcp) +
+  geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
+  geom_line(aes(x=year, y=agb, color=Management), size=1.5) +
+  scale_y_continuous(name="Aboveground Biomass (kgC/m2)") +
+  ggtitle("Total Aboveground Biomass") +
+  theme_bw()
+dev.off()
+
 
 # ------------------------------------
 # Plot the data
@@ -155,13 +210,13 @@ path.figs <- file.path("../figures/")
 # dir.exists(path.figs)
 
 png(file.path(path.figs, "Explore_AGB_by_PFT_Time.png"), height=10, width=8, units="in", res=120)
-ggplot(data=runs.yr[,]) +
+ggplot(data=runs.all[,]) +
   facet_grid(GCM ~ Management) +
   # facet_wrap( ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
-  geom_line(aes(x=year, y=agb, color=pft, linetype=as.factor(rcp)), size=1.5) +
+  geom_line(aes(x=year, y=agb, linetype=as.factor(rcp)), size=1.5) +
   scale_x_continuous(expand=c(0,0)) +
-  scale_y_continuous(name="Aboveground Biomass (kgC/m2)", limits=c(0,max(runs.yr$agb, na.rm = T)), expand=c(0,0)) +
+  scale_y_continuous(name="Aboveground Biomass (kgC/m2)", limits=c(0,max(runs.all$agb, na.rm = T)), expand=c(0,0)) +
   scale_color_discrete(name = "PFT")+
   scale_linetype_discrete(name = "RCP")+
   ggtitle("Aboveground Biomass") +
@@ -169,7 +224,7 @@ ggplot(data=runs.yr[,]) +
 dev.off()
 
 png(file.path(path.figs, "Explore_Stress_by_PFT_Time_All.png"), height=10, width=8, units="in", res=120)
-ggplot(data=runs.yr[,]) +
+ggplot(data=runs.all[,]) +
   facet_grid(GCM ~ Management) +
   geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
   geom_line(aes(x=year, y=stress, color=as.factor(pft), linetype=as.factor(rcp))) +
@@ -181,15 +236,7 @@ ggplot(data=runs.yr[,]) +
   theme_bw() 
 dev.off()
 
-png(file.path(path.figs, "Explore_AGB_Total_Time.png"), height=10, width=8, units="in", res=120)
-ggplot(data=runs.yr[]) +
-  facet_grid(GCM ~ rcp) +
-  geom_rect(xmin=2020, xmax=2025, ymin=-Inf, ymax=Inf, alpha=0.1) +
-  geom_line(aes(x=year, y=soil.moistpot.deep, color=Management), size=1.5) +
-  scale_y_continuous(name="Aboveground Biomass (kgC/m2)") +
-  ggtitle("Total Aboveground Biomass") +
-  theme_bw()
-dev.off()
+
 
 png(file.path(path.figs, "Explore_BA_Time.png"), height=10, width=8, units="in", res=120)
 ggplot(data=runs.yr[]) +
