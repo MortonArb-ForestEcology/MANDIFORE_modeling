@@ -123,21 +123,60 @@ dat.value <-  dat.value %>%
 
 dat.nee <- dat.all[dat.all$ED.VAR == "nee" & dat.all$Weather.VAR == "qair", ]
 
-scatter <- ggplot(dat.nee)+
-    geom_point(aes(x = Weather.diff, y = Delta_MNG, color = Management))+
-    geom_smooth(aes(x = Weather.diff, y = Delta_MNG, color = Management, fill = Management),method = "lm")+
-    ggtitle("NEE Interactive effects with qair")+
-    xlab("qair")+
-    ylab(paste("Delta nee"))
-boxplot <- ggplot(dat.nee)+
-    facet_wrap(~GCM) +
-    geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
-    geom_point(aes(x = Management, y = Delta_MNG, color = Management))+
-    ggtitle("NEE change over time")+
+delta.box.nee <- ggplot(dat.nee)+
+  geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
+  geom_point(aes(x = Management, y = Delta_MNG, color = Management))+
+  ggtitle("Delta NEE")+
+  xlab("Management")+
+  ylab("Delta nee")
+
+dat.agb <- dat.all[dat.all$ED.VAR == "agb" & dat.all$Weather.VAR == "qair", ]
+
+delta.box.agb <- ggplot(dat.agb)+
+  geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
+  geom_point(aes(x = Management, y = Delta_MNG, color = Management))+
+  ggtitle("Delta AGB")+
+  xlab("Management")+
+  ylab("Delta agb")
+
+ggsave(delta.box.nee, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/Delta_NEE_boxplot.png")))
+ggsave(delta.box.agb, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/Delta_AGB_boxplot.png")))
+
+runs.last$Management <- factor(runs.last$Management, levels = c("MgmtNone", "MgmtGap", "MgmtShelter", "MgmtUnder"))
+
+runs.nee <- aggregate(nee~Management+GCM+rcp, data =runs.last,
+                                           FUN = mean)
+box.nee <- ggplot(runs.nee)+
+    geom_boxplot(aes(x = Management, y = nee, color = Management))+
+    geom_point(aes(x = Management, y = nee, color = Management))+
+    ggtitle("Mean NEE for decade 2090-2099")+
+    geom_hline(yintercept = 0)+
     xlab("Management")+
-    ylab(MVAR)
-ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_interactive_with_qair.png")))
-ggsave(boxplot, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_boxplot.png")))
+    ylab("nee")
+
+
+runs.agb <- aggregate(agb~Management+GCM+rcp, data =runs.last,
+                      FUN = mean)
+
+box.agb <- ggplot(runs.agb)+
+  geom_boxplot(aes(x = Management, y = agb, color = Management))+
+  geom_point(aes(x = Management, y = agb, color = Management))+
+  ggtitle("Mean AGB for decade 2090-2099")+
+  xlab("Management")+
+  ylab("agb")
+
+
+scatter <- ggplot(dat.nee)+
+  geom_point(aes(x = Weather.diff, y = Delta_MNG, color = Management))+
+  geom_smooth(aes(x = Weather.diff, y = Delta_MNG, color = Management, fill = Management),method = "lm")+
+  ggtitle("NEE Interactive effects with qair")+
+  xlab("qair")+
+  ylab(paste("Delta nee"))
+
+#ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_interactive_with_qair.png")))
+
+ggsave(box.nee, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_boxplot.png")))
+ggsave(box.agb, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/AGB_boxplot.png")))
 
 
 dat.tbl <- dat.value[dat.value$ED.VAR == "nee",]# & dat.value$Weather.VAR == "qair",]
