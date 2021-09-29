@@ -8,23 +8,36 @@ library(ggplot2); library(gganimate)
 path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
 path.figs <- file.path(path.google, "figures")
 
+path.script <- "C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis"
+
+path.read <- "C:/Users/lucie/Documents/MANDIFORE/"
+
+setwd(path.read)
+
+runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRUE)
+
+setwd(path.script)
+
+runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
+
+dat.co <- runs.all
 
 # -----------------------------------------------------------
 # Read in and play with the data
 # -----------------------------------------------------------
-dat.co <- read.csv(file.path("../data/Summary_PFTs_Cohort_Year.csv"))
-dat.co <- dat.co[dat.co$CO2=="static" & dat.co$PFT!=5,]
+#dat.co <- read.csv(file.path("extract.v3/Summary_PFTs_Cohort_Year.csv"))
+#dat.co <- dat.co[dat.co$CO2=="static" & dat.co$PFT!=5,]
 dat.co$Management <- factor(dat.co$Management, levels=c("None", "Under", "Shelter", "Gap"))
-dat.co$PFT <- car::recode(dat.co$PFT, "'9'='Early Succ.'; '10'='Mid. Succ.'; '11'='Late Succ.'")
-dat.co$PFT <-factor(dat.co$PFT, levels=c("Early Succ.", "Mid. Succ.", "Late Succ."))
-dat.co$RCP.name <- car::recode(dat.co$RCP, "'rcp45'='Low Change'; 'rcp85'='High Change'")
+#dat.co$PFT <- car::recode(dat.co$PFT, "'9'='Early Succ.'; '10'='Mid. Succ.'; '11'='Late Succ.'")
+#dat.co$PFT <-factor(dat.co$PFT, levels=c("Early Succ.", "Mid. Succ.", "Late Succ."))
+dat.co$RCP.name <- car::recode(dat.co$rcp, "'rcp45'='Low Change'; 'rcp85'='High Change'")
 dat.co$RCP.name <- factor(dat.co$RCP.name, levels=c("Low Change", "High Change"))
 summary(dat.co)
 
 
-dbh.dist <- ggplot(data=dat.co[dat.co$PFT!=5 & dat.co$DBH>10,])+
+dbh.dist <- ggplot(data=dat.co)+
   facet_grid(Management ~ RCP.name) +
-  geom_histogram(aes(x=DBH, fill=as.factor(PFT), weight=dens.wt*1e4), binwidth=5) +
+  geom_histogram(aes(x=dbh.mean), binwidth=5) +
   coord_cartesian(ylim=c(0,125), expand=F) +
   scale_y_continuous(name="Stems per Hectare", breaks=c(0,50,100,150)) +
   scale_x_continuous(name="DBH (cm)", expand=c(0,0)) +
@@ -44,7 +57,7 @@ dbh.dist <- ggplot(data=dat.co[dat.co$PFT!=5 & dat.co$DBH>10,])+
         plot.title = element_text(size=rel(2), face="bold", hjust=0.5)) +
   transition_time(year) + labs(title= "Year: {frame_time}") 
 
-# animate(dbh.dist, end_pause=25, start_pause = 25)
+ animate(dbh.dist, end_pause=25, start_pause = 25)
 
 anim_save(filename="Model_Size_Histogram_PFT_time.gif", animation = dbh.dist, end_pause=5, start_pause=5, fps=5, path=path.figs, height=7.5, width=10, units="in", res=180)
 # -----------------------------------------------------------

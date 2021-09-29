@@ -13,7 +13,7 @@ setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/0_setup/")
 runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "15", sep = "-"))
 
 
-dat.met <- read.csv("../Full_Weater_Daily.csv")
+dat.met <- read.csv("../Full_Weather_Daily.csv")
 dat.met <- dat.met[dat.met$model %in% unique(runs.all$GCM),]
 dat.heat <- dat.met[dat.met$var == "air_temperature_maximum",]
 

@@ -9,8 +9,8 @@ runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRU
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
 setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/0_setup/")
-dat.met <- read.csv("../Full_Weater_Daily.csv")
-dat.met <- dat.met[dat.met$model != "NLDAS"]
+dat.met <- read.csv("../Full_Weather_Daily.csv")
+dat.met <- dat.met[dat.met$model %in% unique(runs.all$GCM),]
 
 #Setting up droguht tracking
 
