@@ -77,7 +77,14 @@ summary(malus.pca2)
 #----------------------------------------------------------------------------------------#
 runs.all <- runs.yr
 
-col <- colnames(runs.all[c(9:35, 37:44)])
+#All climate variables
+#col <- colnames(runs.all[c(9:35, 37:44)])
+
+#psurf removed for exploration
+#col <- colnames(runs.all[c(9:13, 15:35, 37:44)])
+
+#Excluding basic weather variables (i.e. tair, precip, CO2)
+col <- colnames(runs.all[c(17:35, 37:44)])
 
 dat.diff <- data.frame(matrix(NA, nrow = 116, ncol = 1))
 colnames(dat.diff) <- c("RunID")
@@ -153,16 +160,21 @@ plot(PCA.RUN.TR, display = "sites", type = "text")
 plot(PCA.RUN, display = "species", type = "text")
 plot(PCA.RUN.TR, display = "species", type = "text")
 
+sum((as.vector(PCA.RUN$CA$eig)/sum(PCA.RUN$CA$eig))[1])
 
 # In a biplot of a PCA, species' scores are drawn as arrows 
 # that point in the direction of increasing values for that variable
 png(file = "../figures/PCA_RUNID_vs_Vardiff.png", height=12, width=12, units="in", res=120)
-biplot(PCA.RUN, choices = c(1,2), type = c("text", "text"))
+biplot(PCA.RUN, choices = c(1,2), type = c("text", "text"),
+       xlab = paste0("PC1", "(", round(sum((as.vector(PCA.RUN$CA$eig)/sum(PCA.RUN$CA$eig))[1] * 100)), "%", ")"),
+       ylab = paste0("PC2", "(", round(sum((as.vector(PCA.RUN$CA$eig)/sum(PCA.RUN$CA$eig))[2] * 100)), "%", ")"))
 dev.off()
 
 
 png(file = "../figures/PCA_Vardiff_vs_RUNID.png", height=12, width=12, units="in", res=120)
-biplot(PCA.RUN.TR, choices = c(1,2), type = c("text", "text"))
+biplot(PCA.RUN.TR, choices = c(1,2), type = c("text", "text"),
+       xlab = paste0("PC1", "(", round(sum((as.vector(PCA.RUN.TR$CA$eig)/sum(PCA.RUN.TR$CA$eig))[1] * 100)), "%", ")"),
+       ylab = paste0("PC2", "(", round(sum((as.vector(PCA.RUN.TR$CA$eig)/sum(PCA.RUN.TR$CA$eig))[2] * 100)), "%", ")"))
 dev.off()
 
 #-------------------------------------------------------------------------------#
@@ -212,12 +224,16 @@ plot(PCA.GCM.TR, display = "species", type = "text")
 # In a biplot of a PCA, species' scores are drawn as arrows 
 # that point in the direction of increasing values for that variable
 png(file = "../figures/PCA_GCM_vs_Vardiff.png", height=12, width=12, units="in", res=120)
-biplot(PCA.GCM, choices = c(1,2), type = c("text", "text"))
+biplot(PCA.GCM, choices = c(1,2), type = c("text", "text"),
+       xlab = paste0("PC1", "(", round(sum((as.vector(PCA.GCM$CA$eig)/sum(PCA.GCM$CA$eig))[1] * 100)), "%", ")"),
+       ylab = paste0("PC2", "(", round(sum((as.vector(PCA.GCM$CA$eig)/sum(PCA.GCM$CA$eig))[2] * 100)), "%", ")"))
 dev.off()
 
 
 png(file = "../figures/PCA_Vardiff_vs_GCM.png", height=12, width=12, units="in", res=120)
-biplot(PCA.GCM.TR, choices = c(1,2), type = c("text", "text"))
+biplot(PCA.GCM.TR, choices = c(1,2), type = c("text", "text"),
+       xlab = paste0("PC1", "(", round(sum((as.vector(PCA.GCM.TR$CA$eig)/sum(PCA.GCM.TR$CA$eig))[1] * 100)), "%", ")"),
+       ylab = paste0("PC2", "(", round(sum((as.vector(PCA.GCM.TR$CA$eig)/sum(PCA.GCM.TR$CA$eig))[2] * 100)), "%", ")"))
 dev.off()
 
 #-------------------------------------------------------------------------------#
@@ -248,7 +264,7 @@ barplot(as.vector(PCA.MNG.TR$CA$eig)/sum(PCA.MNG.TR$CA$eig))
 # How much of the variance in our dataset is explained by the first principal component?
 
 # Calculate the percent of variance explained by first two axes
-sum((as.vector(PCA.MNG$CA$eig)/sum(PCA.MNG$CA$eig))[1:2]) # 90%, this is good.
+sum((as.vector(PCA.MNG$CA$eig)/sum(PCA.MNG$CA$eig))[1:2]) # 80%, this is good.
 # Calculate the percent of variance explained by first two axes
 sum((as.vector(PCA.MNG.TR$CA$eig)/sum(PCA.MNG.TR$CA$eig))[1:2]) # 99%, this is good.
 # Also try to do it for the first three axes
@@ -267,12 +283,16 @@ plot(PCA.MNG.TR, display = "species", type = "text")
 # In a biplot of a PCA, species' scores are drawn as arrows 
 # that point in the direction of increasing values for that variable
 png(file = "../figures/PCA_MNG_vs_Vardiff.png", height=12, width=12, units="in", res=120)
-biplot(PCA.MNG, choices = c(1,2), type = c("text", "text"))
+biplot(PCA.MNG, choices = c(1,2), type = c("text", "text"),
+       xlab = paste0("PC1", "(", round(sum((as.vector(PCA.MNG$CA$eig)/sum(PCA.MNG$CA$eig))[1] * 100)), "%", ")"),
+       ylab = paste0("PC2", "(", round(sum((as.vector(PCA.MNG$CA$eig)/sum(PCA.MNG$CA$eig))[2] * 100)), "%", ")"))
 dev.off()
 
 
 png(file = "../figures/PCA_Vardiff_vs_MNG.png", height=12, width=12, units="in", res=120)
-biplot(PCA.MNG.TR, choices = c(1,2), type = c("text", "text"))
+biplot(PCA.MNG.TR, choices = c(1,2), type = c("text", "text"),
+       xlab = paste0("PC1", "(", round(sum((as.vector(PCA.MNG.TR$CA$eig)/sum(PCA.MNG.TR$CA$eig))[1] * 100)), "%", ")"),
+       ylab = paste0("PC2", "(", round(sum((as.vector(PCA.MNG.TR$CA$eig)/sum(PCA.MNG.TR$CA$eig))[2] * 100)), "%", ")"))
 dev.off()
 
 
