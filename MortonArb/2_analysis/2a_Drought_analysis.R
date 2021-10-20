@@ -83,8 +83,8 @@ lm.test <- lme(diff ~ Management-1, random=list(rcp=~1, GCM=~1), data=drought.df
 hold <- anova(lm.test)
 hold
 
-sum <- summary(lm.test)
-df.eff <- as.data.frame(sum$tTable)
+summary <- summary(lm.test)
+df.eff <- as.data.frame(summary$tTable)
 
 #Creating a visual that looks at what is happeninguring the drought periods
 
@@ -120,7 +120,10 @@ dev.off()
 #--------------------------------------------------------#
 #Experimenting with identifying drought based on avaerage
 #--------------------------------------------------------#
-dat.sum <- aggregate(mean~model+scenario+month+year, dat.precip, sum)
+colnames(dat.precip) <- c("model", "scenario", "var", "year", "yday", "mean", "days_since_rain", "Date", "month")
+dat.sum <- aggregate(mean~model+scenario+month+year, dat.precip, FUN = sum)
+
+
 
 avg.month <- aggregate(mean~month, dat.sum, mean)
 avg.month$sd <- aggregate(mean~month,dat.sum,sd)[,c("mean")]
@@ -137,6 +140,7 @@ dat.end$Date <- lubridate::ymd(paste(dat.end$year, dat.end$month, "15", sep = "-
 
 precip.chi <- data.frame(c(1:12), c(1.75, 1.63, 2.65, 3.68, 3.38, 3.63, 3.51, 4.62, 3.27, 2.71, 3.01, 2.43))
 colnames(precip.chi) <- c("month", "precip")
+#inches to mm
 precip.chi$precip <- precip.chi$precip * 25.4
 
 precip.chi$sd <- aggregate(precipf~month, runs.all, sd)[, c("precipf")]
@@ -265,3 +269,14 @@ for(MOD in unique(runs.all$GCM)){
 }
 dev.off()
 
+
+df.var <- runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & 
+                     runs.all$Date >= (STR-lubridate::years(1)) & runs.all$Date <= (END + lubridate::years(1)), ]
+
+
+precip.check <- dat.precip[dat.precip$model==MOD & dat.precip$scenario == RCP & 
+                     dat.precip$Date >= (STR-lubridate::years(1)) & dat.precip$Date <= (END + lubridate::years(1)), ]
+
+precip.check$mean <- precip.check$mean * 60 * 60 * 24
+
+precip.check <- aggregate(mean~model+scenario+month+year, precip.check, FUN = sum)
