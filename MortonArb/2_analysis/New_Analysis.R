@@ -15,9 +15,13 @@ path.read <- "C:/Users/lucie/Documents/MANDIFORE/"
 
 setwd(path.read)
 
-runs.all <- read_bulk(directory = "output", extension = ".csv", header = TRUE)
+runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRUE)
 
 setwd(path.script)
+
+
+runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
+
 
 
 library("nlme")
@@ -25,7 +29,7 @@ library("nlme")
 met.var <- c("tair", "precipf", "qair")
 
 #col <- colnames(runs.start[c(17:35, 37:44)])
-ED.interest <- c("basal.area.tree", "density.tree", "agb", "nee", "soil.moist.surf", "soil.moist.deep")
+ED.interest <- c("dbh.mean", "dbh.sd", "height.mean", "height.sd", "density.tree", "agb", "nee", "soil.moist.surf", "soil.moist.deep")
 
 dat.interact <- data.frame()
 dat.all <- data.frame()
@@ -33,77 +37,87 @@ dat.value <- data.frame()
 diff.list <- list()
 for(COL in ED.interest){
   var.list <- list()
-  for(VAR in unique(met.var)){
-
-    runs.all <- runs.all[runs.all$GCM != "MIROC-ESM-CHEM",]
     
-    runs.all <- runs.all[runs.all$GCM != "MIROC-ESM",]
+  runs.all <- runs.all[runs.all$GCM != "MIROC-ESM-CHEM",]
     
-    runs.first <- runs.all[runs.all$year < 2036 & runs.all$year > 2025,]
+  runs.all <- runs.all[runs.all$GCM != "MIROC-ESM",]
     
-    runs.last <- runs.all[runs.all$year > 2089,]
+  runs.first <- runs.all[runs.all$year < 2029 & runs.all$year > 2020,]
+    
+  runs.last <- runs.all[runs.all$year > 2089,]
     
     
-    #This is an abomination of aggregate functions that could be combined but I wrote this quick to get an abstract out.
-    ED.num <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.first,
+  #This is an abomination of aggregate functions that could be combined but I wrote this quick to get an abstract out.
+  ED.num <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.first,
                          FUN = mean)
     
-    ED.num[,c("first.mean.temp")] <- aggregate(eval(as.symbol(VAR))~Management+GCM+rcp, data =runs.first,
-                                                FUN = mean)[,c("eval(as.symbol(VAR))")]
+  ED.num[,c("first.mean.temp")] <- aggregate(tair~Management+GCM+rcp, data =runs.first,
+                                                FUN = mean)[,c("tair")]
     
-    colnames(ED.num) <- c("Management", "GCM", "rcp", "first.mean.ED", "first.mean.temp")
+  ED.num[,c("first.mean.precipf")] <- aggregate(precipf~Management+GCM+rcp, data =runs.first,
+                                               FUN = mean)[,c("precipf")]
+  
+  #ED.num[,c("first.mean.qair")] <- aggregate(qair~Management+GCM+rcp, data =runs.first,
+  #                                              FUN = mean)[,c("qair")]
+    
+  colnames(ED.num) <- c("Management", "GCM", "rcp", "first.mean.ED", "first.mean.temp", "first.mean.precipf")
     
     
-    ED.num[,c("last.mean.ED")] <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.last,
+  ED.num[,c("last.mean.ED")] <- aggregate(eval(as.symbol(COL))~Management+GCM+rcp, data =runs.last,
                                               FUN = mean)["eval(as.symbol(COL))"]
     
-    ED.num[,c("last.mean.temp")] <- aggregate(eval(as.symbol(VAR))~Management+GCM+rcp, data =runs.last,
-                                               FUN = mean)[,c("eval(as.symbol(VAR))")]
+  ED.num[,c("last.mean.temp")] <- aggregate(tair~Management+GCM+rcp, data =runs.last,
+                                               FUN = mean)[,c("tair")]
     
-    
-    #Another aggreagate abomination creates differnet data frame structure for another visual. Can compare first and last
-    #ED.num$ED.diff <-  ED.num$last.mean.ED - ED.num$first.mean.ED
-    ED.num$temp.diff <- ED.num$last.mean.temp - ED.num$first.mean.temp
+  ED.num[,c("last.mean.precipf")] <- aggregate(precipf~Management+GCM+rcp, data =runs.last,
+                                                  FUN = mean)[,c("precipf")]
   
-  
-    for(GCM in unique(ED.num$GCM)){
-      for(RCP in unique(ED.num$rcp)){
-        for(MNG in unique(ED.num$Management)){
-            ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == MNG, "Delta_MNG"] <- ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == MNG, "last.mean.ED"] - ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == "MgmtNone", "first.mean.ED"]
-        }
+  #ED.num[,c("last.mean.qair")] <- aggregate(qair~Management+GCM+rcp, data =runs.last,
+  #                                             FUN = mean)[,c("qair")]
+
+  ED.num$temp.diff <- ED.num$last.mean.temp - ED.num$first.mean.temp
+  ED.num$precipf.diff <- ED.num$last.mean.precipf - ED.num$first.mean.precipf
+  #ED.num$qair.diff <- ED.num$last.mean.qair - ED.num$first.mean.qair
+
+  for(GCM in unique(ED.num$GCM)){
+    for(RCP in unique(ED.num$rcp)){
+      for(MNG in unique(ED.num$Management)){
+          ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == MNG, "Delta_MNG"] <- ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == MNG, "last.mean.ED"] - ED.num[ED.num$GCM == GCM & ED.num$rcp == RCP & ED.num$Management == "None", "first.mean.ED"]
       }
     }
-    ED.num$Management <- factor(ED.num$Management, levels = c("MgmtNone", "MgmtGap", "MgmtShelter", "MgmtUnder"))
-    lm.test <- lme(Delta_MNG ~ temp.diff*Management, random=list(rcp=~1, GCM=~1), data=ED.num)
-    hold <- anova(lm.test)
-    
-    sum <- summary(lm.test)
-    df.eff <- as.data.frame(sum$tTable)
-    df.eff$Fixedeff <- rownames(df.eff)
-    df.eff$Fixedeff <- gsub("temp.diff", VAR , df.eff$Fixedeff)
-    df.eff$Fixedeff <- gsub("Management", paste0("Management(", VAR, ")" ) , df.eff$Fixedeff)
-    
-    var.list[[paste(COL, VAR, sep="-")]]$MVAR <- paste(COL, VAR, sep=":")
-    var.list[[paste(COL, VAR, sep="-")]]$Fixedeff <- df.eff$Fixedeff
-    var.list[[paste(COL, VAR, sep="-")]]$Value <- df.eff$Value
-    var.list[[paste(COL, VAR, sep="-")]]$pvalue <- df.eff$`p-value`
-    
-    diff.list[[paste0(COL, VAR, sep = "-")]]$GCM <- ED.num$GCM
-    diff.list[[paste0(COL, VAR, sep = "-")]]$Management <- ED.num$Management
-    diff.list[[paste0(COL, VAR, sep = "-")]]$rcp <- ED.num$rcp
-    diff.list[[paste0(COL, VAR, sep = "-")]]$Weather.VAR <- VAR
-    diff.list[[paste0(COL, VAR, sep = "-")]]$ED.VAR <- COL
-    #diff.list[[paste0(COL, VAR, sep = "-")]]$ED.diff <- ED.num$ED.diff
-    diff.list[[paste0(COL, VAR, sep = "-")]]$Weather.diff <- ED.num$temp.diff
-    diff.list[[paste0(COL, VAR, sep = "-")]]$Delta_MNG <- ED.num$Delta_MNG
   }
+  ED.num$Management <- factor(ED.num$Management, levels = c("None", "Gap", "Shelter", "Under"))
+  #lm.test <- lme(Delta_MNG ~ temp.diff * precipf.diff * Management, random=list(rcp=~1, GCM=~1), data=ED.num)
+  lm.test <- lme(Delta_MNG ~ Management-1, random=list(rcp=~1, GCM=~1), data=ED.num)
+  hold <- anova(lm.test)
+  hold
+
+  sum <- summary(lm.test)
+  df.eff <- as.data.frame(sum$tTable)
+  df.eff$Fixedeff <- rownames(df.eff)
+  #df.eff$Fixedeff <- gsub("temp.diff", VAR , df.eff$Fixedeff)
+  #df.eff$Fixedeff <- gsub("Management", paste0("Management(", VAR, ")" ) , df.eff$Fixedeff)
+  
+  var.list[[COL]]$MVAR <- COL
+  var.list[[COL]]$Fixedeff <- df.eff$Fixedeff
+  var.list[[COL]]$Value <- df.eff$Value
+  var.list[[COL]]$pvalue <- df.eff$`p-value`
+  
+  diff.list[[COL]]$GCM <- ED.num$GCM
+  diff.list[[COL]]$Management <- ED.num$Management
+  diff.list[[COL]]$rcp <- ED.num$rcp
+  diff.list[[COL]]$ED.VAR <- COL
+  diff.list[[COL]]$Precipf.diff <- ED.num$precipf.diff
+  diff.list[[COL]]$Temp.diff <- ED.num$temp.diff
+  diff.list[[COL]]$Delta_MNG <- ED.num$Delta_MNG
+
   dat.diff <- dplyr::bind_rows(diff.list)
   
   dat.var <- dplyr::bind_rows(var.list)
   dat.value <- rbind(dat.value, dat.var)
   dat.worth <- dat.var[dat.var$pvalue < .05,]
   
-  dat.worth <- dat.worth[grepl(":M", dat.worth$Fixedeff),]
+  #dat.worth <- dat.worth[grepl(":M", dat.worth$Fixedeff),]
   dat.all <- rbind(dat.all, dat.diff)
   dat.interact <- rbind(dat.interact, dat.worth)
 
@@ -121,7 +135,7 @@ dat.value <-  dat.value %>%
   separate(MVAR, c("ED.VAR", "Weather.VAR"), sep = ":")
 
 
-dat.nee <- dat.all[dat.all$ED.VAR == "nee" & dat.all$Weather.VAR == "qair", ]
+dat.nee <- dat.all[dat.all$ED.VAR == "nee",]
 
 delta.box.nee <- ggplot(dat.nee)+
   geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
@@ -130,7 +144,7 @@ delta.box.nee <- ggplot(dat.nee)+
   xlab("Management")+
   ylab("Delta nee")
 
-dat.agb <- dat.all[dat.all$ED.VAR == "agb" & dat.all$Weather.VAR == "qair", ]
+dat.agb <- dat.all[dat.all$ED.VAR == "agb",] 
 
 delta.box.agb <- ggplot(dat.agb)+
   geom_boxplot(aes(x = Management, y = Delta_MNG, color = Management))+
@@ -142,49 +156,133 @@ delta.box.agb <- ggplot(dat.agb)+
 ggsave(delta.box.nee, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/Delta_NEE_boxplot.png")))
 ggsave(delta.box.agb, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/Delta_AGB_boxplot.png")))
 
-runs.last$Management <- factor(runs.last$Management, levels = c("MgmtNone", "MgmtGap", "MgmtShelter", "MgmtUnder"))
 
-runs.nee <- aggregate(nee~Management+GCM+rcp, data =runs.last,
+runs.first <- runs.first[runs.first$Management == "None",]
+runs.first$Management <- "Start (2020-2029)"
+
+runs.nee.l <- aggregate(nee~Management+GCM+rcp, data =runs.last,
                                            FUN = mean)
+
+runs.nee.f <- aggregate(nee~Management+GCM+rcp, data =runs.first,
+                        FUN = mean)
+
+
+runs.nee <- rbind(runs.nee.f, runs.nee.l)
+
+runs.nee$Management <- factor(runs.nee$Management, levels = c("Start (2020-2029)", "None", "Gap", "Shelter", "Under"))
+
 box.nee <- ggplot(runs.nee)+
     geom_boxplot(aes(x = Management, y = nee, color = Management))+
     geom_point(aes(x = Management, y = nee, color = Management))+
-    ggtitle("Mean NEE for decade 2090-2099")+
+    #ggtitle("Mean NEE for decade 2090-2099")+
     geom_hline(yintercept = 0)+
+    #theme(plot.title = element_text(hjust = 0.5)) +
+    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
     xlab("Management")+
-    ylab("nee")
+    ylab("NEE (kgC/m2/mo)")
 
 
-runs.agb <- aggregate(agb~Management+GCM+rcp, data =runs.last,
-                      FUN = mean)
+runs.agb.l <- aggregate(agb~Management+GCM+rcp, data =runs.last,
+                        FUN = mean)
+
+runs.agb.f <- aggregate(agb~Management+GCM+rcp, data =runs.first,
+                        FUN = mean)
+
+
+runs.agb <- rbind(runs.agb.f, runs.agb.l)
+
+runs.agb$Management <- factor(runs.agb$Management, levels = c("Start (2020-2029)", "None", "Gap", "Shelter", "Under"))
+
 
 box.agb <- ggplot(runs.agb)+
   geom_boxplot(aes(x = Management, y = agb, color = Management))+
   geom_point(aes(x = Management, y = agb, color = Management))+
-  ggtitle("Mean AGB for decade 2090-2099")+
+  #ggtitle("Mean AGB for decade 2090-2099")+
+  #theme(plot.title = element_text(hjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   xlab("Management")+
-  ylab("agb")
+  ylab("ABG (kgC/m2)")
+
+
+runs.dbh.sd.l <- aggregate(dbh.sd~Management+GCM+rcp, data =runs.last,
+                        FUN = mean)
+
+runs.dbh.sd.f <- aggregate(dbh.sd~Management+GCM+rcp, data =runs.first,
+                        FUN = mean)
+
+
+runs.dbh.sd <- rbind(runs.dbh.sd.f, runs.dbh.sd.l)
+
+runs.dbh.sd$Management <- factor(runs.dbh.sd$Management, levels = c("Start (2020-2029)", "None", "Gap", "Shelter", "Under"))
+
+
+box.dbh.sd <- ggplot(runs.dbh.sd)+
+  geom_boxplot(aes(x = Management, y = dbh.sd, color = Management))+
+  geom_point(aes(x = Management, y = dbh.sd, color = Management))+
+  ggtitle("Mean dbh.sd for decade 2090-2099")+
+  xlab("Management")+
+  ylab("ABG (kgC/m2)")
+
+runs.soil.moist.deep.l <- aggregate(soil.moist.deep~Management+GCM+rcp, data =runs.last,
+                           FUN = mean)
+
+runs.soil.moist.deep.f <- aggregate(soil.moist.deep~Management+GCM+rcp, data =runs.first,
+                           FUN = mean)
+
+
+runs.soil.moist.deep <- rbind(runs.soil.moist.deep.f, runs.soil.moist.deep.l)
+
+runs.soil.moist.deep$Management <- factor(runs.soil.moist.deep$Management, levels = c("Start (2020-2029)", "None", "Gap", "Shelter", "Under"))
+
+
+box.soil.moist.deep <- ggplot(runs.soil.moist.deep)+
+  geom_boxplot(aes(x = Management, y = soil.moist.deep, color = Management))+
+  geom_point(aes(x = Management, y = soil.moist.deep, color = Management))+
+  ggtitle("Mean soil.moist.deep for decade 2090-2099")+
+  xlab("Management")+
+  ylab("ABG (kgC/m2)")
+
+runs.density.tree.l <- aggregate(density.tree~Management+GCM+rcp, data =runs.last,
+                                    FUN = mean)
+
+runs.density.tree.f <- aggregate(density.tree~Management+GCM+rcp, data =runs.first,
+                                    FUN = mean)
+
+
+runs.density.tree <- rbind(runs.density.tree.f, runs.density.tree.l)
+
+runs.density.tree$Management <- factor(runs.density.tree$Management, levels = c("Start (2020-2029)", "None", "Gap", "Shelter", "Under"))
+
+
+box.density.tree <- ggplot(runs.density.tree)+
+  geom_boxplot(aes(x = Management, y = density.tree, color = Management))+
+  geom_point(aes(x = Management, y = density.tree, color = Management))+
+  ggtitle("Mean density.tree for decade 2090-2099")+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Management")+
+  ylab("ABG (kgC/m2)")
 
 
 scatter <- ggplot(dat.nee)+
-  geom_point(aes(x = Weather.diff, y = Delta_MNG, color = Management))+
-  geom_smooth(aes(x = Weather.diff, y = Delta_MNG, color = Management, fill = Management),method = "lm")+
-  ggtitle("NEE Interactive effects with qair")+
-  xlab("qair")+
+  geom_point(aes(x = Precipf.diff, y = Delta_MNG, color = Management))+
+  geom_smooth(aes(x = Precipf.diff, y = Delta_MNG, color = Management, fill = Management),method = "lm")+
+  #ggtitle("NEE Interactive effects with precipf")+
+  #theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Delta Precipitation Flux")+
   ylab(paste("Delta nee"))
 
-#ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_interactive_with_qair.png")))
+ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_interactive_with_precipf.png")))
 
 ggsave(box.nee, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/NEE_boxplot.png")))
 ggsave(box.agb, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/AGB_boxplot.png")))
 
 
-dat.tbl <- dat.value[dat.value$ED.VAR == "nee",]# & dat.value$Weather.VAR == "qair",]
-write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/nee_lme.csv"), row.names = F)
+dat.tbl <- dat.value[dat.value$MVAR == "nee",]# & dat.value$Weather.VAR == "qair",]
+write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/multi_nee_lme.csv"), row.names = F)
 
 
 
-dat.agb <- dat.all[dat.all$ED.VAR == "agb" & dat.all$Weather.VAR == "qair", ]
+dat.agb <- dat.all[dat.all$MVAR == "agb" & dat.all$Weather.VAR == "qair", ]
 
 scatter <- ggplot(dat.agb)+
   geom_point(aes(x = Weather.diff, y = Delta_MNG, color = Management))+
@@ -205,8 +303,8 @@ ggsave(scatter, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE
 ggsave(boxplot, file=paste0(file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/AGB_boxplot.png")))
 
 
-dat.tbl <- dat.value[dat.value$ED.VAR == "agb",]# & dat.value$Weather.VAR == "qair",]
-write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/agb_lme.csv"), row.names = F)
+dat.tbl <- dat.value[dat.value$MVAR == "agb",]# & dat.value$Weather.VAR == "qair",]
+write.csv(dat.tbl, file.path("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/figures/multi_agb_lme.csv"), row.names = F)
 
 
 png(file.path(path.figs, "Explore_NEE_Total_Time.png"), height=10, width=8, units="in", res=120)
