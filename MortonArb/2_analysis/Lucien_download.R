@@ -20,6 +20,7 @@ site.lon = -88.04
 # Get a list of everything we have to work with
 dir.mods <- file.path(path.out, "subdaily_tdm", site.name)
 mods.raw <- dir(dir.mods)
+mods.raw <- mods.raw[c(1:12,15:32)]
 
 yrs.all <- 2006:2099
 vars.all <- c("air_temperature", "precipitation_flux", "surface_downwelling_longwave_flux_in_air", "surface_downwelling_shortwave_flux_in_air", "air_pressure", "specific_humidity", "wind_speed")
@@ -57,16 +58,17 @@ for(MOD in mods.raw){
       if(length(fnow)!=1) next
       
       ncT <- ncdf4::nc_open(file.path(dir.mods, MOD, fnow))
+      check <- ncdf4::ncvar_get(ncT, "time")
       for(DAY in doy.all){
         for(VAR in vars.all){
           if(VAR %in% names(ncT$var)){
             mod.array[,paste(DAY),paste(YR), VAR] <- ncdf4::ncvar_get(ncT, VAR, start=c(1,1, (24*DAY)-23), count=c(1,1,max(hr.all)))
           } else if(VAR=="wind_speed" & "eastward_wind" %in% names(ncT$var)){
-            ew <- ncdf4::ncvar_get(ncT, "eastward_wind", start=c(1,1,1), count=c(1,1,max(doy.all)))
-            nw <- ncdf4::ncvar_get(ncT, "northward_wind", start=c(1,1,1), count=c(1,1,max(doy.all)))
+            ew <- ncdf4::ncvar_get(ncT, "eastward_wind", start=c(1,1, (24*DAY)-23), count=c(1,1,max(hr.all)))
+            nw <- ncdf4::ncvar_get(ncT, "northward_wind", start=c(1,1, (24*DAY)-23), count=c(1,1,max(hr.all)))
             
             # Calculate wind speed from ew/nw using pythagorean theorem
-            mod.array[,paste(YR), "wind_speed"] <- sqrt(ew^2 + nw^2)
+            mod.array[,paste(DAY), paste(YR), "wind_speed"] <- sqrt(ew^2 + nw^2)
             
           } else next
           
@@ -161,6 +163,7 @@ for(MOD in mods.raw){
   )
 }
 dev.off()
+
 
 
 pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_year_byVar.pdf"), height=11, width=8.5)
