@@ -7,7 +7,7 @@
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
 #Folder containing the data
-path.out = "../met_raw.v3"
+path.out = "../../../../crollinson/MANDIFORE_modeling/MortonArb/met_raw.v3"
 
 #Site identification
 site.name= "MortonArb"
@@ -89,34 +89,48 @@ mod.df$value <- ifelse(mod.df$var == "precipitation_flux", mod.df$value * 60 * 6
 #Creating a date object that is Daily (Removing hours)
 mod.df$Date <- as.Date(mod.df$Date)
 
+#adding a flag for Heatwave temperature
+mod.df$Heatwave <- ifelse(mod.df$var == "air_temperature" & mod.df$value > 313.15, 1, 0)
+
 #Aggregating for each day
 day.df <- aggregate(value~var+Date+model, data =mod.df, FUN = mean)
-day.df$min <- aggregate(value~var+Date+model, data =mod.df, FUN = min)[,c("value")]
-day.df$max <- aggregate(value~var+Date+model, data =mod.df, FUN = max)[,c("value")]
 
-#Summing the precipitation converts from kg2/m2/hour to kg2/m2/day
-day.df$sum <- aggregate(value~var+Date+model, data =mod.df, FUN = sum)[,c("value")]
-colnames(day.df) <- c("var", "Date", "model", "mean", "min", "max", "sum")
+#I've removed these for now due to time and memory restrictions but might bring them back if they seem useful
+
+#day.df$min <- aggregate(value~var+Date+model, data =mod.df, FUN = min)[,c("value")]
+#day.df$max <- aggregate(value~var+Date+model, data =mod.df, FUN = max)[,c("value")]
 
 #Splitting the models and scenarios into two columns for easier cross-walking and analysis
-day.df$scenario <- ifelse(grepl("85", day.df$model, fixed = TRUE), "rcp85", "rcp45")
-day.df$model <- car::recode(day.df$model, "'ACCESS1-0_rcp45_bc.tdm'='ACCESS1-0'; 'ACCESS1-0_rcp85_bc.tdm'='ACCESS1-0'; 'bcc-csm1-1-m_rcp45_bc.tdm'='bcc-csm1-1-m';  
-  'bcc-csm1-1-m_rcp85_bc.tdm'='bcc-csm1-1-m'; 'bcc-csm1-1_rcp45_bc.tdm'='bcc-csm1-1'; 'bcc-csm1-1_rcp85_bc.tdm'='bcc-csm1-1';    
-  'BNU-ESM_rcp45_bc.tdm'='BNU-ESM'; 'BNU-ESM_rcp85_bc.tdm'='BNU-ESM'; 'CNRM-CM5_rcp45_bc.tdm'='CNRM-CM5';      
-  'CNRM-CM5_rcp85_bc.tdm'='CNRM-CM5'; 'CSIRO-Mk3-6-0_rcp45_bc.tdm'='CSIRO-Mk3-6-0'; 'CSIRO-Mk3-6-0_rcp85_bc.tdm'='CSIRO-Mk3-6-0'; 
-  'GFDL-ESM2G_rcp45_bc.tdm'='GFDL-ESM2G'; 'GFDL-ESM2G_rcp85_bc.tdm'='GFDL-ESM2G'; 'GFDL-ESM2M_rcp45_bc.tdm'='GFDL-ESM2M';    
-  'GFDL-ESM2M_rcp85_bc.tdm'='GFDL-ESM2M'; 'inmcm4_rcp45_bc.tdm'='inmcm4'; 'inmcm4_rcp85_bc.tdm'='inmcm4';        
-  'IPSL-CM5A-LR_rcp45_bc.tdm'='IPSL-CM5A-LR'; 'IPSL-CM5A-LR_rcp85_bc.tdm'='IPSL-CM5A-LR'; 'IPSL-CM5B-LR_rcp45_bc.tdm'='IPSL-CM5B-LR';  
-  'IPSL-CM5B-LR_rcp85_bc.tdm'='IPSL-CM5B-LR'; 'MIROC-ESM-CHEM_rcp45_bc.tdm'='MIROC-ESM-CHEM'; 'MIROC-ESM-CHEM_rcp85_bc.tdm'='MIROC-ESM-CHEM';
-  'MIROC-ESM_rcp45_bc.tdm'='MIROC-ESM'; 'MIROC-ESM_rcp85_bc.tdm'='MIROC-ESM'; 'MIROC5_rcp45_bc.tdm'='MIROC5';        
-  'MIROC5_rcp85_bc.tdm'='MIROC5'; 'MRI-CGCM3_rcp45_bc.tdm'='MRI-CGCM3'; 'MRI-CGCM3_rcp85_bc.tdm'='MRI-CGCM3'")
+#day.df$scenario <- ifelse(grepl("85", day.df$model, fixed = TRUE), "rcp85", "rcp45")
+#day.df$model <- car::recode(day.df$model, "'ACCESS1-0_rcp45_bc.tdm'='ACCESS1-0'; 'ACCESS1-0_rcp85_bc.tdm'='ACCESS1-0'; 'bcc-csm1-1-m_rcp45_bc.tdm'='bcc-csm1-1-m';  
+#  'bcc-csm1-1-m_rcp85_bc.tdm'='bcc-csm1-1-m'; 'bcc-csm1-1_rcp45_bc.tdm'='bcc-csm1-1'; 'bcc-csm1-1_rcp85_bc.tdm'='bcc-csm1-1';    
+#  'BNU-ESM_rcp45_bc.tdm'='BNU-ESM'; 'BNU-ESM_rcp85_bc.tdm'='BNU-ESM'; 'CNRM-CM5_rcp45_bc.tdm'='CNRM-CM5';      
+#  'CNRM-CM5_rcp85_bc.tdm'='CNRM-CM5'; 'CSIRO-Mk3-6-0_rcp45_bc.tdm'='CSIRO-Mk3-6-0'; 'CSIRO-Mk3-6-0_rcp85_bc.tdm'='CSIRO-Mk3-6-0'; 
+#  'GFDL-ESM2G_rcp45_bc.tdm'='GFDL-ESM2G'; 'GFDL-ESM2G_rcp85_bc.tdm'='GFDL-ESM2G'; 'GFDL-ESM2M_rcp45_bc.tdm'='GFDL-ESM2M';    
+#  'GFDL-ESM2M_rcp85_bc.tdm'='GFDL-ESM2M'; 'inmcm4_rcp45_bc.tdm'='inmcm4'; 'inmcm4_rcp85_bc.tdm'='inmcm4';        
+# 'IPSL-CM5A-LR_rcp45_bc.tdm'='IPSL-CM5A-LR'; 'IPSL-CM5A-LR_rcp85_bc.tdm'='IPSL-CM5A-LR'; 'IPSL-CM5B-LR_rcp45_bc.tdm'='IPSL-CM5B-LR';  
+#  'IPSL-CM5B-LR_rcp85_bc.tdm'='IPSL-CM5B-LR'; 'MIROC-ESM-CHEM_rcp45_bc.tdm'='MIROC-ESM-CHEM'; 'MIROC-ESM-CHEM_rcp85_bc.tdm'='MIROC-ESM-CHEM';
+#  'MIROC-ESM_rcp45_bc.tdm'='MIROC-ESM'; 'MIROC-ESM_rcp85_bc.tdm'='MIROC-ESM'; 'MIROC5_rcp45_bc.tdm'='MIROC5';        
+#  'MIROC5_rcp85_bc.tdm'='MIROC5'; 'MRI-CGCM3_rcp45_bc.tdm'='MRI-CGCM3'; 'MRI-CGCM3_rcp85_bc.tdm'='MRI-CGCM3'")
 
-
-
-
-#Saving the dataframe
+day.df$sum <- aggregate(value~var+Date+model, data =mod.df, FUN = sum)[,c("value")]
+#Saving the dataframe of every variable together at daily resolution
 write.csv(day.df, "../Aggregate_Weater_Daily.csv", row.names=F)
 
+#Making a precipitation specific dataframe for conversion
 #dat.precip <- day.df[day.df$var == "precipitation_flux",]
+#Summing the precipitation converts from kg2/m2/hour to kg2/m2/day
+
+
+
 #dat.temp <- day.df[day.df$var == "air_temperature",]
+#For each day I sum the total number of hours the temperature went above th photsynthetic threshold
+#dat.temp$Heatwave <- aggregate(Heatwave~var+Date+model, data = mod.df, FUN = sum)[,c("Heatwave")]
+#colnames(day.df) <- c("var", "Date", "model", "mean", "min", "max", "sum")
+
+
+
+
+
+
 
