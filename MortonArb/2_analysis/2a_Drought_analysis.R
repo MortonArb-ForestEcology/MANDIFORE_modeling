@@ -19,18 +19,12 @@ runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRU
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
 setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis/")
-dat.met <- read.csv("../Full_Weather_Daily.csv")
-dat.met <- dat.met[dat.met$model %in% unique(runs.all$GCM),]
-
 dat.precip <- read.csv("../Precip_Weather_Daily")
 
 dat.end <- read.csv("../Drought_Weather_Daily")
 
-#dat.end$YM <- paste(dat.end$model, dat.end$scenario , dat.end$year, dat.end$month, sep = "-")
-#runs.all$YM <- paste(runs.all$GCM, runs.all$rcp , runs.all$year, runs.all$month, sep = "-")
-
-#runs.all$drought_flag <- ifelse(runs.all$YM %in% dat.end$YM, T, F)
 #artifically adding the 15th as the day for the Date objects since you can't make a date object with just month and year
+#This is used for plotting not for direct dat comparision
 runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "15", sep = "-"))
 
 
@@ -88,48 +82,25 @@ df.eff <- as.data.frame(summary$tTable)
 
 #Creating a visual that looks at what is happeninguring the drought periods
 
-#Dates.list <- list()
-path.out = "../met.v3"
-pdf(file.path(path.out, "CMIP5_AGB_Drought_window.pdf"), height=11, width=8.5)
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    temp.end <- dat.end[dat.end$model == MOD & dat.end$scenario == RCP, ]
-    if(nrow(temp.end) > 0){
-      for(i in 1:nrow(temp.end)){
-        END <- as.Date(temp.end[i, "Date"])
-        STR <- END - temp.end[i, "days_since_rain"]
-        if(length(STR) > 0){
-          df.var <- runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & 
-                               runs.all$Date >= (STR-lubridate::years(1)) & runs.all$Date <= (END + lubridate::years(5)), ]
-          
-          print(
-            ggplot() +
-              ggtitle(paste(MOD, RCP, (STR-lubridate::years(1)), (END + lubridate::years(5)))) +
-              geom_line(data=df.var, aes(x=Date, y=agb, color = Management))+
-              #geom_vline(xintercept = Enddates, linetype = 4) +
-              geom_rect(aes(xmin = STR, xmax = END, ymin = -Inf, ymax = Inf), alpha = 0.4)
-          )
-        }
-      }
-    }
-  }
-}
-dev.off()
+
+
 
 
 #--------------------------------------------------------#
 #Experimenting with identifying drought based on avaerage
 #--------------------------------------------------------#
-colnames(dat.precip) <- c("model", "scenario", "var", "year", "yday", "mean", "days_since_rain", "Date", "month")
-dat.sum <- aggregate(mean~model+scenario+month+year, dat.precip, FUN = sum)
+dat.sum <- aggregate(mean~month+year+model+scenario, dat.precip, FUN = sum)
 
+dat.merge <- runs.all[, c("month", "year", "GCM", "rcp", "precipf", "Management")]
 
+dat.compare <- merge(dat.sum, dat.merge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
+
+dat.sum$days_no_rain <- aggregate(Drought_flag~month+year+model+scenario, dat.precip, FUN = sum)[,c("Drought_flag")]
+
+#dat.sum$Date <- lubridate::ymd(paste(dat.sum$year, dat.sum$month, "15", sep = "-"))
 
 avg.month <- aggregate(mean~month, dat.sum, mean)
 avg.month$sd <- aggregate(mean~month,dat.sum,sd)[,c("mean")]
-
-#by.month <- aggregate(mean~model+scenario+month+year, dat.precip, mean)
-
 
 dat.sum$flag <- ifelse(dat.sum$mean < 9.198171e-06, T, F)
 
@@ -137,7 +108,7 @@ dat.end <- dat.sum[dat.sum$flag == T,]
 
 dat.end$Date <- lubridate::ymd(paste(dat.end$year, dat.end$month, "15", sep = "-"))
 
-
+#Chicago average per month
 precip.chi <- data.frame(c(1:12), c(1.75, 1.63, 2.65, 3.68, 3.38, 3.63, 3.51, 4.62, 3.27, 2.71, 3.01, 2.43))
 colnames(precip.chi) <- c("month", "precip")
 #inches to mm
@@ -156,6 +127,9 @@ for(Month in unique(runs.all$month)){
 dat.end <- runs.all[runs.all$d_flag == T,]
 
 dat.end$Date <- lubridate::ymd(paste(dat.end$year, dat.end$month, "15", sep = "-"))
+
+
+#Where the Exploratory figures begin
 
 library(ggplot2)
 path.out = "../met.v3"
@@ -176,9 +150,6 @@ for(MOD in unique(runs.all$GCM)){
   }
 }
 dev.off()
-
-
-
 
 
 library(ggplot2)
@@ -268,15 +239,3 @@ for(MOD in unique(runs.all$GCM)){
   }
 }
 dev.off()
-
-
-df.var <- runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & 
-                     runs.all$Date >= (STR-lubridate::years(1)) & runs.all$Date <= (END + lubridate::years(1)), ]
-
-
-precip.check <- dat.precip[dat.precip$model==MOD & dat.precip$scenario == RCP & 
-                     dat.precip$Date >= (STR-lubridate::years(1)) & dat.precip$Date <= (END + lubridate::years(1)), ]
-
-precip.check$mean <- precip.check$mean * 60 * 60 * 24
-
-precip.check <- aggregate(mean~model+scenario+month+year, precip.check, FUN = sum)
