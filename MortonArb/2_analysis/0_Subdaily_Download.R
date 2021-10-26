@@ -8,6 +8,7 @@
 #----------------------------------------------------------------------------------------------------------------------#
 #Folder containing the data
 path.out = "../../../../crollinson/MANDIFORE_modeling/MortonArb/met_raw.v3"
+install.packages("ncdf4")
 
 #Site identification
 site.name= "MortonArb"
