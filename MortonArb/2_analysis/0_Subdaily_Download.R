@@ -27,7 +27,7 @@ vars.all <- c("air_temperature", "precipitation_flux", "surface_downwelling_long
 
 #Creating the list that will be populated
 mod.list <- list()
-mods.raw <- mods.raw[1:3]
+mods.raw <- mods.raw[1,3,5]
 for(MOD in mods.raw){
   #Printing to make sure it's running
   print(paste0("Processing Model: ", MOD))
@@ -126,7 +126,7 @@ dat.precip <- day.df[day.df$var == "precipitation_flux",]
 
 
 
-#dat.temp <- day.df[day.df$var == "air_temperature",]
+dat.temp <- day.df[day.df$var == "air_temperature",]
 #For each day I sum the total number of hours the temperature went above th photsynthetic threshold
 #dat.temp$Heatwave <- aggregate(Heatwave~var+Date+model, data = mod.df, FUN = sum)[,c("Heatwave")]
 #colnames(day.df) <- c("var", "Date", "model", "mean", "min", "max", "sum")
