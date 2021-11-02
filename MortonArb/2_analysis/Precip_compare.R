@@ -31,18 +31,18 @@ dat.precip$year <- lubridate::year(dat.precip$Date)
 #dat.leap <- dat.precip[dat.precip$Date == as.Date("2024-02-29"),]
 
 #This is when the daily rain gets converted to monthly. This is the final conversion step where daily is summed by month
-dat.sum <- aggregate(value~month+year+model+scenario, dat.precip, FUN = mean)
+dat.sum <- aggregate(mean~month+year+model+scenario, dat.precip, FUN = mean)
 
 dpm <- lubridate::days_in_month(1:12)
 sec2mo <- dpm*60*60*24
 
-dat.sum$value <- dat.sum$value * sec2mo[dat.sum$month]
+dat.sum$mean <- dat.sum$mean * sec2mo[dat.sum$month]
 
 dat.merge <- runs.all[, c("month", "year", "GCM", "rcp", "precipf", "Management")]
 
 dat.compare <- merge(dat.sum, dat.merge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
 
-dat.compare$diff <- dat.compare$value - dat.compare$precipf
+dat.compare$diff <- dat.compare$mean - dat.compare$precipf
 
 #Creating a date object so we can easily plot each month
 dat.compare$Date <- lubridate::ymd(paste(dat.compare$year, dat.compare$month, "15", sep = "-"))
@@ -57,7 +57,7 @@ ggplot() +
 
   
 #Looking at percent difference instead of absolute
-dat.compare$pcent.diff <- (dat.compare$sum/dat.compare$precipf - 1) * 100
+dat.compare$pcent.diff <- (dat.compare$mean/dat.compare$precipf - 1) * 100
   
 png(width=9, height=8, units="in", res=600, filename= file.path("../Pcent_Difference_In_Precip.png"))
 ggplot() +
@@ -65,10 +65,10 @@ ggplot() +
   geom_line(data=dat.compare, aes(x=Date, y=pcent.diff, color = model))+
   ggtitle("% Difference between Precipitation (Aggregated/ED output)")
 dev.off()
-dat.compare <- read.csv("../Precip_Comparision.csv")
 
-dat.bad <- dat.compare[dat.compare$pcent.diff > 20 | dat.compare$pcent.diff < -20,]
+write.csv(dat.compare, "../Mean_Precip_Comparision.csv",  row.names = F)
 
+dat.compare <- read.csv("../Mean_Precip_Comparision.csv")
 
 ggplot() +
   facet_wrap(~model, scales = "free_y")+
@@ -81,103 +81,6 @@ ggplot() +
   geom_point(data=dat.compare, aes(x=precipf, y=diff, color = model))+
   geom_smooth(data=dat.compare, aes(x=precipf, y=diff, color = model))+
   ggtitle("Daily Aggregate (sum) vs. monthly ED2 (precipf)")
-
-
-
-dat.temp$month <- lubridate::month(dat.temp$Date)
-
-dat.temp$year <- lubridate::year(dat.temp$Date)
-
-#dat.leap <- dat.precip[dat.precip$Date == as.Date("2024-02-29"),]
-
-#This is when the daily rain gets converted to monthly. This is the final conversion step where daily is summed by month
-dat.tsum <- aggregate(value~month+year+model+scenario, dat.temp, FUN = mean)
-
-dat.tmerge <- runs.all[, c("month", "year", "GCM", "rcp", "tair", "Management")]
-
-dat.tcompare <- merge(dat.tsum, dat.tmerge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
-
-dat.tcompare$diff <- dat.tcompare$value - dat.tcompare$tair
-
-#Creating a date object so we can easily plot each month
-dat.tcompare$Date <- lubridate::ymd(paste(dat.tcompare$year, dat.tcompare$month, "15", sep = "-"))
-
-library(ggplot2)
-png(width=9, height=8, units="in", res=600, filename= file.path("../Difference_In_Precip.png"))
-ggplot() +
-  facet_wrap(~model, scales = "free_y")+
-  geom_line(data=dat.tcompare, aes(x=Date, y=diff, color = model))+
-  ggtitle("DIfference between Temperature")
-dev.off()
-
-dat.tsum$value <- dat.tsum$value - 273.15
-dat.tmerge$tair <- dat.tmerge$tair - 273.15
-
-#Looking at percent difference instead of absolute
-dat.tcompare$pcent.diff <- (dat.tcompare$value/dat.tcompare$tair - 1) * 100
-
-png(width=9, height=8, units="in", res=600, filename= file.path("../Pcent_Difference_In_Precip.png"))
-ggplot() +
-  facet_wrap(~model, scales = "free_y")+
-  geom_line(data=dat.tcompare, aes(x=Date, y=pcent.diff, color = model))+
-  ggtitle("% Difference between Temperature (Aggregated/ED output)")
-dev.off()
-dat.tcompare <- read.csv("../Temp_Comparision.csv")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#Testing zone
-
-month <- 1:12
-dpm <- lubridate::days_in_month(1:12)
-sec2mo <- dpm*60*60*24
-
-convert <- dataframe(month, sec2mo)
-
-dat.precip$sec2mo <- convert$sec2mo[match(dat.precip$month, convert$month)]
-
-dat.precip$con <- dat.precip$
-
-
-dat.temp$month <- lubridate::month(dat.temp$Date)
-
-dat.temp$year <- lubridate::year(dat.temp$Date)
-
-#This is when the daily rain gets converted to monthly. This is the final conversion step where daily is summed by month
-dat.sum <- aggregate(mean~month+year+model+scenario, dat.temp, FUN = mean)
-
-dat.merge <- runs.all[, c("month", "year", "GCM", "rcp", "tair", "Management")]
-
-dat.compare <- merge(dat.sum, dat.merge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
-
-dat.compare$diff <- dat.compare$mean - dat.compare$tair
-
-dat.compare$pcent.diff <- (dat.compare$mean/dat.compare$tair - 1) * 100
-
-ggplot() +
-  facet_wrap(~model, scales = "free_y")+
-  geom_line(data=dat.compare, aes(x=Date, y=diff, color = model))+
-  ggtitle("DIfference between Temp")
-dev.off()
-
-ggplot() +
-  facet_wrap(~model, scales = "free_y")+
-  geom_line(data=dat.compare, aes(x=Date, y=pcent.diff, color = model))+
-  ggtitle("% Difference between Temp (Aggregated/ED output)")
-dev.off()
 
 
 
@@ -251,15 +154,13 @@ ggplot() +
 dev.off()
 dat.compare <- read.csv("../Precip_Comparision.csv")
 
-dat.bad <- dat.compare[dat.compare$pcent.diff > 20 | dat.compare$pcent.diff < -20,]
-
 png(width=9, height=8, units="in", res=600, filename= file.path("../Daily_v_Monthly_preicp.png"))
 ggplot() +
   geom_point(data=dat.compare, aes(x=old.mean, y=new.mean))+
   ggtitle("Daily Aggregate (old.mean) vs. monthly ED2 (new.mean)")+
   xlab("Daily Aggregate mean (kg2/m2/sec)")+
   ylab("Monthly ED2 mean (kg/m2/sec)")
-  
+
 dev.off()
 
 png(width=9, height=8, units="in", res=600, filename= file.path("../Monthly_v_Difference.png"))
@@ -270,4 +171,50 @@ ggplot() +
   xlab("Monthly ED2 mean (kg/m2/sec)")+
   ylab("Absolute difference")
 dev.off()
+
+#------------------------#
+#Testing zone
+#------------------------#
+
+#Testing with temp to see if conversion is the main problem (it is not, temp is also off)
+dat.temp$month <- lubridate::month(dat.temp$Date)
+
+dat.temp$year <- lubridate::year(dat.temp$Date)
+
+#dat.leap <- dat.precip[dat.precip$Date == as.Date("2024-02-29"),]
+
+#This is when the daily rain gets converted to monthly. This is the final conversion step where daily is summed by month
+dat.tsum <- aggregate(value~month+year+model+scenario, dat.temp, FUN = mean)
+
+dat.tmerge <- runs.all[, c("month", "year", "GCM", "rcp", "tair", "Management")]
+
+dat.tcompare <- merge(dat.tsum, dat.tmerge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
+
+dat.tcompare$diff <- dat.tcompare$value - dat.tcompare$tair
+
+#Creating a date object so we can easily plot each month
+dat.tcompare$Date <- lubridate::ymd(paste(dat.tcompare$year, dat.tcompare$month, "15", sep = "-"))
+
+library(ggplot2)
+png(width=9, height=8, units="in", res=600, filename= file.path("../Difference_In_Precip.png"))
+ggplot() +
+  facet_wrap(~model, scales = "free_y")+
+  geom_line(data=dat.tcompare, aes(x=Date, y=diff, color = model))+
+  ggtitle("DIfference between Temperature")
+dev.off()
+
+dat.tsum$value <- dat.tsum$value - 273.15
+dat.tmerge$tair <- dat.tmerge$tair - 273.15
+
+#Looking at percent difference instead of absolute
+dat.tcompare$pcent.diff <- (dat.tcompare$value/dat.tcompare$tair - 1) * 100
+
+png(width=9, height=8, units="in", res=600, filename= file.path("../Pcent_Difference_In_Precip.png"))
+ggplot() +
+  facet_wrap(~model, scales = "free_y")+
+  geom_line(data=dat.tcompare, aes(x=Date, y=pcent.diff, color = model))+
+  ggtitle("% Difference between Temperature (Aggregated/ED output)")
+dev.off()
+dat.tcompare <- read.csv("../Temp_Comparision.csv")
+
 
