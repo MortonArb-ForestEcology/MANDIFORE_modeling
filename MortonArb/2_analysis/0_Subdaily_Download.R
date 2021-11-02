@@ -27,7 +27,7 @@ vars.all <- c("air_temperature", "precipitation_flux", "surface_downwelling_long
 
 #Creating the list that will be populated
 mod.list <- list()
-mods.raw <- mods.raw[1,3,5]
+mods.raw <- mods.raw[c(1)]
 for(MOD in mods.raw){
   #Printing to make sure it's running
   print(paste0("Processing Model: ", MOD))
@@ -42,14 +42,16 @@ for(MOD in mods.raw){
     if(length(fnow)!=1) next
     
     ncT <- ncdf4::nc_open(file.path(dir.mods, MOD, fnow))
-    day.time <- ncdf4::ncvar_get(ncT, "time")
-    
+    sec <- ncdf4::ncvar_get(ncT, "time")
+    ## convert time to seconds
+    sec <- udunits2::ud.convert(sec, unlist(strsplit(ncT$dim$time$units, " "))[1], "seconds")
+
     #These documents uses a weird "Days since start" unit for hours giving values like (.0208, .0625) for hour 1 and 2
     #Converting from days since year start to hours since year start
-    h.time <- 1:length(day.time)
+    #h.time <- 0:(length(day.time)-1)
     
     #Making the final Datetime object
-    final.time <- lubridate::hours(h.time) + as.POSIXct(paste0(YR, "-01-01 00:00:00"), format = "%Y-%m-%d %H:%M:%S")
+    final.time <- lubridate::seconds(sec) + as.POSIXct(paste0(YR, "-01-01 00:00:00"), format = "%Y-%m-%d %H:%M:%S")
     
     #Beginning the loop for every variable
     for(VAR in vars.all){
@@ -58,9 +60,13 @@ for(MOD in mods.raw){
         
         #Building the list that contains the hourly values in nested lists for each model, year, and variable
         mod.list[[paste(MOD, YR, VAR)]]$value <- ncdf4::ncvar_get(ncT, VAR)
+        #Rain.me <- ncdf4::ncvar_get(ncT, "precipitation_flux")
         mod.list[[paste(MOD, YR, VAR)]]$model <- MOD
         mod.list[[paste(MOD, YR, VAR)]]$var <- VAR
         mod.list[[paste(MOD, YR, VAR)]]$Date <- final.time 
+        mod.list[[paste(MOD, YR, VAR)]]$yday <- lubridate::yday(final.time)
+        mod.list[[paste(MOD, YR, VAR)]]$year <- lubridate::year(final.time)
+        mod.list[[paste(MOD, YR, VAR)]]$month <- lubridate::month(final.time)
       } 
       #Special case for windspeed
       
@@ -73,6 +79,9 @@ for(MOD in mods.raw){
         mod.list[[paste(MOD, YR, VAR)]]$model <- MOD
         mod.list[[paste(MOD, YR, VAR)]]$var <- VAR
         mod.list[[paste(MOD, YR, VAR)]]$Date<- final.time
+        mod.list[[paste(MOD, YR, VAR)]]$yday <- lubridate::yday(final.time)
+        mod.list[[paste(MOD, YR, VAR)]]$year <- lubridate::year(final.time)
+        mod.list[[paste(MOD, YR, VAR)]]$month <- lubridate::month(final.time)
       } 
     } # end var loop
     ncdf4::nc_close(ncT)
@@ -87,15 +96,15 @@ mod.df <- dplyr::bind_rows(mod.list)
 mod.df$value <- ifelse(mod.df$var == "precipitation_flux", mod.df$value * 60 * 60, mod.df$value)
 
 #Creating a date object that is Daily (Removing hours)
-mod.df$Date <- as.Date(mod.df$Date)
+mod.df$Date <- substr(mod.df$Date, 1, 10)
 
 #adding a flag for Heatwave temperature
 mod.df$Heatwave <- ifelse(mod.df$var == "air_temperature" & mod.df$value > 313.15, 1, 0)
 
-#Aggregating for each day
-day.df <- aggregate(value~var+Date+model, data =mod.df, FUN = mean)
 
 #Summing the precipitation converts from kg2/m2/hour to kg2/m2/day
+day.df <- aggregate(value~var+Date+model, data =mod.df, FUN = mean)
+colnames(day.df) <- c("var", "Date", "model", "mean")
 day.df$sum <- aggregate(value~var+Date+model, data =mod.df, FUN = sum)[,c("value")]
 
 #I've removed these for now due to time and memory restrictions but might bring them back if they seem useful
@@ -130,10 +139,5 @@ dat.temp <- day.df[day.df$var == "air_temperature",]
 #For each day I sum the total number of hours the temperature went above th photsynthetic threshold
 #dat.temp$Heatwave <- aggregate(Heatwave~var+Date+model, data = mod.df, FUN = sum)[,c("Heatwave")]
 #colnames(day.df) <- c("var", "Date", "model", "mean", "min", "max", "sum")
-
-
-
-
-
 
 
