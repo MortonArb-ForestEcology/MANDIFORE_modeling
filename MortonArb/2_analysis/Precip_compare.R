@@ -33,6 +33,7 @@ dat.precip$year <- lubridate::year(dat.precip$Date)
 #-------------------------------------#
 # Here is where I do the conversion in the style of ED2
 # This means I am taking the monthly mean precipitation and converting it using manual coding (ignoring leap year)
+# Takes the mean of the kg2/m2/sec for every month and then converts that mean into kg2/m2/mo without accounting for leap year.
 # Later I do a full converion that sums the subdaily up to monthly and then converts while accounting for leaf year
 #-------------------------------------#
 
@@ -88,6 +89,7 @@ write.csv(dat.EDcompare, "../Mean_Precip_Comparision.csv",  row.names = F)
 #-------------------------------------#
 # Here is where I do the conversion fully?
 # This means I am taking the subdaily resolution and summing it up. The conversion is 60*60 to go seconds to hours
+# Convert the kg2/m2/sec to kg2/m2/hour and then sum up to daily and then monthly while accounting for leaf year
 # This is not how ED does it's converisons. THere will always be a mismatch if I do it this way. This is for documentation
 #-------------------------------------#
 dat.sum <- aggregate(sum~month+year+model+scenario, dat.precip, FUN = sum)
@@ -100,7 +102,6 @@ dat.merge <- runs.all[, c("month", "year", "GCM", "rcp", "precipf", "Management"
 #There is!!
 dat.convert <- merge(dat.sum, dat.mean, by.x = c("month", "year", "model", "scenario"))
 dat.convert$diff <- dat.convert$mean - dat.convert$sum
-
 
 dat.compare <- merge(dat.sum, dat.merge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
 
@@ -143,9 +144,14 @@ ggplot() +
 write.csv(dat.compare, "../Sum_Precip_Comparision.csv",  row.names = F)
 
 
+#--------------------------------------------------#
+#Here is where I compare the raw ED2 output with the ED input
+# These do not match which is where I see the problem in the mismatch
+# However I don't understand the iin between step and am at a loss
+#--------------------------------------------------#
 
-
-# Get a list of everything we have to work with
+library("hdf5r")
+# Pullling from the netcdf data that is used as ED output
 dat.old <- "C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/met_ed.v3/MortonArb/ACCESS1-0_rcp45_bc.tdm/"
 
 mods.old <- dir(dat.old)
@@ -167,6 +173,60 @@ colnames(old.df) <- c("MON", "old.mean", "year", "month")
 
 old.df$month <- car::recode(old.df$month, "'JAN'='01'; 'FEB'='02'; 'MAR'='03'; 'APR'='04'; 'MAY'='05'; 'JUN'='06'; 'JUL'='07';'AUG'='08';'SEP'='09';'OCT'='10'; 'NOV'='11'; 'DEC' = '12'")
 
+#Comparing this to the ED2 output
+#THEY DO NOT MATCH
+old.df$MON <- "ACCESS1-0"
+old.df$scenario <- "rcp45"
+dat.oldmatch <- merge(old.df, dat.merge, by.x = c("month", "year", "MON", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
+dat.oldmatch$old.mean <- dat.oldmatch$old.mean * sec2mo[dat.oldmatch$month]
+dat.oldmatch$diff <- dat.oldmatch$old.mean - dat.oldmatch$precipf
+
+dat.oldmatch$Date <- lubridate::ymd(paste(dat.oldmatch$year, dat.oldmatch$month, "15", sep = "-"))
+
+write.csv(dat.oldmatch, "../Input_Output_Precip_Comparision.csv", row.names = F)
+
+png(width=9, height=8, units="in", res=600, filename= file.path("../Shell_Difference_In_Precip.png"))
+ggplot() +
+  geom_line(data=dat.oldmatch, aes(x=Date, y=diff))+
+  ggtitle("DIfference between Precipitation rate (kg2/m2/sec)")+
+  xlab("Date")+
+  ylab("Absolute difference")
+dev.off()
+
+
+#Looking at percent difference instead of absolute
+dat.oldmatch$pcent.diff <- (dat.oldmatch$old.mean/dat.oldmatch$precipf - 1) * 100
+
+png(width=9, height=8, units="in", res=600, filename= file.path("../Shell_Pcent_Difference_In_Precip.png"))
+ggplot() +
+  geom_line(data=dat.oldmatch, aes(x=Date, y=pcent.diff))+
+  ggtitle("% Difference between Precipitation rate (kg2/m2/sec) (Aggregated/ED output)")+
+  xlab("Date")+
+  ylab("% difference (kg/m2/sec)")
+dev.off()
+
+
+
+png(width=9, height=8, units="in", res=600, filename= file.path("../Shell_Daily_v_Monthly_preicp.png"))
+ggplot() +
+  geom_point(data=dat.oldmatch, aes(x=old.mean, y=precipf))+
+  ggtitle("Daily Aggregate (old.mean) vs. monthly ED2 (new.mean)")+
+  xlab("Daily Aggregate mean (kg2/m2/sec)")+
+  ylab("Monthly ED2 mean (kg/m2/sec)")
+dev.off()
+
+png(width=9, height=8, units="in", res=600, filename= file.path("../Shell_Monthly_v_Difference.png"))
+ggplot() +
+  geom_point(data=dat.oldmatch, aes(x=precipf, y=diff))+
+  geom_smooth(data=dat.oldmatch, aes(x=precipf, y=diff))+
+  ggtitle("ED2 monthly mean (kg2/m2/sec vs. difference")+
+  xlab("Monthly ED2 mean (kg/m2/sec)")+
+  ylab("Absolute difference")
+dev.off()
+
+
+# Pullling from the netcdf data that is immediately after the ED2 output
+# This is the full netcdf, not the csv that we extract to work with
 dat.h5 <- "C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/1_runs/MortonArb_ed_runs.v3/MortArb_All_ACCESS1-0_rcp45_statCO2_MgmtNone/analy/"
 mods.new <- dir(dat.h5)
 
@@ -184,19 +244,29 @@ for(MON in mods.new){
 new.df$year <- substr(new.df$MON,48, 51)
 new.df$month <- as.integer(substr(new.df$MON,53, 54))
 
-colnames(new.df) <- c("MON", "new.mean", "month", "year")
+colnames(new.df) <- c("MON", "new.mean", "year",  "month")
 
-dat.compare <- merge(new.df, old.df, by.x = c("month", "year"), by.y= c("month", "year"))
+#Here I compare the netcdf that contains the ED output to the ED output. THEY MATCH
+#THESE MATCH WITHIN REASON (are all off by e-13 or less)
+new.df$MON <- "ACCESS1-0"
+new.df$scenario <- "rcp45"
+dat.newmatch <- merge(new.df, dat.merge, by.x = c("month", "year", "MON", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
+dat.newmatch$new.mean <- dat.newmatch$new.mean * sec2mo[dat.newmatch$month]
+dat.newmatch$diff <- dat.newmatch$new.mean - dat.newmatch$precipf
 
-dat.compare$diff <- dat.compare$old.mean - dat.compare$new.mean
+dat.prepost <- merge(new.df, old.df, by.x = c("month", "year"), by.y= c("month", "year"))
+
+dat.prepost$diff <- dat.prepost$old.mean - dat.prepost$new.mean
+
+
 
 #Creating a date object so we can easily plot each month
-dat.compare$Date <- lubridate::ymd(paste(dat.compare$year, dat.compare$month, "15", sep = "-"))
+dat.prepost$Date <- lubridate::ymd(paste(dat.prepost$year, dat.prepost$month, "15", sep = "-"))
 
 library(ggplot2)
 png(width=9, height=8, units="in", res=600, filename= file.path("../Difference_In_Precip.png"))
 ggplot() +
-  geom_line(data=dat.compare, aes(x=Date, y=diff))+
+  geom_line(data=dat.prepost, aes(x=Date, y=diff))+
   ggtitle("DIfference between Precipitation rate (kg2/m2/sec)")+
   xlab("Date")+
   ylab("Absolute difference")
@@ -204,20 +274,21 @@ dev.off()
 
 
 #Looking at percent difference instead of absolute
-dat.compare$pcent.diff <- (dat.compare$old.mean/dat.compare$new.mean - 1) * 100
+dat.prepost$pcent.diff <- (dat.prepost$old.mean/dat.prepost$new.mean - 1) * 100
 
 png(width=9, height=8, units="in", res=600, filename= file.path("../Pcent_Difference_In_Precip.png"))
 ggplot() +
-  geom_line(data=dat.compare, aes(x=Date, y=pcent.diff))+
+  geom_line(data=dat.prepost, aes(x=Date, y=pcent.diff))+
   ggtitle("% Difference between Precipitation rate (kg2/m2/sec) (Aggregated/ED output)")+
   xlab("Date")+
   ylab("% difference (kg/m2/sec)")
 dev.off()
-dat.compare <- read.csv("../Precip_Comparision.csv")
+
+write.csv(dat.prepost, "../NCDF_Precip_Comparision.csv", row.names = F)
 
 png(width=9, height=8, units="in", res=600, filename= file.path("../Daily_v_Monthly_preicp.png"))
 ggplot() +
-  geom_point(data=dat.compare, aes(x=old.mean, y=new.mean))+
+  geom_point(data=dat.prepost, aes(x=old.mean, y=new.mean))+
   ggtitle("Daily Aggregate (old.mean) vs. monthly ED2 (new.mean)")+
   xlab("Daily Aggregate mean (kg2/m2/sec)")+
   ylab("Monthly ED2 mean (kg/m2/sec)")
@@ -226,12 +297,46 @@ dev.off()
 
 png(width=9, height=8, units="in", res=600, filename= file.path("../Monthly_v_Difference.png"))
 ggplot() +
-  geom_point(data=dat.compare, aes(x=new.mean, y=diff))+
-  geom_smooth(data=dat.compare, aes(x=new.mean, y=diff))+
+  geom_point(data=dat.prepost, aes(x=new.mean, y=diff))+
+  geom_smooth(data=dat.prepost, aes(x=new.mean, y=diff))+
   ggtitle("ED2 monthly mean (kg2/m2/sec vs. difference")+
   xlab("Monthly ED2 mean (kg/m2/sec)")+
   ylab("Absolute difference")
 dev.off()
+
+#------------------------------------------------------------------#
+#This section shows how the two different ncdf results compare to the aggregates that I made
+#None of them match
+#------------------------------------------------------------------#
+
+dat.mean <- aggregate(mean~month+year+model+scenario, dat.precip, FUN = mean)
+
+dat.newmatch <- merge(new.df, dat.mean, by = c("month", "year"))
+
+dat.newmatch$diff <- dat.newmatch$new.mean - dat.newmatch$mean
+
+dat.oldmatch <- merge(old.df, dat.mean, by = c("month", "year"))
+
+dat.oldmatch$diff <- dat.oldmatch$old.mean - dat.oldmatch$mean
+
+
+#These do not match well at all because of the conversion issues. 
+#Shows that the sum method is going to be defunct
+dat.sum <- aggregate(sum~month+year+model+scenario, dat.precip, FUN = sum)
+
+dat.sum$sum <- dat.sum$sum * 60 * 60
+
+dat.newmatch <- merge(new.df, dat.sum, by = c("month", "year"))
+
+dat.newmatch$new.mean <- dat.newmatch$new.mean * sec2mo[dat.newmatch$month]
+
+dat.newmatch$diff <- dat.newmatch$new.mean - dat.newmatch$sum
+
+dat.oldmatch <- merge(old.df, dat.sum, by = c("month", "year"))
+
+dat.oldmatch$old.mean <-dat.oldmatch$old.mean * sec2mo[dat.oldmatch$month]
+
+dat.oldmatch$diff <- dat.oldmatch$old.mean - dat.oldmatch$sum
 
 #------------------------#
 #Testing zone
