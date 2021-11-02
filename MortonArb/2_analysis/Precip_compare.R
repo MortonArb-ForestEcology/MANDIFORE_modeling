@@ -30,19 +30,81 @@ dat.precip$year <- lubridate::year(dat.precip$Date)
 
 #dat.leap <- dat.precip[dat.precip$Date == as.Date("2024-02-29"),]
 
-#This is when the daily rain gets converted to monthly. This is the final conversion step where daily is summed by month
-dat.sum <- aggregate(mean~month+year+model+scenario, dat.precip, FUN = mean)
+#-------------------------------------#
+# Here is where I do the conversion in the style of ED2
+# This means I am taking the monthly mean precipitation and converting it using manual coding (ignoring leap year)
+# Later I do a full converion that sums the subdaily up to monthly and then converts while accounting for leaf year
+#-------------------------------------#
+
+dat.mean <- aggregate(mean~month+year+model+scenario, dat.precip, FUN = mean)
 
 dpm <- lubridate::days_in_month(1:12)
 sec2mo <- dpm*60*60*24
 
-dat.sum$mean <- dat.sum$mean * sec2mo[dat.sum$month]
+dat.mean$mean <- dat.mean$mean * sec2mo[dat.mean$month]
 
 dat.merge <- runs.all[, c("month", "year", "GCM", "rcp", "precipf", "Management")]
 
+dat.EDcompare <- merge(dat.mean, dat.merge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
+
+dat.EDcompare$diff <- dat.EDcompare$mean - dat.EDcompare$precipf
+
+#Creating a date object so we can easily plot each month
+dat.EDcompare$Date <- lubridate::ymd(paste(dat.EDcompare$year, dat.EDcompare$month, "15", sep = "-"))
+
+library(ggplot2)
+png(width=9, height=8, units="in", res=600, filename= file.path("../Difference_In_Precip.png"))
+ggplot() +
+  facet_wrap(~model, scales = "free_y")+
+  geom_line(data=dat.EDcompare, aes(x=Date, y=diff, color = model))+
+  ggtitle("DIfference between Precipitation")
+  dev.off()
+
+  
+#Looking at percent difference instead of absolute
+dat.EDcompare$pcent.diff <- (dat.EDcompare$mean/dat.EDcompare$precipf - 1) * 100
+  
+png(width=9, height=8, units="in", res=600, filename= file.path("../Pcent_Difference_In_Precip.png"))
+ggplot() +
+  facet_wrap(~model, scales = "free_y")+
+  geom_line(data=dat.EDcompare, aes(x=Date, y=pcent.diff, color = model))+
+  ggtitle("% Difference between Precipitation (Aggregated/ED output)")
+dev.off()
+
+ggplot() +
+  facet_wrap(~model, scales = "free_y")+
+  geom_point(data=dat.EDcompare, aes(x=mean, y=precipf, color = model))+
+  ggtitle("Daily Aggregate (sum) vs. monthly ED2 (precipf)")
+dev.off()
+
+ggplot() +
+  facet_wrap(~model, scales = "free_y")+
+  geom_point(data=dat.EDcompare, aes(x=precipf, y=diff, color = model))+
+  geom_smooth(data=dat.EDcompare, aes(x=precipf, y=diff, color = model))+
+  ggtitle("Daily Aggregate (sum) vs. monthly ED2 (precipf)")
+
+write.csv(dat.EDcompare, "../Mean_Precip_Comparision.csv",  row.names = F)
+
+#-------------------------------------#
+# Here is where I do the conversion fully?
+# This means I am taking the subdaily resolution and summing it up. The conversion is 60*60 to go seconds to hours
+# This is not how ED does it's converisons. THere will always be a mismatch if I do it this way. This is for documentation
+#-------------------------------------#
+dat.sum <- aggregate(sum~month+year+model+scenario, dat.precip, FUN = sum)
+
+dat.sum$sum <- dat.sum$sum * 60 * 60
+
+dat.merge <- runs.all[, c("month", "year", "GCM", "rcp", "precipf", "Management")]
+
+#Seeing if there is a difference in the two methods
+#There is!!
+dat.convert <- merge(dat.sum, dat.mean, by.x = c("month", "year", "model", "scenario"))
+dat.convert$diff <- dat.convert$mean - dat.convert$sum
+
+
 dat.compare <- merge(dat.sum, dat.merge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
 
-dat.compare$diff <- dat.compare$mean - dat.compare$precipf
+dat.compare$diff <- dat.compare$sum - dat.compare$precipf
 
 #Creating a date object so we can easily plot each month
 dat.compare$Date <- lubridate::ymd(paste(dat.compare$year, dat.compare$month, "15", sep = "-"))
@@ -53,22 +115,18 @@ ggplot() +
   facet_wrap(~model, scales = "free_y")+
   geom_line(data=dat.compare, aes(x=Date, y=diff, color = model))+
   ggtitle("DIfference between Precipitation")
-  dev.off()
+dev.off()
 
-  
+
 #Looking at percent difference instead of absolute
-dat.compare$pcent.diff <- (dat.compare$mean/dat.compare$precipf - 1) * 100
-  
+dat.compare$pcent.diff <- (dat.compare$sum/dat.compare$precipf - 1) * 100
+
 png(width=9, height=8, units="in", res=600, filename= file.path("../Pcent_Difference_In_Precip.png"))
 ggplot() +
   facet_wrap(~model, scales = "free_y")+
   geom_line(data=dat.compare, aes(x=Date, y=pcent.diff, color = model))+
   ggtitle("% Difference between Precipitation (Aggregated/ED output)")
 dev.off()
-
-write.csv(dat.compare, "../Mean_Precip_Comparision.csv",  row.names = F)
-
-dat.compare <- read.csv("../Mean_Precip_Comparision.csv")
 
 ggplot() +
   facet_wrap(~model, scales = "free_y")+
@@ -81,6 +139,9 @@ ggplot() +
   geom_point(data=dat.compare, aes(x=precipf, y=diff, color = model))+
   geom_smooth(data=dat.compare, aes(x=precipf, y=diff, color = model))+
   ggtitle("Daily Aggregate (sum) vs. monthly ED2 (precipf)")
+
+write.csv(dat.compare, "../Sum_Precip_Comparision.csv",  row.names = F)
+
 
 
 
