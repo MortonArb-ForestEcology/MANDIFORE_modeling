@@ -93,7 +93,7 @@ for(MOD in mods.raw){
 mod.df <- dplyr::bind_rows(mod.list)
 
 #HERE is where I convert kg2/m2/sec to kg2/m2/hour
-mod.df$value <- ifelse(mod.df$var == "precipitation_flux", mod.df$value * 60 * 60, mod.df$value)
+#mod.df$value <- ifelse(mod.df$var == "precipitation_flux", mod.df$value * 60 * 60, mod.df$value)
 
 #Creating a date object that is Daily (Removing hours)
 mod.df$Date <- substr(mod.df$Date, 1, 10)
