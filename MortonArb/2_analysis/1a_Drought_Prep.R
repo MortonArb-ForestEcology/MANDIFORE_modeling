@@ -6,20 +6,8 @@
 # Outputs: Dataframes focusing on daily precipitaiton weather and periods of drought
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
-
-path.read <- "C:/Users/lucie/Documents/MANDIFORE/"
-
-setwd(path.read)
 library(readbulk)
-
-runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRUE)
-
-
-runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
-
-setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis/")
 dat.met <- read.csv("../Aggregate_Weater_Daily.csv")
-#dat.met <- dat.met[dat.met$model %in% unique(runs.all$GCM),]
 
 #Setting up droguht tracking
 
