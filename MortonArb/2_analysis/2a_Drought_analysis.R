@@ -23,8 +23,10 @@ setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis/"
 dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
 dat.end <- read.csv("../Drought_Periods_End.csv")
-#artifically adding the 15th as the day for the Date objects since you can't make a date object with just month and year
-#This is used for plotting not for direct dat comparision
+#Semi-arbitrary cut off. Will discuss in the future.
+dat.end <- dat.end[dat.end$days_since_rain >= 20,]
+#artifically adding the 1st as the day for the Date objects since you can't make a date object with just month and year
+#This is used for plotting not for direct date comparision
 runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep = "-"))
 
 
@@ -33,9 +35,9 @@ start <- as.Date(dat.end$Date) - dat.end$days_since_rain
 dat.start <- dat.precip[as.Date(dat.precip$Date) %in% start, ]
 
 
-Good.models <- c("ACCESS1-0")#, "ACCESS1-3", "bcc-csm1-1", "bcc-csm1-1-m", "HadGEM2-CC", "HadGEM2-ES", "MIROC-ESM", "MIROC-ESM-CHEM")
-runs.all <- runs.all[runs.all$GCM %in% Good.models, ]
-dat.end <- dat.end[dat.end$model %in% Good.models, ]
+#Good.models <- c("ACCESS1-0", "ACCESS1-3", "bcc-csm1-1", "bcc-csm1-1-m", "HadGEM2-CC", "HadGEM2-ES", "MIROC-ESM", "MIROC-ESM-CHEM")
+#runs.all <- runs.all[runs.all$GCM %in% Good.models, ]
+#dat.end <- dat.end[dat.end$model %in% Good.models, ]
 
 
 
@@ -78,31 +80,40 @@ for(MOD in unique(runs.all$GCM)){
           for(j in 1:nrow(recov.df)){
             dip <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
                                 df$Date >= recov.df$D.end & df$Date <= recov.df$D.end %m+% period("15 months"), "agb"], na.rm=T) #Pulling the lowet point in 15 months
- 
-            recov.df[j, "resil.min"] <- dip
+
             
             resil.month <- df[df$Management == recov.df[j, "Management"] & #Matching management
                                 df$Date >= recov.df$D.end & df$Date <= recov.df$D.end %m+% period("15 months") & df$agb == dip,"Date"]
             
-            recov.df[j, "flag.2sig"] <- ifelse(recov.df[j, "resil.min"] < recov.df[j, "first.mean"] -2*recov.df[j, "sd"] ,T,F)
+            recov.df[j, "flag.2sig"] <- ifelse(dip < recov.df[j, "first.mean"] -2*recov.df[j, "sd"] ,T,F)
             
-            recov.df[j, "flag.3sig"] <- ifelse(recov.df[j, "resil.min"] < recov.df[j, "first.mean"] -3*recov.df[j, "sd"] ,T,F)
+            recov.df[j, "flag.3sig"] <- ifelse(dip < recov.df[j, "first.mean"] -3*recov.df[j, "sd"] ,T,F)
             
-            recov.df[j, "flag.4sig"] <- ifelse(recov.df[j, "resil.min"] < recov.df[j, "first.mean"] -4*recov.df[j, "sd"],T,F)
+            recov.df[j, "flag.4sig"] <- ifelse(dip < recov.df[j, "first.mean"] -4*recov.df[j, "sd"],T,F)
             
               if(recov.df[j, "flag.2sig"] == T){
                 recov.df[j, "recov.Date"] <- as.Date(df[df$Management == recov.df[j, "Management"] & #Matching management
                                                   df$Date > resil.month & #Making sure we check after drought has occured
                                                   df$agb >= recov.df[j, "first.mean"] -2*recov.df[j, "sd"], "Date"][1])  #Choosing the first date above the original
                 
+                #If it never recovers then we look at the lowest point from the drought to the end of the model
+                if(is.na(recov.df[j, "recov.Date"])){
+                  recov.df[j, "resil.min"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                       df$Date >= resil.month & df$Date <= max(df$Date), "agb"])
+                  
+                  recov.df[j, "resil.month"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                     df$Date >= resil.month & df$Date <= max(df$Date) & df$agb == recov.df[j, "resil.min"],"Date"]
+                } else { #If it does recoer we look at the lowest point before recovery
+                recov.df[j, "resil.min"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                        df$Date >= resil.month & df$Date < recov.df[j, "recov.Date"], "agb"])
                 
-                recov.df[j, "resil.month"] <- resil.month
+                recov.df[j, "resil.month"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                  df$Date >= resil.month & df$Date < recov.df[j, "recov.Date"] & df$agb == recov.df[j, "resil.min"],"Date"]
+                }
               } else { #Flagging situations were there isn't a signifgant effect of drought
                 recov.df[j, "recov.Date"] <- as.Date(NA)
-                recov.df[j, "resil.month"] <- as.Date(NA)
-            
-            
-
+                recov.df[j, "resil.month"] <- resil.month
+                recov.df[j, "resil.min"] <- dip
             }
           }
           #Flagging situation where it never recovers to not have a resilience. Not sure how to handle going forward
@@ -112,7 +123,7 @@ for(MOD in unique(runs.all$GCM)){
           recov.df$days_of_recovery <- difftime(recov.df$recov.Date, recov.df$resil.month, units = "days")
           
           #Counting 
-          recov.df$resil.diff <- recov.df$first.mean - recov.df$resil.min
+          recov.df$resil.diff <-  recov.df$resil.min - recov.df$first.mean
           
           
           #In between the end of the drought (rain begins again) and the recovery date what is the local minimum
@@ -126,8 +137,41 @@ for(MOD in unique(runs.all$GCM)){
   }
 }
 drought.df <- dplyr::bind_rows(Dates.list)
+drought.df$Management <- factor(drought.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
+
 
 sig <- drought.df[drought.df$flag.2sig == T,]
+
+table(sig$Management)
+
+#number of unique drought with a 4xsignificant drought dip
+length(unique(sig$Drought.period))
+
+library(nlme)
+drought.df$Management <- factor(drought.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
+
+#This is what lucien is checking if Management has a signifigant effect on the drop in agb
+lm.test <- lme(resil.diff ~ Management-1, random=list(rcp=~1, GCM=~1), data=drought.df)
+summary(lm.test)
+anova(lm.test)
+
+#This is what lucien is checking if Management has a signifigant effect compared to the None condition
+lm.2test <- lme(resil.diff ~ Management, random=list(rcp=~1, GCM=~1), data=drought.df)
+summary(lm.2test)
+anova(lm.2test)
+
+#--------------------------------------------#
+#Here we only look at signifignt results
+#--------------------------------------------#
+#This is what lucien is checking if Management has a signifigant effect on the drop in agb
+sig.test <- lme(resil.diff ~ Management-1, random=list(rcp=~1, GCM=~1), data=sig)
+summary(sig.test)
+anova(sig.test)
+
+#This is what lucien is checking if Management has a signifigant effect compared to the None condition
+sig.2test <- lme(resil.diff ~ Management, random=list(rcp=~1, GCM=~1), data=sig)
+summary(sig.2test)
+anova(sig.2test)
 
 #This section creates a graphic that highlights drought windows
 path.out = "../met.v3"
