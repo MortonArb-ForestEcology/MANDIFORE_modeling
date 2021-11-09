@@ -7,11 +7,8 @@
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
 library(readbulk)
-dat.met <- read.csv("../Aggregate_Weater_Daily.csv")
+dat.precip <- read.csv("../Precip_Weather_Daily.csv")
 
-#Setting up droguht tracking
-
-dat.precip <- dat.met[dat.met$var == "precipitation_flux",]
 dat.precip$days_since_rain <- NA
 
 dat.precip <- dat.precip[!is.na(dat.precip$mean),]
@@ -29,10 +26,14 @@ for(i in 1:nrow(dat.precip)){
 
 dat.precip$Drought_flag <-  ifelse(dat.precip$mean == 0, 1, 0)
 
-write.csv(dat.precip, "../Precip_Weather_Daily", row.names = F)
+write.csv(dat.precip, "../Drought_Weather_Daily.csv", row.names = F)
 
+dat.plot <- dat.precip[dat.precip$days_since_rain > 5 & dat.precip$days_since_rain <75 ,]
+library(ggplot2)
+ggplot(dat.plot, aes(days_since_rain))+
+  geom_histogram()
 
-dat.precip <- read.csv("../Precip_Weather_Daily")
+dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
 #Creating a dataframe that contains the end date of every drought
 #Defining the end of a drought for flagging
@@ -44,4 +45,5 @@ for(i in 2:nrow(dat.precip)){
 }
 
 
-write.csv(dat.end, "../Drought_Weather_Daily", row.names = F)
+write.csv(dat.end, "../Drought_Periods_End.csv", row.names = F)
+ 
