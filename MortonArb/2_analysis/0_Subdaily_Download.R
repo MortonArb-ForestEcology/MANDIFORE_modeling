@@ -27,7 +27,7 @@ vars.all <- c("air_temperature", "precipitation_flux", "surface_downwelling_long
 
 #Creating the list that will be populated
 mod.list <- list()
-mods.raw <- mods.raw[c(1)]
+#mods.raw <- mods.raw[c(1)]
 for(MOD in mods.raw){
   #Printing to make sure it's running
   print(paste0("Processing Model: ", MOD))
@@ -57,16 +57,15 @@ for(MOD in mods.raw){
     for(VAR in vars.all){
       #Checking for the windspeed exception
       if(VAR %in% names(ncT$var)){
-        
         #Building the list that contains the hourly values in nested lists for each model, year, and variable
         mod.list[[paste(MOD, YR, VAR)]]$value <- ncdf4::ncvar_get(ncT, VAR)
         #Rain.me <- ncdf4::ncvar_get(ncT, "precipitation_flux")
         mod.list[[paste(MOD, YR, VAR)]]$model <- MOD
         mod.list[[paste(MOD, YR, VAR)]]$var <- VAR
-        mod.list[[paste(MOD, YR, VAR)]]$Date <- final.time 
-        mod.list[[paste(MOD, YR, VAR)]]$yday <- lubridate::yday(final.time)
-        mod.list[[paste(MOD, YR, VAR)]]$year <- lubridate::year(final.time)
-        mod.list[[paste(MOD, YR, VAR)]]$month <- lubridate::month(final.time)
+        mod.list[[paste(MOD, YR, VAR)]]$Date <- substr(final.time, 1, 10) 
+        #mod.list[[paste(MOD, YR, VAR)]]$yday <- lubridate::yday(final.time)
+        #mod.list[[paste(MOD, YR, VAR)]]$year <- lubridate::year(final.time)
+        #mod.list[[paste(MOD, YR, VAR)]]$month <- lubridate::month(final.time)
       } 
       #Special case for windspeed
       
@@ -78,10 +77,10 @@ for(MOD in mods.raw){
         mod.list[[paste(MOD, YR, VAR)]]$value <- sqrt(ew^2 + nw^2)
         mod.list[[paste(MOD, YR, VAR)]]$model <- MOD
         mod.list[[paste(MOD, YR, VAR)]]$var <- VAR
-        mod.list[[paste(MOD, YR, VAR)]]$Date<- final.time
-        mod.list[[paste(MOD, YR, VAR)]]$yday <- lubridate::yday(final.time)
-        mod.list[[paste(MOD, YR, VAR)]]$year <- lubridate::year(final.time)
-        mod.list[[paste(MOD, YR, VAR)]]$month <- lubridate::month(final.time)
+        mod.list[[paste(MOD, YR, VAR)]]$Date<- substr(final.time, 1, 10) #This is to make aggregation easy later
+        #mod.list[[paste(MOD, YR, VAR)]]$yday <- lubridate::yday(final.time)
+        #mod.list[[paste(MOD, YR, VAR)]]$year <- lubridate::year(final.time)
+        #mod.list[[paste(MOD, YR, VAR)]]$month <- lubridate::month(final.time)
       } 
     } # end var loop
     ncdf4::nc_close(ncT)
@@ -92,29 +91,9 @@ for(MOD in mods.raw){
 #Make into a dataframe
 mod.df <- dplyr::bind_rows(mod.list)
 
-#HERE is where I convert kg2/m2/sec to kg2/m2/hour
-#mod.df$value <- ifelse(mod.df$var == "precipitation_flux", mod.df$value * 60 * 60, mod.df$value)
-
-#Creating a date object that is Daily (Removing hours)
-mod.df$Date <- substr(mod.df$Date, 1, 10)
-
-#adding a flag for Heatwave temperature
-mod.df$Heatwave <- ifelse(mod.df$var == "air_temperature" & mod.df$value > 313.15, 1, 0)
-
-
-#Summing the precipitation converts from kg2/m2/hour to kg2/m2/day
-day.df <- aggregate(value~var+Date+model, data =mod.df, FUN = mean)
-colnames(day.df) <- c("var", "Date", "model", "mean")
-day.df$sum <- aggregate(value~var+Date+model, data =mod.df, FUN = sum)[,c("value")]
-
-#I've removed these for now due to time and memory restrictions but might bring them back if they seem useful
-
-#day.df$min <- aggregate(value~var+Date+model, data =mod.df, FUN = min)[,c("value")]
-#day.df$max <- aggregate(value~var+Date+model, data =mod.df, FUN = max)[,c("value")]
-
 #Splitting the models and scenarios into two columns for easier cross-walking and analysis
-day.df$scenario <- ifelse(grepl("85", day.df$model, fixed = TRUE), "rcp85", "rcp45")
-day.df$model <- car::recode(day.df$model, "'ACCESS1-0_rcp45_bc.tdm'='ACCESS1-0'; 'ACCESS1-0_rcp85_bc.tdm'='ACCESS1-0'; 'bcc-csm1-1-m_rcp45_bc.tdm'='bcc-csm1-1-m';  
+mod.df$scenario <- ifelse(grepl("85", mod.df$model, fixed = TRUE), "rcp85", "rcp45")
+mod.df$model <- car::recode(mod.df$model, "'ACCESS1-0_rcp45_bc.tdm'='ACCESS1-0'; 'ACCESS1-0_rcp85_bc.tdm'='ACCESS1-0'; 'bcc-csm1-1-m_rcp45_bc.tdm'='bcc-csm1-1-m';  
   'bcc-csm1-1-m_rcp85_bc.tdm'='bcc-csm1-1-m'; 'bcc-csm1-1_rcp45_bc.tdm'='bcc-csm1-1'; 'bcc-csm1-1_rcp85_bc.tdm'='bcc-csm1-1';    
   'BNU-ESM_rcp45_bc.tdm'='BNU-ESM'; 'BNU-ESM_rcp85_bc.tdm'='BNU-ESM'; 'CNRM-CM5_rcp45_bc.tdm'='CNRM-CM5';      
   'CNRM-CM5_rcp85_bc.tdm'='CNRM-CM5'; 'CSIRO-Mk3-6-0_rcp45_bc.tdm'='CSIRO-Mk3-6-0'; 'CSIRO-Mk3-6-0_rcp85_bc.tdm'='CSIRO-Mk3-6-0'; 
@@ -126,18 +105,33 @@ day.df$model <- car::recode(day.df$model, "'ACCESS1-0_rcp45_bc.tdm'='ACCESS1-0';
   'MIROC5_rcp85_bc.tdm'='MIROC5'; 'MRI-CGCM3_rcp45_bc.tdm'='MRI-CGCM3'; 'MRI-CGCM3_rcp85_bc.tdm'='MRI-CGCM3'")
 
 
-#Saving the dataframe of every variable together at daily resolution
-write.csv(day.df, "../Aggregate_Weater_Daily.csv", row.names=F)
+
+#I've decided to split them by variable of interest here because the data gets too large otherwise
+
+heat.df <- mod.df[mod.df$var == "air_temperature",]
+
+#adding a flag for Heatwave temperature
+heat.df$Heatwave <-  ifelse(heat.df$value > 313.15, 1, 0)
+
+heat.df$value <- heat.df$value -273.15
+
+#Taking the mean heat and the sum. THe sum is more useful for counting the number of hours with temp above the heatwave threshold
+heat.agg <- aggregate(value~var+Date+model, data =heat.df, FUN = mean)
+colnames(heat.agg) <- c("var", "Date", "model", "mean")
+heat.agg$sum <- aggregate(value~var+Date+model, data =heat.df, FUN = sum)[,c("value")]
+
+#Saving the dataframe of temperature at daily resolution
+write.csv(heat.agg, "../Temp_Weather_Daily.csv", row.names=F)
+
 
 #Making a precipitation specific dataframe for conversion
-dat.precip <- day.df[day.df$var == "precipitation_flux",]
+precip.df <- mod.df[mod.df$var == "precipitation_flux",]
 
+#Summing the precipitation converts from kg2/m2/hour to kg2/m2/day
+#I am still summing for posterity but our workflow uses to mean to match with ED2 output
+precip.agg <- aggregate(value~var+Date+model, data =precip.df, FUN = mean)
+colnames(precip.agg) <- c("var", "Date", "model", "mean")
+precip.agg$sum <- aggregate(value~var+Date+model, data =precip.df, FUN = sum)[,c("value")]
 
-
-
-dat.temp <- day.df[day.df$var == "air_temperature",]
-#For each day I sum the total number of hours the temperature went above th photsynthetic threshold
-#dat.temp$Heatwave <- aggregate(Heatwave~var+Date+model, data = mod.df, FUN = sum)[,c("Heatwave")]
-#colnames(day.df) <- c("var", "Date", "model", "mean", "min", "max", "sum")
-
+write.csv(precip.agg, "../Precip_Weather_Daily.csv", row.names=F)
 
