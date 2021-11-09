@@ -200,9 +200,9 @@ dat.oldmatch$pcent.diff <- (dat.oldmatch$old.mean/dat.oldmatch$precipf - 1) * 10
 png(width=9, height=8, units="in", res=600, filename= file.path("../Shell_Pcent_Difference_In_Precip.png"))
 ggplot() +
   geom_line(data=dat.oldmatch, aes(x=Date, y=pcent.diff))+
-  ggtitle("% Difference between Precipitation rate (kg2/m2/sec) (Aggregated/ED output)")+
+  ggtitle("% Difference between Precipitation rate (kg2/m2/mo) (Aggregated/ED output)")+
   xlab("Date")+
-  ylab("% difference (kg/m2/sec)")
+  ylab("% difference (kg/m2/mo)")
 dev.off()
 
 
@@ -264,21 +264,28 @@ dat.prepost$diff <- dat.prepost$old.mean - dat.prepost$new.mean
 dat.prepost$Date <- lubridate::ymd(paste(dat.prepost$year, dat.prepost$month, "15", sep = "-"))
 
 library(ggplot2)
-png(width=9, height=8, units="in", res=600, filename= file.path("../Difference_In_Precip.png"))
+#png(width=9, height=8, units="in", res=600, filename= file.path("../Difference_In_Precip.png"))
 ggplot() +
+  facet_wrap(~month)+
   geom_line(data=dat.prepost, aes(x=Date, y=diff))+
   ggtitle("DIfference between Precipitation rate (kg2/m2/sec)")+
   xlab("Date")+
   ylab("Absolute difference")
 dev.off()
 
+old.df.year <- aggregate(old.mean~year+MON+scenario, data = old.df,FUN = sum)
+new.df.year <- aggregate(new.mean~year+MON+scenario, data = new.df,FUN = sum)
+dat.year<- merge(old.df.year, new.df.year, by.x = c( "year", "MON", "scenario"))
+
+dat.year$diff <- dat.year$old.mean-dat.year$new.mean
+dat.year$pcent.diff <- (dat.year$old.mean/dat.year$new.mean -1)*100
 
 #Looking at percent difference instead of absolute
 dat.prepost$pcent.diff <- (dat.prepost$old.mean/dat.prepost$new.mean - 1) * 100
 
-png(width=9, height=8, units="in", res=600, filename= file.path("../Pcent_Difference_In_Precip.png"))
+#png(width=9, height=8, units="in", res=600, filename= file.path("../Pcent_Difference_In_Precip.png"))
 ggplot() +
-  geom_line(data=dat.prepost, aes(x=Date, y=pcent.diff))+
+  geom_line(data=dat.year[dat.year$year >2007,], aes(x=as.numeric(year), y=pcent.diff))+
   ggtitle("% Difference between Precipitation rate (kg2/m2/sec) (Aggregated/ED output)")+
   xlab("Date")+
   ylab("% difference (kg/m2/sec)")
@@ -286,16 +293,23 @@ dev.off()
 
 write.csv(dat.prepost, "../NCDF_Precip_Comparision.csv", row.names = F)
 
-png(width=9, height=8, units="in", res=600, filename= file.path("../Daily_v_Monthly_preicp.png"))
+#png(width=9, height=8, units="in", res=600, filename= file.path("../Daily_v_Monthly_preicp.png"))
 ggplot() +
+  facet_wrap(~month, scales = "free")+
   geom_point(data=dat.prepost, aes(x=old.mean, y=new.mean))+
+  geom_abline(yintercept=0,slope=1, color = "red") +
   ggtitle("Daily Aggregate (old.mean) vs. monthly ED2 (new.mean)")+
   xlab("Daily Aggregate mean (kg2/m2/sec)")+
   ylab("Monthly ED2 mean (kg/m2/sec)")
 
 dev.off()
 
-png(width=9, height=8, units="in", res=600, filename= file.path("../Monthly_v_Difference.png"))
+ggplot()+
+  facet_wrap(~month, scales = "free")+
+  geom_vline(xintercept =0)+
+  geom_histogram(data = dat.prepost, aes(x = diff))
+
+#png(width=9, height=8, units="in", res=600, filename= file.path("../Monthly_v_Difference.png"))
 ggplot() +
   geom_point(data=dat.prepost, aes(x=new.mean, y=diff))+
   geom_smooth(data=dat.prepost, aes(x=new.mean, y=diff))+
@@ -309,15 +323,15 @@ dev.off()
 #None of them match
 #------------------------------------------------------------------#
 
-dat.mean <- aggregate(mean~month+year+model+scenario, dat.precip, FUN = mean)
+dat.2mean <- aggregate(mean~month+year+model+scenario, dat.precip, FUN = mean)
 
-dat.newmatch <- merge(new.df, dat.mean, by = c("month", "year"))
+dat.2newmatch <- merge(new.df, dat.2mean, by = c("month", "year"))
 
-dat.newmatch$diff <- dat.newmatch$new.mean - dat.newmatch$mean
+dat.2newmatch$diff <- dat.2newmatch$new.mean - dat.2newmatch$mean
 
-dat.oldmatch <- merge(old.df, dat.mean, by = c("month", "year"))
+dat.2oldmatch <- merge(old.df, dat.2mean, by = c("month", "year"))
 
-dat.oldmatch$diff <- dat.oldmatch$old.mean - dat.oldmatch$mean
+dat.2oldmatch$diff <- dat.2oldmatch$old.mean - dat.2oldmatch$mean
 
 
 #These do not match well at all because of the conversion issues. 
