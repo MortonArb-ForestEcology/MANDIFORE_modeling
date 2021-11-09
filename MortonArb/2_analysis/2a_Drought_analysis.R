@@ -147,6 +147,9 @@ table(sig$Management)
 #number of unique drought with a 4xsignificant drought dip
 length(unique(sig$Drought.period))
 
+#--------------------------------------#
+#Linear regression of resilience
+#--------------------------------------#
 library(nlme)
 drought.df$Management <- factor(drought.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
 
@@ -170,6 +173,22 @@ anova(sig.test)
 
 #This is what lucien is checking if Management has a signifigant effect compared to the None condition
 sig.2test <- lme(resil.diff ~ Management, random=list(rcp=~1, GCM=~1), data=sig)
+summary(sig.2test)
+anova(sig.2test)
+
+#--------------------------------------------#
+#Here we do linear regression for time to recovery. Only including sucessful recoveries. 
+#Not sure how to account for failed recovery?
+#-------------------------------------------#
+recov.sig <- sig[!is.na(sig$days_of_recovery),]
+
+#This is what lucien is checking if Management has a signifigant effect on the drop in agb
+sig.test <- lme(days_of_recovery ~ Management-1, random=list(rcp=~1, GCM=~1), data=recov.sig)
+summary(sig.test)
+anova(sig.test)
+
+#This is what lucien is checking if Management has a signifigant effect compared to the None condition
+sig.2test <- lme(days_of_recovery ~ Management, random=list(rcp=~1, GCM=~1), data=recov.sig)
 summary(sig.2test)
 anova(sig.2test)
 
