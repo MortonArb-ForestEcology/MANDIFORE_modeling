@@ -118,7 +118,7 @@ heat.df$value <- heat.df$value -273.15
 #Taking the mean heat and the sum. THe sum is more useful for counting the number of hours with temp above the heatwave threshold
 heat.agg <- aggregate(value~var+Date+model+scenario, data =heat.df, FUN = mean)
 colnames(heat.agg) <- c("var", "Date", "model", "scenario", "mean")
-heat.agg$sum <- aggregate(value~var+Date+model+scenario, data =heat.df, FUN = sum)[,c("value")]
+heat.agg$Hwave.hours <- aggregate(Heatwave~var+Date+model+scenario, data =heat.df, FUN = sum)[,c("Heatwave")]
 
 #Saving the dataframe of temperature at daily resolution
 write.csv(heat.agg, "../Temp_Weather_Daily.csv", row.names=F)
