@@ -116,9 +116,9 @@ heat.df$Heatwave <-  ifelse(heat.df$value > 313.15, 1, 0)
 heat.df$value <- heat.df$value -273.15
 
 #Taking the mean heat and the sum. THe sum is more useful for counting the number of hours with temp above the heatwave threshold
-heat.agg <- aggregate(value~var+Date+model, data =heat.df, FUN = mean)
-colnames(heat.agg) <- c("var", "Date", "model", "mean")
-heat.agg$sum <- aggregate(value~var+Date+model, data =heat.df, FUN = sum)[,c("value")]
+heat.agg <- aggregate(value~var+Date+model+scenario, data =heat.df, FUN = mean)
+colnames(heat.agg) <- c("var", "Date", "model", "scenario", "mean")
+heat.agg$sum <- aggregate(value~var+Date+model+scenario, data =heat.df, FUN = sum)[,c("value")]
 
 #Saving the dataframe of temperature at daily resolution
 write.csv(heat.agg, "../Temp_Weather_Daily.csv", row.names=F)
@@ -129,9 +129,9 @@ precip.df <- mod.df[mod.df$var == "precipitation_flux",]
 
 #Summing the precipitation converts from kg2/m2/hour to kg2/m2/day
 #I am still summing for posterity but our workflow uses to mean to match with ED2 output
-precip.agg <- aggregate(value~var+Date+model, data =precip.df, FUN = mean)
-colnames(precip.agg) <- c("var", "Date", "model", "mean")
-precip.agg$sum <- aggregate(value~var+Date+model, data =precip.df, FUN = sum)[,c("value")]
+precip.agg <- aggregate(value~var+Date+model+scenario, data =precip.df, FUN = mean)
+colnames(precip.agg) <- c("var", "Date", "model", "scenario", "mean")
+precip.agg$sum <- aggregate(value~var+Date+model+scenario, data =precip.df, FUN = sum)[,c("value")]
 
 write.csv(precip.agg, "../Precip_Weather_Daily.csv", row.names=F)
 
