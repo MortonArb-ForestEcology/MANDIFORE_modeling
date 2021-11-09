@@ -20,9 +20,9 @@ runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRU
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
 setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis/")
-dat.precip <- read.csv("../Drought_Weather_Daily")
+dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
-dat.end <- read.csv("../Drought_Periods_End")
+dat.end <- read.csv("../Drought_Periods_End.csv")
 #artifically adding the 15th as the day for the Date objects since you can't make a date object with just month and year
 #This is used for plotting not for direct dat comparision
 runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep = "-"))
