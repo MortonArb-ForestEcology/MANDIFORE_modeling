@@ -23,17 +23,27 @@ setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis/"
 dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
 dat.end <- read.csv("../Drought_Periods_End.csv")
+
+dat.end$D.start <- as.Date(dat.end$Date) - dat.end$days_since_rain
+library(lubridate)
+
+dat.end$season <- NA
+for(i in 1:nrow(dat.end)){ 
+  if(month(dat.end[i, "D.start"]) >= 3 & month(dat.end[i, "D.start"]) <= 5){
+    dat.end[i, "season"] <- "Spring"
+  } else if(month(dat.end[i, "D.start"]) >= 6 & month(dat.end[i, "D.start"]) <= 8){
+    dat.end[i, "season"] <- "Summer"
+  } else if(month(dat.end[i, "D.start"]) >= 9 & month(dat.end[i, "D.start"]) <= 11){
+    dat.end[i, "season"] <- "Fall"
+  } else {
+    dat.end[i, "season"] <- "Winter"
+  }
+}
 #Semi-arbitrary cut off. Will discuss in the future.
 dat.end <- dat.end[dat.end$days_since_rain >= 20,]
 #artifically adding the 1st as the day for the Date objects since you can't make a date object with just month and year
 #This is used for plotting not for direct date comparision
 runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep = "-"))
-
-
-start <- as.Date(dat.end$Date) - dat.end$days_since_rain
-
-dat.start <- dat.precip[as.Date(dat.precip$Date) %in% start, ]
-
 
 #Good.models <- c("ACCESS1-0", "ACCESS1-3", "bcc-csm1-1", "bcc-csm1-1-m", "HadGEM2-CC", "HadGEM2-ES", "MIROC-ESM", "MIROC-ESM-CHEM")
 #runs.all <- runs.all[runs.all$GCM %in% Good.models, ]
