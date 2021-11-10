@@ -45,5 +45,21 @@ for(i in 2:nrow(dat.precip)){
 }
 
 
+dat.end$D.start <- as.Date(dat.end$Date) - dat.end$days_since_rain
+library(lubridate)
+
+dat.end$season <- NA
+for(i in 1:nrow(dat.end)){ 
+  if(month(dat.end[i, "D.start"]) >= 3 & month(dat.end[i, "D.start"]) <= 5){
+    dat.end[i, "season"] <- "Spring"
+  } else if(month(dat.end[i, "D.start"]) >= 6 & month(dat.end[i, "D.start"]) <= 8){
+    dat.end[i, "season"] <- "Summer"
+  } else if(month(dat.end[i, "D.start"]) >= 9 & month(dat.end[i, "D.start"]) <= 11){
+    dat.end[i, "season"] <- "Fall"
+  } else {
+    dat.end[i, "season"] <- "Winter"
+  }
+}
+
 write.csv(dat.end, "../Drought_Periods_End.csv", row.names = F)
  

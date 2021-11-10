@@ -24,21 +24,6 @@ dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
 dat.end <- read.csv("../Drought_Periods_End.csv")
 
-dat.end$D.start <- as.Date(dat.end$Date) - dat.end$days_since_rain
-library(lubridate)
-
-dat.end$season <- NA
-for(i in 1:nrow(dat.end)){ 
-  if(month(dat.end[i, "D.start"]) >= 3 & month(dat.end[i, "D.start"]) <= 5){
-    dat.end[i, "season"] <- "Spring"
-  } else if(month(dat.end[i, "D.start"]) >= 6 & month(dat.end[i, "D.start"]) <= 8){
-    dat.end[i, "season"] <- "Summer"
-  } else if(month(dat.end[i, "D.start"]) >= 9 & month(dat.end[i, "D.start"]) <= 11){
-    dat.end[i, "season"] <- "Fall"
-  } else {
-    dat.end[i, "season"] <- "Winter"
-  }
-}
 #Semi-arbitrary cut off. Will discuss in the future.
 dat.end <- dat.end[dat.end$days_since_rain >= 20,]
 #artifically adding the 1st as the day for the Date objects since you can't make a date object with just month and year
@@ -48,7 +33,6 @@ runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep =
 #Good.models <- c("ACCESS1-0", "ACCESS1-3", "bcc-csm1-1", "bcc-csm1-1-m", "HadGEM2-CC", "HadGEM2-ES", "MIROC-ESM", "MIROC-ESM-CHEM")
 #runs.all <- runs.all[runs.all$GCM %in% Good.models, ]
 #dat.end <- dat.end[dat.end$model %in% Good.models, ]
-
 
 
 #Calculating the recovery period and the resilience over that period.
@@ -65,6 +49,7 @@ for(MOD in unique(runs.all$GCM)){
         #Identifying the beginning and end of drought dates
         END <- as.Date(temp.end[i, "Date"])
         STR <- END - temp.end[i, "days_since_rain"]
+        Season <- temp.end[i, "season"]
         if(length(STR) > 0){
           
           #Subsetting the ED output starting a year before drought
@@ -141,7 +126,8 @@ for(MOD in unique(runs.all$GCM)){
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$GCM <- as.factor(MOD)
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$rcp <- as.factor(RCP)
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$Drought.period <- paste0(STR," to ", END, sep="")
-        }
+          Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$season <- Season
+          }
       }
     }
   }
