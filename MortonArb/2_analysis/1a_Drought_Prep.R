@@ -28,10 +28,10 @@ dat.precip$Drought_flag <-  ifelse(dat.precip$mean == 0, 1, 0)
 
 write.csv(dat.precip, "../Drought_Weather_Daily.csv", row.names = F)
 
-dat.plot <- dat.precip[dat.precip$days_since_rain > 5 & dat.precip$days_since_rain <75 ,]
+dat.plot <- dat.precip[dat.precip$days_since_rain > 0 & dat.precip$days_since_rain <75 ,]
 library(ggplot2)
 ggplot(dat.plot, aes(days_since_rain))+
-  geom_histogram()
+  geom_bar(width=0.1, color = "black")
 
 dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
