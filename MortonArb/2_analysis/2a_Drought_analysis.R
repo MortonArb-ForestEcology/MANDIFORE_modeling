@@ -24,8 +24,11 @@ dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
 dat.end <- read.csv("../Drought_Periods_End.csv")
 
+#Removing any droughts that occur before management separates the scenarios
+dat.end <- dat.end[dat.end$Date >= as.Date("2025-01-01"),]
+
 #Semi-arbitrary cut off. Will discuss in the future.
-dat.end <- dat.end[dat.end$days_since_rain >= 20,]
+dat.end <- dat.end[dat.end$days_since_rain >= 14,]
 #artifically adding the 1st as the day for the Date objects since you can't make a date object with just month and year
 #This is used for plotting not for direct date comparision
 runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep = "-"))
@@ -130,13 +133,13 @@ for(MOD in unique(runs.all$GCM)){
                                                                 df$Date >= resil.month & df$Date <= max(df$Date), "agb"])
                   
                   recov.df[j, "resil.month.ultimate"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                              df$Date >= resil.month & df$Date <= max(df$Date) & df$agb == recov.df[j, "resil.min.norecov"],"Date"]
+                                                              df$Date >= resil.month & df$Date <= max(df$Date) & df$agb == recov.df[j, "resil.min.ultimate"],"Date"]
                   
                   recov.df[j, "resil.min.local"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
                                                           df$Date >= resil.month & df$Date < recov.df[j, "recov.Date"], "agb"])
                   
                   recov.df[j, "resil.month.local"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                    df$Date >= resil.month & df$Date < recov.df[j, "recov.Date"] & df$agb == recov.df[j, "resil.min"],"Date"]
+                                                    df$Date >= resil.month & df$Date < recov.df[j, "recov.Date"] & df$agb == recov.df[j, "resil.min.local"],"Date"]
                   
                   recov.df[j, "recov.soil.moist.mean"] <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
                                                                     df$Date >= resil.month & df$Date <= recov.df[j, "recov.Date"], "soil.moist.deep"])
@@ -205,18 +208,112 @@ for(MOD in unique(runs.all$GCM)){
     }
   }
 }
-drought.df <- dplyr::bind_rows(Dates.list)
-drought.df$Management <- factor(drought.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
+#Despite it's name this dataframe contains all the dry periods. It is an ecological drought if theres a signfigant drop
+drought.temp <- dplyr::bind_rows(Dates.list)
+drought.temp$Management <- factor(drought.temp$Management, levels = c("None", "Gap", "Shelter", "Under"))
+drought.temp$year <- year(drought.temp$D.end)
+drought.temp$check.recov <- ifelse(is.na(drought.temp$recov.Date), F, T)
 
+write.csv(drought.temp, "../Resilience_dataframe.csv", row.names = F)
 
+drought.df <- data.frame()
+#Making a loop to count previous droughts and dry periods. I'm not checking for overlap of periods just total previous occurences
+for(MOD in unique(drought.temp$GCM)){
+  for(RCP in unique(drought.temp[drought.temp$GCM == MOD, "rcp"])){
+    for(MNG in unique(drought.temp[drought.temp$GCM == MOD & drought.temp$rcp == RCP, "Management"])){
+      temp <- drought.temp[drought.temp$GCM == MOD & drought.temp$rcp == RCP & drought.temp$Management == MNG, ]
+      temp$prev.dry.period <- (seq.int(nrow(temp))-1)
+      drought <- -1
+      for(i in 1:nrow(temp)){
+        #Using 2 sigs but flagging in case we change in the future
+        if(temp[i, "flag.2sig"]){
+          drought <- drought + 1
+        }
+          temp[i, "prev.drought"] <- drought
+      }
+      drought.df <- rbind(drought.df, temp)  
+    }
+  }
+}
+#Removing the negative ones that occur if the first instance isn't a signifigant drought
+drought.df$prev.drought <- ifelse(drought.df$prev.drought == -1, 0, drought.df$prev.drought)
 
-sig <- drought.df[drought.df$flag.2sig == T,]
+summary(drought.df$flag.4sig)
+
+sig <- drought.df[drought.df$flag.2sig == T, ]
+
+sig <- sig[sig$D.end <= as.Date("2094-12-01"),]
 
 table(sig$Management)
+
+median(sig$days_of_recovery, na.rm = T)
+mean(sig$days_of_recovery, na.rm = T)
+sd(sig$days_of_recovery, na.rm = T)
+min(sig$days_of_recovery, na.rm = T)
+max(sig$days_of_recovery, na.rm = T)
 
 #number of unique drought with a 4xsignificant drought dip
 length(unique(sig$Drought.period))
 
+summary(sig$recov.Date)
+
+png(file.path('../figures', 'Days_of_recovery_distribution.png'))
+ggplot(sig) + 
+  geom_histogram(aes(x=days_of_recovery, fill = Management, color = Management)) +
+  ggtitle("Distribtuion of the length of recovery period in days (with mean line)")+
+  geom_vline(aes(xintercept = mean(sig$days_of_recovery, na.rm = T)))
+dev.off()
+
+png(file.path('../figures', 'Drought_recovery_over_years.png'))
+  ggplot(sig, aes(x=year, color = check.recov, fill = check.recov)) + 
+    facet_wrap(~rcp)+
+    geom_histogram() +
+    ggtitle("Porportion of droughts that recovered each year")
+  dev.off()
+
+  
+#norecov <- sig[sig$check.recov == F,]
+
+png(file.path('../figures', 'Nonrecovery_lowpoints.png'))
+ggplot(sig) + 
+  facet_grid(~rcp)+
+  geom_point(aes(x=resil.month.ultimate, y = resil.min.ultimate, color = check.recov)) +
+  ggtitle("Year of lowest point for non-recovered scenarios") +
+  xlab("Date of lowest point of agb following drought")+
+  ylab("agb at lowest point")
+dev.off()
+
+
+png(file.path('../figures', 'Past_soil_vs._pcent_change_in_agb.png'))
+ggplot(sig) + 
+  facet_grid(~rcp)+
+  geom_point(aes(x=past.soil.moist.mean, y = resil.pcent.diff, color = check.recov)) +
+  stat_smooth(aes(x=past.soil.moist.mean, y=resil.pcent.diff, color=check.recov), method="lm", alpha=0.2) +
+  ggtitle("Past soil moisture vs. pcent change in difference") +
+  xlab("Mean deep soil moisture 10 years before drought")+
+  ylab("Percentage of agb difference")
+dev.off()
+
+
+png(file.path('../figures', 'Nee_vs._pcent_change_in_agb.png'))
+ggplot(sig) + 
+  facet_grid(~rcp)+
+  geom_point(aes(x=past.nee.mean, y = resil.pcent.diff, color = check.recov)) +
+  stat_smooth(aes(x=past.nee.mean, y=resil.pcent.diff, color=check.recov), method="lm", alpha=0.2) +
+  ggtitle("Past nee vs. pcent change in difference") +
+  xlab("Mean nee 10 years before drought")+
+  ylab("Percentage of agb difference")
+dev.off()
+
+png(file.path('../figures', 'End_date_of_Drought_vs._pcent_change_in_agb.png'))
+ggplot(sig) + 
+  #facet_grid(~rcp)+
+  geom_point(aes(x=D.end, y = resil.pcent.diff, color = check.recov)) +
+  stat_smooth(aes(x=D.end, y=resil.pcent.diff, color=check.recov), method="lm", alpha=0.2) +
+  ggtitle("End Date of Drought vs. pcent change in difference") +
+  xlab("End Date of Drought")+
+  ylab("Percentage of agb difference")
+dev.off()
 #--------------------------------------#
 #Linear regression of resilience for dry conditions
 #--------------------------------------#
@@ -233,6 +330,12 @@ anova(lm.test)
 lm.2test <- lme(resil.pcent.diff ~ Management, random=list(rcp=~1, GCM=~1, year =~1), data=drought.df[drought.df$D.start >= as.Date("2025-01-01") & drought.df$flag.2sig == T& is.na(drought.df$recov.Date) == F,])
 summary(lm.2test)
 anova(lm.2test)
+
+library(ggplot2)
+ggplot(data=drought.df[drought.df$D.start >= as.Date("2025-01-01") & drought.df$flag.2sig == T & is.na(drought.df$recov.Date) == F,]) +
+  facet_wrap(~Management) +
+  geom_point(aes(x=, y=resil.diff, color=GCM), size=0.5, alpha=0.5) +
+  stat_smooth(aes(x=year, y=resil.diff, color=GCM, fill=GCM), method="lm", alpha=0.2) 
 
 
 #--------------------------------------------#
