@@ -13,6 +13,7 @@ setwd(path.read)
 library(readbulk)
 library(dplyr)
 library(lubridate)
+library(ggplot2)
 
 runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRUE)
 
@@ -313,6 +314,50 @@ ggplot(sig) +
   ggtitle("End Date of Drought vs. pcent change in difference") +
   xlab("End Date of Drought")+
   ylab("Percentage of agb difference")
+dev.off()
+
+png(file.path('../figures', 'Compounding_dry_periods.png'))
+ggplot(sig, aes(x=prev.dry.period, color = check.recov, fill = check.recov)) + 
+  #facet_wrap(~rcp)+
+  geom_histogram() +
+  ggtitle("Porportion of droughts that recovered based on previous dry periods")+
+  xlab("Number of previous dry periods (14 days without rain)")
+dev.off()
+
+png(file.path('../figures', 'Compounding_droughts_MNG.png'))
+ggplot(sig, aes(x=prev.drought, color = check.recov, fill = check.recov)) + 
+  facet_wrap(~Management)+
+  geom_histogram() +
+  ggtitle("Porportion of droughts that recovered based on previous dry droughts")+
+  xlab("Number of previous droughts (14 days without rain that cause a signifigant drop in agb)")
+dev.off()
+
+png(file.path('../figures', 'AGB vs.recovery.png'))
+ggplot(sig, aes(x=agb.mean, color = check.recov, fill = check.recov)) + 
+  facet_wrap(~Management)+
+  geom_histogram() +
+  ggtitle("Porportion of droughts that recovered based mean agb for 10 years before drought")+
+  xlab("mean agb for 10 years before drought")
+dev.off()
+
+ggplot(sig) + 
+  #facet_grid(~rcp)+
+  geom_point(aes(x=prev.drought, y = resil.pcent.diff, color = check.recov)) +
+  stat_smooth(aes(x=prev.drought, y= resil.pcent.diff, color= check.recov), method="lm", alpha=0.2) +
+  ggtitle("Number of Droughts vs. pcent change in difference") +
+  xlab("Number of preiovus droughts")+
+  ylab("Percentage of agb difference")
+
+
+
+png(file.path('../figures', 'Past_soil_moisture_vs_number_droughts.png'))
+ggplot(sig) + 
+  #facet_grid(~rcp)+
+  geom_point(aes(x=prev.drought, y = past.soil.moist.mean, color = check.recov)) +
+  stat_smooth(aes(x=prev.drought, y= past.soil.moist.mean, color= check.recov), method="lm", alpha=0.2) +
+  ggtitle("Number of Droughts vs. 10yr mean of deep soil moisture") +
+  xlab("Number of preiovus droughts")+
+  ylab("mean deep soil moisture for 10 years before drought")
 dev.off()
 #--------------------------------------#
 #Linear regression of resilience for dry conditions
