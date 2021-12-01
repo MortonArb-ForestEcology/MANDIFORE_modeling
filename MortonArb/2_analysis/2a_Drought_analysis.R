@@ -200,6 +200,7 @@ for(MOD in unique(runs.all$GCM)){
           
           #In between the end of the drought (rain begins again) and the recovery date what is the local minimum
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]] <- recov.df
+          Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$days_since_rain <- temp.end[i, "days_since_rain"]
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$GCM <- as.factor(MOD)
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$rcp <- as.factor(RCP)
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$Drought.period <- paste0(STR," to ", END, sep="")
@@ -214,8 +215,6 @@ drought.temp <- dplyr::bind_rows(Dates.list)
 drought.temp$Management <- factor(drought.temp$Management, levels = c("None", "Gap", "Shelter", "Under"))
 drought.temp$year <- year(drought.temp$D.end)
 drought.temp$check.recov <- ifelse(is.na(drought.temp$recov.Date), F, T)
-
-write.csv(drought.temp, "../Resilience_dataframe.csv", row.names = F)
 
 drought.df <- data.frame()
 #Making a loop to count previous droughts and dry periods. I'm not checking for overlap of periods just total previous occurences
@@ -238,6 +237,16 @@ for(MOD in unique(drought.temp$GCM)){
 }
 #Removing the negative ones that occur if the first instance isn't a signifigant drought
 drought.df$prev.drought <- ifelse(drought.df$prev.drought == -1, 0, drought.df$prev.drought)
+
+write.csv(drought.df, "../Resilience_dataframe.csv", row.names = F)
+
+drought.df$flag.2sig <- ifelse(drought.df$flag.2sig, "Drought", "Dry period")
+
+png(file.path('../figures', 'Days_since_rain_vs_drought.png'))
+ggplot(drought.df)+
+  geom_histogram(aes(x = days_since_rain, fill =flag.2sig, color = flag.2sig))+
+  ggtitle("Proportion of droughts instead of dry periods by duration of period")
+dev.off()  
 
 summary(drought.df$flag.4sig)
 
