@@ -38,7 +38,10 @@ runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep =
 
 
 #Calculating the recovery period and the resilience over that period.
-#ED.interest <- c("dbh.mean", "dbh.sd", "height.mean", "height.sd", "nee", "agb", "nee", "soil.moist.surf", "soil.moist.deep")
+#Calculating the temp at the start of the model run
+OG.temp <- mean(runs.all[runs.all$Date > min(runs.all$Date) & runs.all$Date < (min(runs.all$Date)%m+% years(10)), "tair"])
+#Structural variables of interest
+ED.interest <- c("dbh.mean", "dbh.sd", "height.mean", "height.sd", "density.tree", "nee", "soil.moist.surf", "soil.moist.deep")
 Dates.list <- list()
 for(MOD in unique(runs.all$GCM)){
   for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
@@ -52,6 +55,8 @@ for(MOD in unique(runs.all$GCM)){
         END <- as.Date(temp.end[i, "Date"])
         STR <- END - temp.end[i, "days_since_rain"]
         Season <- temp.end[i, "season"]
+
+        
         if(length(STR) > 0){
           
           #Subsetting the ED output starting a year before drought
@@ -62,14 +67,15 @@ for(MOD in unique(runs.all$GCM)){
           recov.df <- aggregate(agb~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
                                 FUN = mean)
           
-          colnames(recov.df) <- c("Management", "agb.mean")
+          colnames(recov.df) <- c("Management", "past.agb.mean")
           
-          recov.df$agb.sd <- aggregate(agb~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
+          recov.df$past.agb.sd <- aggregate(agb~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
                                 FUN = sd)[,c("agb")]
           
           recov.df$D.start <- STR
           recov.df$D.end <- END
-
+          recov.df$Delta.temp <-  df[df$Date == ymd(paste(year(recov.df$D.end), month(recov.df$D.end), "01", sep = "-")),"tair"]- OG.temp
+          
           
           #1 year after drought end when is the first time agb equals the mean of the year leading up to drought
           for(j in 1:nrow(recov.df)){
@@ -80,11 +86,11 @@ for(MOD in unique(runs.all$GCM)){
             month.agb.min <- df[df$Management == recov.df[j, "Management"] & #Matching management
                                 df$Date >= recov.df$D.end & df$Date <= recov.df$D.end %m+% period("15 months") & df$agb == dip,"Date"]
             
-            recov.df[j, "flag.2sig"] <- ifelse(dip < recov.df[j, "agb.mean"] -2*recov.df[j, "agb.sd"] ,T,F)
+            recov.df[j, "flag.2sig"] <- ifelse(dip < recov.df[j, "past.agb.mean"] -2*recov.df[j, "past.agb.sd"] ,T,F)
             
-            recov.df[j, "flag.3sig"] <- ifelse(dip < recov.df[j, "agb.mean"] -3*recov.df[j, "agb.sd"] ,T,F)
+            recov.df[j, "flag.3sig"] <- ifelse(dip < recov.df[j, "past.agb.mean"] -3*recov.df[j, "past.agb.sd"] ,T,F)
             
-            recov.df[j, "flag.4sig"] <- ifelse(dip < recov.df[j, "agb.mean"] -4*recov.df[j, "agb.sd"],T,F)
+            recov.df[j, "flag.4sig"] <- ifelse(dip < recov.df[j, "past.agb.mean"] -4*recov.df[j, "past.agb.sd"],T,F)
             
             recov.df[j, "agb.min.local"] <- dip
             
@@ -94,7 +100,7 @@ for(MOD in unique(runs.all$GCM)){
               if(recov.df[j, "flag.2sig"] == T){
                 recov.df[j, "recov.Date"] <- as.Date(df[df$Management == recov.df[j, "Management"] & #Matching management
                                                   df$Date > month.agb.min & #Making sure we check after drought has occured
-                                                  df$agb >= recov.df[j, "agb.mean"] -2*recov.df[j, "agb.sd"], "Date"][1])  #Choosing the first date above the original
+                                                  df$agb >= recov.df[j, "past.agb.mean"] -2*recov.df[j, "past.agb.sd"], "Date"][1])  #Choosing the first date above the original
                 
                 #If it never recovers then we look at the lowest point from the drought to the end of the model
                 if(is.na(recov.df[j, "recov.Date"])){
@@ -137,24 +143,18 @@ for(MOD in unique(runs.all$GCM)){
                   
                   
                   #Structural metrics to compare to the past. Can see how much they hae changed since the drought ended
-                  recov.df[j, "recov.soil.moist.mean"] <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                                    df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], "soil.moist.deep"])
                   
-                  recov.df[j, "recov.soil.moist.max"] <- max(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                                  df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], "soil.moist.deep"])
-                  
-                  recov.df[j, "recov.soil.moist.min"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                                  df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], "soil.moist.deep"])
-                  
-                  recov.df[j, "recov.nee.mean"] <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                             df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], "nee"])
-                  
-                  
-                  recov.df[j, "recov.nee.max"] <- max(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                           df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], "nee"])
-                  
-                  recov.df[j, "recov.nee.min"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                           df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], "nee"])
+                  for(VAR in ED.interest){
+                    recov.df[j, paste("recov", VAR ,"mean", sep = ".")] <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                                           df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], VAR])
+                    
+                    recov.df[j, paste("recov", VAR ,"max", sep = ".")] <- max(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                                         df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], VAR])
+                    
+                    recov.df[j, paste("recov", VAR ,"min", sep = ".")] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                                         df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], VAR])
+                  }
+
                 }
               } else { #Flagging situations were there isn't a signifgant effect of drought
                 recov.df[j, "recov.Date"] <- as.Date(NA)
@@ -166,50 +166,43 @@ for(MOD in unique(runs.all$GCM)){
           #Counting how many days it takes for recovery after the drought ends
           recov.df$days_of_descent <- difftime(recov.df$month.agb.min.recov, recov.df$D.end, units = "days")
           recov.df$days_of_ascent <- difftime(recov.df$recov.Date, recov.df$month.agb.min.recov, units = "days")
-          recov.df$days_of_recovery <- difftime(recov.df$D.end, recov.df$recov.Date, units = "days")
+          recov.df$days_of_recovery <- difftime( recov.df$recov.Date, recov.df$D.end, units = "days")
 
           #Calculating the difference and change over the first 15 months
-          recov.df$agb.local.diff <-  recov.df$agb.min.local - recov.df$agb.mean
+          recov.df$agb.local.diff <-  recov.df$agb.min.local - recov.df$past.agb.mean
           
-          recov.df$agb.pcent.local.diff <- (recov.df$agb.min.local/recov.df$agb.mean - 1) * 100
+          recov.df$agb.pcent.local.diff <- (recov.df$agb.min.local/recov.df$past.agb.mean - 1) * 100
           
           #Calculating the difference and change over the entire drought months
-          recov.df$agb.ultimate.diff <-  recov.df$agb.min.ultimate - recov.df$agb.mean
+          recov.df$agb.ultimate.diff <-  recov.df$agb.min.ultimate - recov.df$past.agb.mean
           
-          recov.df$agb.pcent.ultimate.diff <- (recov.df$agb.min.ultimate/recov.df$agb.mean - 1) * 100
+          recov.df$agb.pcent.ultimate.diff <- (recov.df$agb.min.ultimate/recov.df$past.agb.mean - 1) * 100
           
           #Calculating the difference and change over the recovery period
-          recov.df$agb.recov.diff <-  recov.df$agb.min.recov - recov.df$agb.mean
+          recov.df$agb.recov.diff <-  recov.df$agb.min.recov - recov.df$past.agb.mean
           
-          recov.df$agb.pcent.recov.diff <- (recov.df$agb.min.recov/recov.df$agb.mean - 1) * 100
+          recov.df$agb.pcent.recov.diff <- (recov.df$agb.min.recov/recov.df$past.agb.mean - 1) * 100
         
           
           #Calculating 10 year averages of structural response variables
-          recov.df$past.soil.moist.mean <- aggregate(soil.moist.deep~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
-                                                     FUN = mean)[,c("soil.moist.deep")]
+          for(VAR in ED.interest){
+          recov.df[, paste("past", VAR ,"mean", sep = ".")] <- aggregate(eval(as.symbol(VAR))~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
+                                                                FUN = mean)[,c("eval(as.symbol(VAR))")]
           
-          recov.df$past.soil.moist.max <- aggregate(soil.moist.deep~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
-                                                    FUN = max)[,c("soil.moist.deep")]
+          recov.df[, paste("past", VAR ,"max", sep = ".")] <- aggregate(eval(as.symbol(VAR))~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
+                                                                FUN = max)[,c("eval(as.symbol(VAR))")]
           
-          recov.df$past.soil.moist.min <- aggregate(soil.moist.deep~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
-                                                    FUN = min)[,c("soil.moist.deep")]
+          recov.df[, paste("past", VAR ,"min", sep = ".")] <- aggregate(eval(as.symbol(VAR))~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
+                                                                FUN = min)[,c("eval(as.symbol(VAR))")]
           
-          recov.df$past.nee.mean <- aggregate(nee~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
-                                              FUN = mean)[,c("nee")]
-          
-          recov.df$past.nee.max <- aggregate(nee~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
-                                             FUN = max)[,c("nee")]
-          
-          recov.df$past.nee.min <- aggregate(nee~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
-                                             FUN = min)[,c("nee")]
-          
-          
+          }
+
           #In between the end of the drought (rain begins again) and the recovery date what is the local minimum
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]] <- recov.df
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$days_since_rain <- temp.end[i, "days_since_rain"]
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$GCM <- as.factor(MOD)
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$rcp <- as.factor(RCP)
-          Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$Drought.period <- paste0(STR," to ", END, sep="")
+          Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$Dry.period <- paste0(STR," to ", END, sep="")
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$season <- Season
           }
       }
@@ -245,4 +238,3 @@ for(MOD in unique(drought.temp$GCM)){
 drought.df$prev.drought <- ifelse(drought.df$prev.drought == -1, 0, drought.df$prev.drought)
 
 write.csv(drought.df, "../Resilience_dataframe.csv", row.names = F)
-
