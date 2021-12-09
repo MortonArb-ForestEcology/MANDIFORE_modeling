@@ -39,7 +39,6 @@ runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep =
 
 #Calculating the recovery period and the resilience over that period.
 #Calculating the temp at the start of the model run
-OG.temp <- mean(runs.all[runs.all$Date > min(runs.all$Date) & runs.all$Date < (min(runs.all$Date)%m+% years(10)), "tair"])
 #Structural variables of interest
 ED.interest <- c("dbh.mean", "dbh.sd", "height.mean", "height.sd", "density.tree", "nee", "soil.moist.surf", "soil.moist.deep")
 Dates.list <- list()
@@ -74,8 +73,7 @@ for(MOD in unique(runs.all$GCM)){
           
           recov.df$D.start <- STR
           recov.df$D.end <- END
-          recov.df$Delta.temp <-  df[df$Date == ymd(paste(year(recov.df$D.end), month(recov.df$D.end), "01", sep = "-")),"tair"]- OG.temp
-          
+
           
           #1 year after drought end when is the first time agb equals the mean of the year leading up to drought
           for(j in 1:nrow(recov.df)){
@@ -84,7 +82,18 @@ for(MOD in unique(runs.all$GCM)){
 
             
             month.agb.min <- df[df$Management == recov.df[j, "Management"] & #Matching management
-                                df$Date >= recov.df$D.end & df$Date <= recov.df$D.end %m+% period("15 months") & df$agb == dip,"Date"]
+                                  df$Date >= recov.df$D.end & df$Date <= recov.df$D.end %m+% period("15 months") & df$agb == dip,"Date"]
+            
+            OG.temp <- mean(runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & runs.all$Management == recov.df[j, "Management"] &
+                                       runs.all$Date > min(runs.all$Date) & runs.all$Date < (min(runs.all$Date)%m+% years(10)), "tair"])
+            
+            
+            New.temp <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                  df$Date >= recov.df$D.end %m-% years(10) & df$Date <= recov.df$D.end, "tair"], na.rm=T) #Pulling the mean temp for past 10 years
+            
+            End.temp <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                  df$Date >= max(df$Date) %m-% years(10) & df$Date <= max(df$Date), "tair"], na.rm=T) #Pulling the mean temp for last 10 years
+            
             
             recov.df[j, "flag.2sig"] <- ifelse(dip < recov.df[j, "past.agb.mean"] -2*recov.df[j, "past.agb.sd"] ,T,F)
             
@@ -95,6 +104,10 @@ for(MOD in unique(runs.all$GCM)){
             recov.df[j, "agb.min.local"] <- dip
             
             recov.df[j, "month.agb.min.local"] <- month.agb.min
+            
+            recov.df[j, "delta.temp"] <- New.temp - OG.temp
+            
+            recov.df[j, "delta.temp.end"] <- End.temp - OG.temp
             
             
               if(recov.df[j, "flag.2sig"] == T){
@@ -166,7 +179,8 @@ for(MOD in unique(runs.all$GCM)){
           #Counting how many days it takes for recovery after the drought ends
           recov.df$days_of_descent <- difftime(recov.df$month.agb.min.recov, recov.df$D.end, units = "days")
           recov.df$days_of_ascent <- difftime(recov.df$recov.Date, recov.df$month.agb.min.recov, units = "days")
-          recov.df$days_of_recovery <- difftime( recov.df$recov.Date, recov.df$D.end, units = "days")
+          recov.df$days_of_recovery_str <- difftime(recov.df$recov.Date, recov.df$D.start, units = "days")
+          recov.df$days_of_recovery_end <- difftime(recov.df$recov.Date, recov.df$D.end, units = "days")
 
           #Calculating the difference and change over the first 15 months
           recov.df$agb.local.diff <-  recov.df$agb.min.local - recov.df$past.agb.mean
