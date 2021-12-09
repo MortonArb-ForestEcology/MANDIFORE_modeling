@@ -1,0 +1,25 @@
+"Predictor","Equation","Fixedeff","Value","pvalue"
+"prev.drought","days_of_recovery_end ~ prev.drought","(Intercept)",1312.80111224509,0.0308900497357489
+"prev.drought","days_of_recovery_end ~ prev.drought","prev.drought",469.293324706336,2.23491812898651e-07
+"prev.dry.period","days_of_recovery_end ~ prev.dry.period","(Intercept)",1441.39520699991,0.0301946488002176
+"prev.dry.period","days_of_recovery_end ~ prev.dry.period","prev.dry.period",84.3600460210759,0.00305461183675802
+"delta.temp","days_of_recovery_end ~ delta.temp","(Intercept)",1022.39118326607,0.206274860234149
+"delta.temp","days_of_recovery_end ~ delta.temp","delta.temp",577.825568789901,0.014043243596557
+"delta.temp.end","days_of_recovery_end ~ delta.temp.end","(Intercept)",1696.24209413692,0.148853922643329
+"delta.temp.end","days_of_recovery_end ~ delta.temp.end","delta.temp.end",126.144228206981,0.640697983592409
+"past.dbh.mean.mean","days_of_recovery_end ~ past.dbh.mean.mean","(Intercept)",2282.21008904499,0.0216820549365789
+"past.dbh.mean.mean","days_of_recovery_end ~ past.dbh.mean.mean","past.dbh.mean.mean",-246.287135574448,0.910855701691275
+"past.dbh.sd.mean","days_of_recovery_end ~ past.dbh.sd.mean","(Intercept)",986.448552442284,0.577475226773437
+"past.dbh.sd.mean","days_of_recovery_end ~ past.dbh.sd.mean","past.dbh.sd.mean",835.452112801711,0.478593003249685
+"past.height.mean.mean","days_of_recovery_end ~ past.height.mean.mean","(Intercept)",2601.47480780744,0.415485656934836
+"past.height.mean.mean","days_of_recovery_end ~ past.height.mean.mean","past.height.mean.mean",-234.812772577034,0.895370514200464
+"past.height.sd.mean","days_of_recovery_end ~ past.height.sd.mean","(Intercept)",-3.10014705780181,0.997929236538363
+"past.height.sd.mean","days_of_recovery_end ~ past.height.sd.mean","past.height.sd.mean",2244.19758364981,0.0383629323175907
+"past.density.tree.mean","days_of_recovery_end ~ past.density.tree.mean","(Intercept)",1287.22959889636,0.0564886506112178
+"past.density.tree.mean","days_of_recovery_end ~ past.density.tree.mean","past.density.tree.mean",46.0259593848385,0.0818899711730044
+"past.nee.mean","days_of_recovery_end ~ past.nee.mean","(Intercept)",2240.71836808546,6.0516655404902e-05
+"past.nee.mean","days_of_recovery_end ~ past.nee.mean","past.nee.mean",17995.9990556264,0.612910820565209
+"past.soil.moist.surf.mean","days_of_recovery_end ~ past.soil.moist.surf.mean","(Intercept)",6436.85602870057,0.361642049224745
+"past.soil.moist.surf.mean","days_of_recovery_end ~ past.soil.moist.surf.mean","past.soil.moist.surf.mean",-11020.7619155069,0.546365199314158
+"past.soil.moist.deep.mean","days_of_recovery_end ~ past.soil.moist.deep.mean","(Intercept)",3553.09732429176,0.553178899878364
+"past.soil.moist.deep.mean","days_of_recovery_end ~ past.soil.moist.deep.mean","past.soil.moist.deep.mean",-3567.6094463914,0.819455521038094

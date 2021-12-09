@@ -31,7 +31,9 @@ write.csv(dat.precip, "../Drought_Weather_Daily.csv", row.names = F)
 dat.plot <- dat.precip[dat.precip$days_since_rain > 0 & dat.precip$days_since_rain <75 ,]
 library(ggplot2)
 ggplot(dat.plot, aes(days_since_rain))+
-  geom_bar(width=0.1, color = "black")
+  geom_bar( color = "black")+
+  scale_y_log10()+
+  geom_vline(xintercept = 14)
 
 dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
