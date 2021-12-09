@@ -15,132 +15,130 @@ drought.df$Management <- factor(drought.df$Management, levels = c("None", "Gap",
 drought.df$year <- lubridate::year(drought.df$D.start)
 
 dry.list <- list()
-dry.check <- lme(flag.2sig ~ Management-1, random = list(rcp = ~1, GCM = ~1), data = drought.df)
-sum <- summary(dry.check)
-df.eff <- as.data.frame(sum$tTable)
-df.eff$Fixedeff <- rownames(df.eff)
-df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
-dry.list[[paste("flag.2sig", " -1")]]$Var <- paste("flag.2sig", " -1")
-dry.list[[paste("flag.2sig", " -1")]]$Fixedeff <- df.eff$Fixedeff
-dry.list[[paste("flag.2sig", " -1")]]$Equation <- df.eff$Equaiton
-dry.list[[paste("flag.2sig", " -1")]]$Value <- df.eff$Value
-dry.list[[paste("flag.2sig", " -1")]]$pvalue <- df.eff$`p-value`
-
-dry.check <- lme(flag.2sig ~ Management, random = list(rcp = ~1, GCM = ~1), data = drought.df)
-sum <- summary(dry.check)
-df.eff <- as.data.frame(sum$tTable)
-df.eff$Fixedeff <- rownames(df.eff)
-df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
-dry.list[[paste("flag.2sig")]]$Var <- paste("flag.2sig")
-dry.list[[paste("flag.2sig")]]$Fixedeff <- df.eff$Fixedeff
-dry.list[[paste("flag.2sig")]]$Equation <- df.eff$Equaiton
-dry.list[[paste("flag.2sig")]]$Value <- df.eff$Value
-dry.list[[paste("flag.2sig")]]$pvalue <- df.eff$`p-value`
-summary(dry.check)
-
-dry.list <- list()
 Dry.variables <- c("flag.2sig", #True flase on whetehr a dry period or drought occured
                         "agb.local.diff", #The difference in the lowest dip in agb over 15 months after drought
-                        "agb.pcent.local.diff", #The percentage difference in the lowest dip in agb over 15 months after drought
-                   "agb.min.local") #The low point after 15 months
+                        "agb.pcent.local.diff") #The percentage difference in the lowest dip in agb over 15 months after drought
+
 for(COL in Dry.variables){
-  #lme regression that can cycle through all of our variables of interest.
-  lm.test <- lme(eval(substitute(j ~ Management-1, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df)
-  sum <- summary(lm.test)
-  df.eff <- as.data.frame(sum$tTable)
-  df.eff$Fixedeff <- rownames(df.eff)
-  df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
-  dry.list[[paste(COL, " -1")]]$Var <- paste(COL, " -1")
-  dry.list[[paste(COL, " -1")]]$Fixedeff <- df.eff$Fixedeff
-  dry.list[[paste(COL, " -1")]]$Equation <- df.eff$Equaiton
-  dry.list[[paste(COL, " -1")]]$Value <- df.eff$Value
-  dry.list[[paste(COL, " -1")]]$pvalue <- df.eff$`p-value`
-  
-  #One set is for the general signifigance and this set is for sigfignace relative to no management
-  lm.test <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df)
-  sum <- summary(lm.test)
-  df.eff <- as.data.frame(sum$tTable)
-  df.eff$Fixedeff <- rownames(df.eff)
-  df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
-  dry.list[[paste(COL)]]$Var <- paste(COL)
-  dry.list[[paste(COL)]]$Fixedeff <- df.eff$Fixedeff
-  dry.list[[paste(COL)]]$Equation <- df.eff$Equaiton
-  dry.list[[paste(COL)]]$Value <- df.eff$Value
-  dry.list[[paste(COL)]]$pvalue <- df.eff$`p-value`
+  if(COL == "flag.2sig"){ #Checking if we need to do a binomal
+    #lme regression that can cycle through all of our variables of interest.
+    lm.test <- lme4::glmer(eval(substitute(j ~ Management-1 + (1|rcp) + (1|GCM), list(j = as.name(COL)))), family = binomial, data = drought.df)
+    sum <- summary(lm.test)
+    df.eff <-  as.data.frame(sum$coefficients)
+    colnames(df.eff) <- c("Value", "Std.Error", "z value", "p-value")
+    df.eff$Fixedeff <- rownames(df.eff)
+    df.eff$Equation <- paste(COL, "~", "Management - 1 + (1|rcp) + (1|GCM)")
+    dry.list[[paste(COL, " -1")]]$Var <- COL
+    dry.list[[paste(COL, " -1")]]$Equation <- df.eff$Equation
+    dry.list[[paste(COL, " -1")]]$Fixedeff <- df.eff$Fixedeff
+    dry.list[[paste(COL, " -1")]]$Value <- df.eff$Value
+    dry.list[[paste(COL, " -1")]]$pvalue <- df.eff$`p-value`
+    lm2.test <- lme4::glmer(eval(substitute(j ~ Management + (1|rcp) + (1|GCM), list(j = as.name(COL)))), family = binomial, data = drought.df)
+    
+    sum <- summary(lm2.test)
+    df.eff <-  as.data.frame(sum$coefficients)
+    colnames(df.eff) <- c("Value", "Std.Error", "z value", "p-value")
+    df.eff$Fixedeff <- rownames(df.eff)
+    df.eff$Equation <- paste(COL, "~", "Management + (1|rcp) + (1|GCM)")
+    dry.list[[paste(COL)]]$Var <- COL
+    dry.list[[paste(COL)]]$Equation <- df.eff$Equation
+    dry.list[[paste(COL)]]$Fixedeff <- df.eff$Fixedeff
+    dry.list[[paste(COL)]]$Value <- df.eff$Value
+    dry.list[[paste(COL)]]$pvalue <- df.eff$`p-value`
+    } else {
+    lm.test <- lme(eval(substitute(j ~ Management-1, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df)
+    sum <- summary(lm.test)
+    df.eff <- as.data.frame(sum$tTable)
+    df.eff$Fixedeff <- rownames(df.eff)
+    df.eff$Equation <- paste(COL, "~", "Management - 1")
+    dry.list[[paste(COL, " -1")]]$Var <- COL
+    dry.list[[paste(COL, " -1")]]$Equation <- df.eff$Equation
+    dry.list[[paste(COL, " -1")]]$Fixedeff <- df.eff$Fixedeff
+    dry.list[[paste(COL, " -1")]]$Value <- df.eff$Value
+    dry.list[[paste(COL, " -1")]]$pvalue <- df.eff$`p-value`
+    lm2.test <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df)
+    #One set is for the general signifigance and this set is for sigfignace relative to no management
+    sum <- summary(lm2.test)
+    df.eff <- as.data.frame(sum$tTable)
+    df.eff$Fixedeff <- rownames(df.eff)
+    df.eff$Equation <- paste(COL, "~", "Management")
+    dry.list[[paste(COL)]]$Var <- COL
+    dry.list[[paste(COL)]]$Equation <- df.eff$Equation
+    dry.list[[paste(COL)]]$Fixedeff <- df.eff$Fixedeff
+    dry.list[[paste(COL)]]$Value <- df.eff$Value
+    dry.list[[paste(COL)]]$pvalue <- df.eff$`p-value`
+  }
+
 }
 
 dat.dry <- dplyr::bind_rows(dry.list)
 write.csv(dat.dry, "../LME_of_dry_periods.csv", row.names = F)
 
+#The drought recovery check was previously here. It was moved to the lower portion. It had no signifigance of managment on whether recovery happened
+#For predictor variables such as nee, soil.moisture, and dbh.mean
+pred.list <- list()
+Predictor.variables <- c("prev.drought",
+                         "prev.dry.period",
+                         "delta.temp",
+                         "delta.temp.end",
+                         "past.dbh.mean.mean",
+                         "past.dbh.sd.mean",
+                         "past.height.mean.mean",
+                         "past.height.sd.mean",
+                         "past.density.tree.mean",
+                         "past.nee.mean",
+                         "past.soil.moist.surf.mean",
+                         "past.soil.moist.deep.mean")
 
-var.list <- list()
-Resilience.variables <- c("check.recov") #Drop in agb after a dry period
-for(COL in Resilience.variables){
-  #This is what lucien is checking if Management has a signifigant effect on the drop in agb
-  lm.test <- lme(eval(substitute(j ~ Management-1, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df[drought.df$flag.2sig == T,])
-  sum <- summary(lm.test)
-  df.eff <- as.data.frame(sum$tTable)
-  df.eff$Fixedeff <- rownames(df.eff)
-  df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
-  var.list[[paste(COL, " -1")]]$Var <- paste(COL, " -1")
-  var.list[[paste(COL, " -1")]]$Fixedeff <- df.eff$Fixedeff
-  var.list[[paste(COL, " -1")]]$Equation <- df.eff$Equaiton
-  var.list[[paste(COL, " -1")]]$Value <- df.eff$Value
-  var.list[[paste(COL, " -1")]]$pvalue <- df.eff$`p-value`
-  
+for(COL in Predictor.variables){
+  #We only need the effects parameterization because they are continous variables
   #One set is for the general signifigance and this set is for sigfignace relative to no management
-  lm.test <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df[drought.df$flag.2sig == T,])
+  lm.test <- lme4::glmer(eval(substitute(check.recov ~ j + (1|rcp) + (1|GCM), list(j = as.name(COL)))), family = binomial, data = drought.df[drought.df$flag.2sig == T,])
   sum <- summary(lm.test)
-  df.eff <- as.data.frame(sum$tTable)
+  df.eff <- as.data.frame(sum$coefficients)
   df.eff$Fixedeff <- rownames(df.eff)
-  df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
-  var.list[[paste(COL)]]$Var <- paste(COL)
-  var.list[[paste(COL)]]$Fixedeff <- df.eff$Fixedeff
-  var.list[[paste(COL)]]$Equation <- df.eff$Equaiton
-  var.list[[paste(COL)]]$Value <- df.eff$Value
-  var.list[[paste(COL)]]$pvalue <- df.eff$`p-value`
+  df.eff$Equation <- paste("check.recov", "~", COL, "+ (1|rcp) + (1|GCM)")
+  pred.list[[paste(COL, " -1")]]$Predictor <- COL
+  pred.list[[paste(COL, " -1")]]$Equation <- df.eff$Equation
+  pred.list[[paste(COL, " -1")]]$Fixedeff <- df.eff$Fixedeff
+  pred.list[[paste(COL, " -1")]]$Value <- df.eff$Estimate
+  pred.list[[paste(COL, " -1")]]$pvalue <- df.eff$`Pr(>|z|)`
 }
 
-dat.resilience <- dplyr::bind_rows(var.list)
+dat.recov <- dplyr::bind_rows(pred.list)
 
-write.csv(dat.resilience, "../LME_of_resilience.csv", row.names = F)
-
+write.csv(dat.recov, "../LME_of_pred_recovery.csv", row.names = F)
 
 var.list <- list()
-Recovery.variables <- c("days_of_recovery", #How long it takes to recover
+Recovery.variables <- c("days_of_recovery_str", #How long it takes to recover from start of dry period
+                        "days_of_recovery_end", #How long it takes to recover from end of dry period
                         "agb.recov.diff", #The difference between past 10 years agb and min agb following the end of drought and before recovery
-                        "agb.pcent.recov.diff", #The percentage difference between past 10 years agb and min agb following the end of drought and before recovery
-                        "agb.min.recov", #The min agb following the end of drought and before recovery
-                        "recov.dbh.mean.mean",
-                        "recov.dbh.sd.mean",
-                        "recov.height.mean.mean",
-                        "recov.height.sd.mean",
-                        "recov.density.tree.mean",
-                        "recov.nee.mean",
-                        "recov.soil.moist.surf.mean",
-                        "recov.soil.moist.deep.mean") #The min nee following the lowest point of agb before recovery
+                        "agb.pcent.recov.diff") #The percentage difference between past 10 years agb and min agb following the end of drought and before recovery
+
 for(COL in Recovery.variables){
   #lme regression that can cycle through all of our variables of interest.
+  #Means parameterization
   lm.test <- lme(eval(substitute(j ~ Management-1, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df[drought.df$flag.2sig == T & drought.df$check.recov == T,])
   sum <- summary(lm.test)
   df.eff <- as.data.frame(sum$tTable)
   df.eff$Fixedeff <- rownames(df.eff)
   df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
-  var.list[[paste(COL, " -1")]]$Var <- paste(COL, " -1")
+  var.list[[paste(COL, " -1")]]$Var <- COL
+  var.list[[paste(COL, " -1")]]$Equation <- df.eff$Equation
   var.list[[paste(COL, " -1")]]$Fixedeff <- df.eff$Fixedeff
-  var.list[[paste(COL, " -1")]]$Equation <- df.eff$Equaiton
   var.list[[paste(COL, " -1")]]$Value <- df.eff$Value
   var.list[[paste(COL, " -1")]]$pvalue <- df.eff$`p-value`
   
   #One set is for the general signifigance and this set is for sigfignace relative to no management
+  #Effects parameterization
   lm.test <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df[drought.df$flag.2sig == T & drought.df$check.recov == T,])
   sum <- summary(lm.test)
   df.eff <- as.data.frame(sum$tTable)
   df.eff$Fixedeff <- rownames(df.eff)
   df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
-  var.list[[paste(COL)]]$Var <- paste(COL)
+  var.list[[paste(COL)]]$Var <- COL
+  var.list[[paste(COL)]]$Equation <- df.eff$Equation
   var.list[[paste(COL)]]$Fixedeff <- df.eff$Fixedeff
-  var.list[[paste(COL)]]$Equation <- df.eff$Equaiton
   var.list[[paste(COL)]]$Value <- df.eff$Value
   var.list[[paste(COL)]]$pvalue <- df.eff$`p-value`
 }
@@ -148,6 +146,40 @@ for(COL in Recovery.variables){
 dat.lme <- dplyr::bind_rows(var.list)
 
 write.csv(dat.lme, "../LME_of_recovery.csv", row.names = F)
+
+#For predictor variables such as nee, soil.moisture, and dbh.mean
+pred.list <- list()
+Predictor.variables <- c("prev.drought",
+                         "prev.dry.period",
+                         "delta.temp",
+                         "delta.temp.end",
+                         "past.dbh.mean.mean",
+                          "past.dbh.sd.mean",
+                          "past.height.mean.mean",
+                          "past.height.sd.mean",
+                          "past.density.tree.mean",
+                          "past.nee.mean",
+                          "past.soil.moist.surf.mean",
+                          "past.soil.moist.deep.mean")
+
+for(COL in Predictor.variables){
+  #We only need the effects parameterization because they are continous variables
+  #One set is for the general signifigance and this set is for sigfignace relative to no management
+  lm.test <- lme(eval(substitute(days_of_recovery_end ~ j, list(j = as.name(COL)))), random=list(rcp=~1, GCM=~1), data = drought.df[drought.df$flag.2sig == T & drought.df$check.recov == T,])
+  sum <- summary(lm.test)
+  df.eff <- as.data.frame(sum$tTable)
+  df.eff$Fixedeff <- rownames(df.eff)
+  df.eff$Equation <- paste(as.character(sum$terms)[2], "~", as.character(sum$terms)[3])
+  pred.list[[paste(COL)]]$Predictor <- COL
+  pred.list[[paste(COL)]]$Equation <- df.eff$Equation
+  pred.list[[paste(COL)]]$Fixedeff <- df.eff$Fixedeff
+  pred.list[[paste(COL)]]$Value <- df.eff$Value
+  pred.list[[paste(COL)]]$pvalue <- df.eff$`p-value`
+}
+
+dat.pred <- dplyr::bind_rows(pred.list)
+
+write.csv(dat.pred, "../LME_of_predictors.csv", row.names = F)
 
 drought.df$flag.2sig <- ifelse(drought.df$flag.2sig, "Drought", "Dry period")
 
@@ -182,9 +214,9 @@ summary(sig$recov.Date)
 
 png(file.path('../figures', 'Days_of_recovery_distribution.png'))
 ggplot(sig) + 
-  geom_histogram(aes(x=days_of_recovery, fill = Management, color = Management)) +
+  geom_histogram(aes(x=days_of_recovery_end, fill = Management, color = Management)) +
   ggtitle("Distribtuion of the length of recovery period in days (with mean line)")+
-  geom_vline(aes(xintercept = mean(sig$days_of_recovery, na.rm = T)))
+  geom_vline(aes(xintercept = mean(sig$days_of_recovery_end, na.rm = T)))
 dev.off()
 
 png(file.path('../figures', 'Drought_recovery_over_years.png'))
@@ -281,6 +313,41 @@ ggplot(sig) +
   xlab("Number of preiovus droughts")+
   ylab("mean deep soil moisture for 10 years before drought")
 dev.off()
+
+
+
+
+var.list <- list()
+Resilience.variables <- c("check.recov") #Drop in agb after a dry period
+for(COL in Resilience.variables){
+  #This is what lucien is checking if Management has a signifigant effect on the drop in agb
+  lm.test <- lme4::glmer(eval(substitute(j ~ Management-1 + (1|rcp) + (1|GCM), list(j = as.name(COL)))), family = binomial, data = drought.df[drought.df$flag.2sig == T,])
+  sum <- summary(lm.test)
+  df.eff <- as.data.frame(sum$coefficients)
+  df.eff$Fixedeff <- rownames(df.eff)
+  df.eff$Equation <- paste(COL, "~", "Management - 1 + (1|rcp) + (1|GCM)")
+  var.list[[paste(COL, " -1")]]$Var <- COL
+  var.list[[paste(COL, " -1")]]$Equation <- df.eff$Equation
+  var.list[[paste(COL, " -1")]]$Fixedeff <- df.eff$Fixedeff
+  var.list[[paste(COL, " -1")]]$Value <- df.eff$Estimate
+  var.list[[paste(COL, " -1")]]$pvalue <- df.eff$`Pr(>|z|)`
+  
+  #One set is for the general signifigance and this set is for sigfignace relative to no management
+  lm.test <- lme4::glmer(eval(substitute(j ~ Management + (1|rcp) + (1|GCM), list(j = as.name(COL)))), family = binomial, data = drought.df[drought.df$flag.2sig == T,])
+  sum <- summary(lm.test)
+  df.eff <- as.data.frame(sum$coefficients)
+  df.eff$Fixedeff <- rownames(df.eff)
+  df.eff$Equation <- paste(COL, "~", "Management + (1|rcp) + (1|GCM)")
+  var.list[[paste(COL)]]$Var <- COL
+  var.list[[paste(COL)]]$Equation <- df.eff$Equation
+  var.list[[paste(COL)]]$Fixedeff <- df.eff$Fixedeff
+  var.list[[paste(COL)]]$Value <- df.eff$Estimate
+  var.list[[paste(COL)]]$pvalue <- df.eff$`Pr(>|z|)`
+}
+
+dat.resilience <- dplyr::bind_rows(var.list)
+
+write.csv(dat.resilience, "../LME_of_resilience.csv", row.names = F)
 #--------------------------------------#
 #Linear regression of resilience for dry conditions
 #--------------------------------------#
@@ -322,15 +389,15 @@ anova(sig.2test)
 #Here we do linear regression for time to recovery. Only including sucessful recoveries. 
 #Not sure how to account for failed recovery?
 #-------------------------------------------#
-recov.sig <- sig[!is.na(sig$days_of_recovery),]
+recov.sig <- sig[!is.na(sig$days_of_recovery_end),]
 
 #This is what lucien is checking if Management has a signifigant effect on the drop in agb
-sig.test <- lme(days_of_recovery ~ Management-1, random=list(rcp=~1, GCM=~1), data=recov.sig)
+sig.test <- lme(days_of_recovery_end ~ Management-1, random=list(rcp=~1, GCM=~1), data=recov.sig)
 summary(sig.test)
 anova(sig.test)
 
 #This is what lucien is checking if Management has a signifigant effect compared to the None condition
-sig.2test <- lme(days_of_recovery ~ Management, random=list(rcp=~1, GCM=~1), data=recov.sig)
+sig.2test <- lme(days_of_recovery_end ~ Management, random=list(rcp=~1, GCM=~1), data=recov.sig)
 summary(sig.2test)
 anova(sig.2test)
 
