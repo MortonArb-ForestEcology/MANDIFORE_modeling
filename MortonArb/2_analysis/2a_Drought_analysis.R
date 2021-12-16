@@ -17,25 +17,20 @@ library(ggplot2)
 
 runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRUE)
 
-
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
 setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis/")
 dat.end <- read.csv("../Drought_Periods_End.csv")
 
+#Semi-arbitrary cut off. Will discuss in the future.
+#dat.end <- dat.end[dat.end$days_since_rain >= 14,]
+
 #Removing any droughts that occur before management separates the scenarios
 dat.end <- dat.end[dat.end$Date >= as.Date("2025-01-01"),]
 
-#Semi-arbitrary cut off. Will discuss in the future.
-dat.end <- dat.end[dat.end$days_since_rain >= 14,]
 #artifically adding the 1st as the day for the Date objects since you can't make a date object with just month and year
 #This is used for plotting not for direct date comparision
 runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep = "-"))
-
-#Good.models <- c("ACCESS1-0", "ACCESS1-3", "bcc-csm1-1", "bcc-csm1-1-m", "HadGEM2-CC", "HadGEM2-ES", "MIROC-ESM", "MIROC-ESM-CHEM")
-#runs.all <- runs.all[runs.all$GCM %in% Good.models, ]
-#dat.end <- dat.end[dat.end$model %in% Good.models, ]
-
 
 #Calculating the recovery period and the resilience over that period.
 #Calculating the temp at the start of the model run
@@ -60,7 +55,7 @@ for(MOD in unique(runs.all$GCM)){
           
           #Subsetting the ED output starting a year before drought
           df <- runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & 
-                           runs.all$Date >= (STR-lubridate::years(10)), ]
+                           runs.all$Date >= as.Date((as.POSIXct(STR)-years(10))), ]
           
           #Finding the mean for the year leading up to drought
           recov.df <- aggregate(agb~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
