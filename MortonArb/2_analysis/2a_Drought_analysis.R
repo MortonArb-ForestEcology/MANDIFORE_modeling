@@ -1,10 +1,10 @@
 #----------------------------------------------------------------------------------------------------------------------#
 # Script by : Lucien Fitzpatrick
 # Project: Mandifore Morton arb casee study
-# Purpose: This script crates plots and tables exploring drought periods impact on variables of interest
+# Purpose: This script crates the dataframe containing forests responses to dry periods
 # Inputs: ED2 Morton Arb site data
 #         Drought and preicpitaiton dataframes from 1a_Drought_Prep
-# Outputs: Plots mmostly exploring agb, basal tree area, and density
+# Outputs: Dataframe containing resistance and recovery information
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
 path.read <- "C:/Users/lucie/Documents/MANDIFORE/"
@@ -13,30 +13,29 @@ setwd(path.read)
 library(readbulk)
 library(dplyr)
 library(lubridate)
+library(ggplot2)
 
 runs.all <- read_bulk(directory = "output", extension = "Site.csv", header = TRUE)
-
 
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
 setwd("C:/Users/lucie/Documents/GitHub/MANDIFORE_modeling/MortonArb/2_analysis/")
-dat.precip <- read.csv("../Drought_Weather_Daily.csv")
-
 dat.end <- read.csv("../Drought_Periods_End.csv")
 
 #Semi-arbitrary cut off. Will discuss in the future.
-dat.end <- dat.end[dat.end$days_since_rain >= 20,]
+#dat.end <- dat.end[dat.end$days_since_rain >= 14,]
+
+#Removing any droughts that occur before management separates the scenarios
+dat.end <- dat.end[dat.end$Date >= as.Date("2025-01-01"),]
+
 #artifically adding the 1st as the day for the Date objects since you can't make a date object with just month and year
 #This is used for plotting not for direct date comparision
 runs.all$Date <- lubridate::ymd(paste(runs.all$year, runs.all$month, "01", sep = "-"))
 
-#Good.models <- c("ACCESS1-0", "ACCESS1-3", "bcc-csm1-1", "bcc-csm1-1-m", "HadGEM2-CC", "HadGEM2-ES", "MIROC-ESM", "MIROC-ESM-CHEM")
-#runs.all <- runs.all[runs.all$GCM %in% Good.models, ]
-#dat.end <- dat.end[dat.end$model %in% Good.models, ]
-
-
 #Calculating the recovery period and the resilience over that period.
-#ED.interest <- c("dbh.mean", "dbh.sd", "height.mean", "height.sd", "nee", "agb", "nee", "soil.moist.surf", "soil.moist.deep")
+#Calculating the temp at the start of the model run
+#Structural variables of interest
+ED.interest <- c("dbh.mean", "dbh.sd", "height.mean", "height.sd", "density.tree", "nee", "soil.moist.surf", "soil.moist.deep")
 Dates.list <- list()
 for(MOD in unique(runs.all$GCM)){
   for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
@@ -50,22 +49,22 @@ for(MOD in unique(runs.all$GCM)){
         END <- as.Date(temp.end[i, "Date"])
         STR <- END - temp.end[i, "days_since_rain"]
         Season <- temp.end[i, "season"]
+
+        
         if(length(STR) > 0){
           
           #Subsetting the ED output starting a year before drought
           df <- runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & 
-                           runs.all$Date >= (STR-lubridate::years(10)), ]
+                           runs.all$Date >= as.Date((as.POSIXct(STR)-years(10))), ]
           
           #Finding the mean for the year leading up to drought
           recov.df <- aggregate(agb~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
                                 FUN = mean)
           
-          colnames(recov.df) <- c("Management", "first.mean")
+          colnames(recov.df) <- c("Management", "past.agb.mean")
           
-          recov.df$sd <- aggregate(agb~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
+          recov.df$past.agb.sd <- aggregate(agb~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
                                 FUN = sd)[,c("agb")]
-          
-          
           
           recov.df$D.start <- STR
           recov.df$D.end <- END
@@ -77,347 +76,174 @@ for(MOD in unique(runs.all$GCM)){
                                 df$Date >= recov.df$D.end & df$Date <= recov.df$D.end %m+% period("15 months"), "agb"], na.rm=T) #Pulling the lowet point in 15 months
 
             
-            resil.month <- df[df$Management == recov.df[j, "Management"] & #Matching management
-                                df$Date >= recov.df$D.end & df$Date <= recov.df$D.end %m+% period("15 months") & df$agb == dip,"Date"]
+            month.agb.min <- df[df$Management == recov.df[j, "Management"] & #Matching management
+                                  df$Date >= recov.df$D.end & df$Date <= recov.df$D.end %m+% period("15 months") & df$agb == dip,"Date"]
             
-            recov.df[j, "flag.2sig"] <- ifelse(dip < recov.df[j, "first.mean"] -2*recov.df[j, "sd"] ,T,F)
+            OG.temp <- mean(runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & runs.all$Management == recov.df[j, "Management"] &
+                                       runs.all$Date > min(runs.all$Date) & runs.all$Date < (min(runs.all$Date)%m+% years(10)), "tair"])
             
-            recov.df[j, "flag.3sig"] <- ifelse(dip < recov.df[j, "first.mean"] -3*recov.df[j, "sd"] ,T,F)
             
-            recov.df[j, "flag.4sig"] <- ifelse(dip < recov.df[j, "first.mean"] -4*recov.df[j, "sd"],T,F)
+            New.temp <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                  df$Date >= recov.df$D.end %m-% years(10) & df$Date <= recov.df$D.end, "tair"], na.rm=T) #Pulling the mean temp for past 10 years
+            
+            End.temp <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                  df$Date >= max(df$Date) %m-% years(10) & df$Date <= max(df$Date), "tair"], na.rm=T) #Pulling the mean temp for last 10 years
+            
+            
+            recov.df[j, "flag.2sig"] <- ifelse(dip < recov.df[j, "past.agb.mean"] -2*recov.df[j, "past.agb.sd"] ,T,F)
+            
+            recov.df[j, "flag.3sig"] <- ifelse(dip < recov.df[j, "past.agb.mean"] -3*recov.df[j, "past.agb.sd"] ,T,F)
+            
+            recov.df[j, "flag.4sig"] <- ifelse(dip < recov.df[j, "past.agb.mean"] -4*recov.df[j, "past.agb.sd"],T,F)
+            
+            recov.df[j, "agb.min.local"] <- dip
+            
+            recov.df[j, "month.agb.min.local"] <- month.agb.min
+            
+            recov.df[j, "delta.temp"] <- New.temp - OG.temp
+            
+            recov.df[j, "delta.temp.end"] <- End.temp - OG.temp
+            
             
               if(recov.df[j, "flag.2sig"] == T){
                 recov.df[j, "recov.Date"] <- as.Date(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                  df$Date > resil.month & #Making sure we check after drought has occured
-                                                  df$agb >= recov.df[j, "first.mean"] -2*recov.df[j, "sd"], "Date"][1])  #Choosing the first date above the original
+                                                  df$Date > month.agb.min & #Making sure we check after drought has occured
+                                                  df$agb >= recov.df[j, "past.agb.mean"] -2*recov.df[j, "past.agb.sd"], "Date"][1])  #Choosing the first date above the original
                 
                 #If it never recovers then we look at the lowest point from the drought to the end of the model
                 if(is.na(recov.df[j, "recov.Date"])){
-                  recov.df[j, "resil.min"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                       df$Date >= resil.month & df$Date <= max(df$Date), "agb"])
+                  recov.df[j, "agb.min.ultimate"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                       df$Date >= recov.df$D.end & df$Date <= max(df$Date), "agb"])
                   
-                  recov.df[j, "resil.month"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                     df$Date >= resil.month & df$Date <= max(df$Date) & df$agb == recov.df[j, "resil.min"],"Date"]
-                } else { #If it does recoer we look at the lowest point before recovery
-                recov.df[j, "resil.min"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                        df$Date >= resil.month & df$Date < recov.df[j, "recov.Date"], "agb"])
-                
-                recov.df[j, "resil.month"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
-                                                  df$Date >= resil.month & df$Date < recov.df[j, "recov.Date"] & df$agb == recov.df[j, "resil.min"],"Date"]
+                  recov.df[j, "month.agb.min.ultimate"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                     df$Date >= recov.df$D.end & df$Date <= max(df$Date) & df$agb == recov.df[j, "agb.min.ultimate"],"Date"]
+                  
+                  recov.df[j, "agb.min.recov"] <- NA
+                  
+                  recov.df[j, "month.agb.min.recov"] <- as.Date(NA)
+                  
+                  #I've removed these for now becuase they don't have a good point of comparision with the scenarios where recovery does happen
+                  #Ive kept one as a reference point in case I bring this back
+                  
+                  #recov.df[j, "recov.soil.moist.mean"] <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
+                  #                                             df$Date >= month.agb.min & df$Date <= max(df$Date), "soil.moist.deep"])
+
+                  
+                } else if(is.na(recov.df[j, "recov.Date"])==F){ #If it does recoer we look at the lowest point before recovery
+                  
+                  #This is to make looper over other parts easier
+                  recov.df[j, "month.agb.min.recov"] <- as.Date(NA)
+                  
+                  
+                  #Ultimate means the lowest point from the end of this drought to the end of the model run
+                  recov.df[j, "agb.min.ultimate"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                                df$Date >= recov.df$D.end & df$Date <= max(df$Date), "agb"])
+                  
+                  recov.df[j, "month.agb.min.ultimate"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                              df$Date >= recov.df$D.end & df$Date <= max(df$Date) & df$agb == recov.df[j, "agb.min.ultimate"],"Date"]
+                  
+                  #Recov means the lowest point before recovery begins
+                  recov.df[j, "agb.min.recov"] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                          df$Date >= recov.df$D.end & df$Date < recov.df[j, "recov.Date"], "agb"])
+                  
+                  recov.df[j, "month.agb.min.recov"] <- df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                                df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"] & df$agb == recov.df[j, "agb.min.recov"],"Date"]
+                  
+                  
+                  #Structural metrics to compare to the past. Can see how much they hae changed since the drought ended
+                  
+                  for(VAR in ED.interest){
+                    recov.df[j, paste("recov", VAR ,"mean", sep = ".")] <- mean(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                                           df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], VAR])
+                    
+                    recov.df[j, paste("recov", VAR ,"max", sep = ".")] <- max(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                                         df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], VAR])
+                    
+                    recov.df[j, paste("recov", VAR ,"min", sep = ".")] <- min(df[df$Management == recov.df[j, "Management"] & #Matching management
+                                                                         df$Date >= recov.df$D.end & df$Date <= recov.df[j, "recov.Date"], VAR])
+                  }
+
                 }
               } else { #Flagging situations were there isn't a signifgant effect of drought
                 recov.df[j, "recov.Date"] <- as.Date(NA)
-                recov.df[j, "resil.month"] <- resil.month
-                recov.df[j, "resil.min"] <- dip
+                recov.df[j, "month.agb.min.recov"] <- as.Date(NA)
+                recov.df[j, "agb.min.ultimate"] <- NA
+                recov.df[j, "agb.min.recov"] <- NA
             }
           }
-          #Flagging situation where it never recovers to not have a resilience. Not sure how to handle going forward
-          #recov.df$resil.min <- ifelse(is.na(recov.df$recov.Date), NA, recov.df$resil.min)
+          #Counting how many days it takes for recovery after the drought ends
+          recov.df$days_of_descent <- difftime(recov.df$month.agb.min.recov, recov.df$D.end, units = "days")
+          recov.df$days_of_ascent <- difftime(recov.df$recov.Date, recov.df$month.agb.min.recov, units = "days")
+          recov.df$days_of_recovery_str <- difftime(recov.df$recov.Date, recov.df$D.start, units = "days")
+          recov.df$days_of_recovery_end <- difftime(recov.df$recov.Date, recov.df$D.end, units = "days")
+
+          #Calculating the difference and change over the first 15 months
+          recov.df$agb.local.diff <-  recov.df$agb.min.local - recov.df$past.agb.mean
           
-          #Counting how many days it takes for recovery after the drought window (so 1 year after drought ends)
-          recov.df$days_of_recovery <- difftime(recov.df$recov.Date, recov.df$resil.month, units = "days")
+          recov.df$agb.pcent.local.diff <- (recov.df$agb.min.local/recov.df$past.agb.mean - 1) * 100
           
-          #Counting 
-          recov.df$resil.diff <-  recov.df$resil.min - recov.df$first.mean
+          #Calculating the difference and change over the entire drought months
+          recov.df$agb.ultimate.diff <-  recov.df$agb.min.ultimate - recov.df$past.agb.mean
           
+          recov.df$agb.pcent.ultimate.diff <- (recov.df$agb.min.ultimate/recov.df$past.agb.mean - 1) * 100
           
+          #Calculating the difference and change over the recovery period
+          recov.df$agb.recov.diff <-  recov.df$agb.min.recov - recov.df$past.agb.mean
+          
+          recov.df$agb.pcent.recov.diff <- (recov.df$agb.min.recov/recov.df$past.agb.mean - 1) * 100
+        
+          
+          #Calculating 10 year averages of structural response variables
+          for(VAR in ED.interest){
+          recov.df[, paste("past", VAR ,"mean", sep = ".")] <- aggregate(eval(as.symbol(VAR))~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
+                                                                FUN = mean)[,c("eval(as.symbol(VAR))")]
+          
+          recov.df[, paste("past", VAR ,"max", sep = ".")] <- aggregate(eval(as.symbol(VAR))~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
+                                                                FUN = max)[,c("eval(as.symbol(VAR))")]
+          
+          recov.df[, paste("past", VAR ,"min", sep = ".")] <- aggregate(eval(as.symbol(VAR))~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(10)) ,],
+                                                                FUN = min)[,c("eval(as.symbol(VAR))")]
+          
+          }
+
           #In between the end of the drought (rain begins again) and the recovery date what is the local minimum
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]] <- recov.df
+          Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$days_since_rain <- temp.end[i, "days_since_rain"]
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$GCM <- as.factor(MOD)
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$rcp <- as.factor(RCP)
-          Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$Drought.period <- paste0(STR," to ", END, sep="")
+          Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$Dry.period <- paste0(STR," to ", END, sep="")
           Dates.list[[paste(MOD, RCP, STR, END, sep="-")]]$season <- Season
           }
       }
     }
   }
 }
-drought.df <- dplyr::bind_rows(Dates.list)
-drought.df$Management <- factor(drought.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
+#Despite it's name this dataframe contains all the dry periods. It is an ecological drought if theres a signfigant drop
+drought.temp <- dplyr::bind_rows(Dates.list)
+drought.temp$Management <- factor(drought.temp$Management, levels = c("None", "Gap", "Shelter", "Under"))
+drought.temp$year <- year(drought.temp$D.end)
+drought.temp$check.recov <- ifelse(is.na(drought.temp$recov.Date), F, T)
 
-
-sig <- drought.df[drought.df$flag.2sig == T,]
-
-table(sig$Management)
-
-#number of unique drought with a 4xsignificant drought dip
-length(unique(sig$Drought.period))
-
-#--------------------------------------#
-#Linear regression of resilience
-#--------------------------------------#
-library(nlme)
-drought.df$Management <- factor(drought.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
-
-#This is what lucien is checking if Management has a signifigant effect on the drop in agb
-lm.test <- lme(resil.diff ~ Management-1, random=list(rcp=~1, GCM=~1), data=drought.df)
-summary(lm.test)
-anova(lm.test)
-
-#This is what lucien is checking if Management has a signifigant effect compared to the None condition
-lm.2test <- lme(resil.diff ~ Management, random=list(rcp=~1, GCM=~1), data=drought.df)
-summary(lm.2test)
-anova(lm.2test)
-
-#--------------------------------------------#
-#Here we only look at signifignt results
-#--------------------------------------------#
-#This is what lucien is checking if Management has a signifigant effect on the drop in agb
-sig.test <- lme(resil.diff ~ Management-1, random=list(rcp=~1, GCM=~1), data=sig)
-summary(sig.test)
-anova(sig.test)
-
-#This is what lucien is checking if Management has a signifigant effect compared to the None condition
-sig.2test <- lme(resil.diff ~ Management, random=list(rcp=~1, GCM=~1), data=sig)
-summary(sig.2test)
-anova(sig.2test)
-
-#--------------------------------------------#
-#Here we do linear regression for time to recovery. Only including sucessful recoveries. 
-#Not sure how to account for failed recovery?
-#-------------------------------------------#
-recov.sig <- sig[!is.na(sig$days_of_recovery),]
-
-#This is what lucien is checking if Management has a signifigant effect on the drop in agb
-sig.test <- lme(days_of_recovery ~ Management-1, random=list(rcp=~1, GCM=~1), data=recov.sig)
-summary(sig.test)
-anova(sig.test)
-
-#This is what lucien is checking if Management has a signifigant effect compared to the None condition
-sig.2test <- lme(days_of_recovery ~ Management, random=list(rcp=~1, GCM=~1), data=recov.sig)
-summary(sig.2test)
-anova(sig.2test)
-
-#This section creates a graphic that highlights drought windows
-path.out = "../met.v3"
-pdf(file.path(path.out, "CMIP5_AGB_Drought_window.pdf"), height=11, width=8.5)
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    temp.end <- dat.end[dat.end$model == MOD & dat.end$scenario == RCP, ]
-    if(nrow(temp.end) > 0){
-      for(i in 1:nrow(temp.end)){
-        END <- as.Date(temp.end[i, "Date"])
-        STR <- END - temp.end[i, "days_since_rain"]
-        if(length(STR) > 0){
-          df.var <- runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & 
-                               runs.all$Date >= (STR-lubridate::years(1)) & runs.all$Date <= (END + lubridate::years(2)), ]
-          
-          print(
-            ggplot() +
-              ggtitle(paste(MOD, RCP, (STR-lubridate::years(1)), (END + lubridate::years(5)))) +
-              geom_line(data=df.var, aes(x=Date, y=agb, color = Management))+
-              geom_vline(xintercept = as.Date("2070-07-01"), linetype = 4) +
-              geom_rect(aes(xmin = STR, xmax = END, ymin = -Inf, ymax = Inf), alpha = 0.4)
-          )
+drought.df <- data.frame()
+#Making a loop to count previous droughts and dry periods. I'm not checking for overlap of periods just total previous occurences
+for(MOD in unique(drought.temp$GCM)){
+  for(RCP in unique(drought.temp[drought.temp$GCM == MOD, "rcp"])){
+    for(MNG in unique(drought.temp[drought.temp$GCM == MOD & drought.temp$rcp == RCP, "Management"])){
+      temp <- drought.temp[drought.temp$GCM == MOD & drought.temp$rcp == RCP & drought.temp$Management == MNG, ]
+      temp$prev.dry.period <- (seq.int(nrow(temp))-1)
+      drought <- -1
+      for(i in 1:nrow(temp)){
+        #Using 2 sigs but flagging in case we change in the future
+        if(temp[i, "flag.2sig"]){
+          drought <- drought + 1
         }
+          temp[i, "prev.drought"] <- drought
       }
+      drought.df <- rbind(drought.df, temp)  
     }
   }
 }
-dev.off()
+#Removing the negative ones that occur if the first instance isn't a signifigant drought
+drought.df$prev.drought <- ifelse(drought.df$prev.drought == -1, 0, drought.df$prev.drought)
 
-
-#This is an older section that is used for anova's on the difference between management groups.
-#OLD for now
-#ED.interest <- c("dbh.mean", "dbh.sd", "height.mean", "height.sd", "nee", "agb", "nee", "soil.moist.surf", "soil.moist.deep")
-Dates.lme <- list()
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    temp.end <- dat.end[dat.end$model == MOD & dat.end$scenario == RCP, ]
-    if(nrow(temp.end) > 0){
-      for(i in 1:nrow(temp.end)){
-        END <- as.Date(temp.end[i, "Date"])
-        STR <- END - temp.end[i, "days_since_rain"]
-        if(length(STR) > 0){
-          df <- runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP & 
-                           runs.all$Date >= (STR-lubridate::years(1)) & runs.all$Date <= (END + lubridate::years(4)), ]
-          
-          temp <- aggregate(soil.moist.deep~Management, data = df[df$Date >= min(df$Date) & df$Date <= (min(df$Date) %m+% years(1)) ,],
-                            FUN = mean)
-          
-          colnames(temp) <- c("Management", "first.mean")
-          
-          temp$last.mean <- aggregate(soil.moist.deep~Management, data = df[df$Date >= (max(df$Date) %m-% years(1)) & df$Date <= max(df$Date)  ,],
-                                      FUN = mean)[,c("soil.moist.deep")]
-          
-          temp$diff <-  temp$last.mean - temp$first.mean
-          Dates.lme[[paste(MOD, RCP, STR, END, sep="-")]] <- temp
-          Dates.lme[[paste(MOD, RCP, STR, END, sep="-")]]$GCM <- as.factor(MOD)
-          Dates.lme[[paste(MOD, RCP, STR, END, sep="-")]]$rcp <- as.factor(RCP)
-          Dates.lme[[paste(MOD, RCP, STR, END, sep="-")]]$Start <- as.factor((STR-lubridate::years(1)))
-          Dates.lme[[paste(MOD, RCP, STR, END, sep="-")]]$End <- as.factor((END + lubridate::years(4)))
-          Dates.lme[[paste(MOD, RCP, STR, END, sep="-")]]$Drought.period <- paste0(STR," to ", END, sep="")
-        }
-      }
-    }
-  }
-}
-drought.lme <- dplyr::bind_rows(Dates.lme)
-
-drought.lme$Management <- factor(drought.lme$Management, levels = c("None", "Gap", "Shelter", "Under"))
-lm.test <- lme(diff ~ Management-1, random=list(rcp=~1, GCM=~1), data=drought.lme)
-hold <- anova(lm.test)
-hold
-
-summary <- summary(lm.test)
-df.eff <- as.data.frame(summary$tTable)
-
-#Creating a visual that looks at what is happeninguring the drought periods
-
-
-
-
-
-#--------------------------------------------------------#
-#Experimenting with identifying drought based on avaerage
-#--------------------------------------------------------#
-dat.sum <- aggregate(mean~month+year+model+scenario, dat.precip, FUN = sum)
-
-dat.merge <- runs.all[, c("month", "year", "GCM", "rcp", "precipf", "Management")]
-
-dat.compare <- merge(dat.sum, dat.merge, by.x = c("month", "year", "model", "scenario"), by.y= c("month", "year", "GCM", "rcp"))
-
-dat.sum$days_no_rain <- aggregate(Drought_flag~month+year+model+scenario, dat.precip, FUN = sum)[,c("Drought_flag")]
-
-#dat.sum$Date <- lubridate::ymd(paste(dat.sum$year, dat.sum$month, "15", sep = "-"))
-
-avg.month <- aggregate(mean~month, dat.sum, mean)
-avg.month$sd <- aggregate(mean~month,dat.sum,sd)[,c("mean")]
-
-dat.sum$flag <- ifelse(dat.sum$mean < 9.198171e-06, T, F)
-
-dat.end <- dat.sum[dat.sum$flag == T,]
-
-dat.end$Date <- lubridate::ymd(paste(dat.end$year, dat.end$month, "15", sep = "-"))
-
-#Chicago average per month
-precip.chi <- data.frame(c(1:12), c(1.75, 1.63, 2.65, 3.68, 3.38, 3.63, 3.51, 4.62, 3.27, 2.71, 3.01, 2.43))
-colnames(precip.chi) <- c("month", "precip")
-#inches to mm
-precip.chi$precip <- precip.chi$precip * 25.4
-
-precip.chi$sd <- aggregate(precipf~month, runs.all, sd)[, c("precipf")]
-
-
-for(Month in unique(runs.all$month)){
-  avg <- precip.chi[precip.chi$month == Month, "precip"]
-  runs.all[runs.all$month == Month, "d_flag"] <- 
-    ifelse(runs.all[runs.all$month == Month, "precipf"] < 
-             avg/8, T, F)
-}
-
-dat.end <- runs.all[runs.all$d_flag == T,]
-
-dat.end$Date <- lubridate::ymd(paste(dat.end$year, dat.end$month, "15", sep = "-"))
-
-
-#Where the Exploratory figures begin
-
-library(ggplot2)
-path.out = "../met.v3"
-pdf(file.path(path.out, "CMIP5_AGB_Drought_monthtest.pdf"), height=11, width=8.5)
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    temp.end <- dat.end[dat.end$GCM == MOD & dat.end$rcp == RCP, ]
-    Enddates <- as.Date(temp.end[, "Date"])
-    if(length(Enddates) > 0){
-      print(
-        ggplot() +
-          ggtitle(paste(MOD, RCP)) +
-          geom_line(data=runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP,], aes(x=Date, y=agb, color = Management))+
-          geom_vline(xintercept = Enddates, linetype = 4) 
-        #geom_rect(aes(xmin = Strdates, xmax = Enddates, ymin = -Inf, ymax = Inf, fill = letters[1:4]), alpha = 0.4)
-      )
-    }
-  }
-}
-dev.off()
-
-
-library(ggplot2)
-path.out = "../met.v3"
-pdf(file.path(path.out, "CMIP5_AGB_Drought.pdf"), height=11, width=8.5)
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    temp.end <- dat.end[dat.end$model == MOD & dat.end$scenario == RCP, ]
-    Enddates <- as.Date(temp.end[, "Date"])
-    Strdates <- as.Date(temp.end$Date) - temp.end$days_since_rain
-    if(length(Strdates) > 0){
-    print(
-      ggplot() +
-        ggtitle(paste(MOD, RCP)) +
-        geom_line(data=runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP,], aes(x=Date, y=agb, color = Management))+
-        #geom_vline(xintercept = Enddates, linetype = 4) +
-        geom_rect(aes(xmin = Strdates, xmax = Enddates, ymin = -Inf, ymax = Inf, fill = letters[1:4]), alpha = 0.4)
-    )
-    }
-  }
-}
-dev.off()
-
-pdf(file.path(path.out, "CMIP5_NEE_Drought.pdf"), height=11, width=8.5)
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    Ddates <- runs.all[runs.all$GCM == MOD & runs.all$rcp == RCP & runs.all$drought_flag == T, "Date"]
-    if(length(Ddates) > 0){
-      print(
-        ggplot(data=runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP,]) +
-          ggtitle(paste(MOD, RCP)) +
-          geom_line(aes(x=Date, y=nee, color = Management))+
-          geom_vline(xintercept = Ddates, linetype = 4)
-      )
-    }
-  }
-}
-dev.off()
-
-
-pdf(file.path(path.out, "CMIP5_density_Drought.pdf"), height=11, width=8.5)
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    Ddates <- runs.all[runs.all$GCM == MOD & runs.all$rcp == RCP & runs.all$drought_flag == T, "Date"]
-    if(length(Ddates) > 0){
-      print(
-        ggplot(data=runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP,]) +
-          ggtitle(paste(MOD, RCP)) +
-          geom_line(aes(x=Date, y=density.tree, color = Management))+
-          geom_vline(xintercept = Ddates, linetype = 4)
-      )
-    }
-  }
-}
-dev.off()
-
-
-pdf(file.path(path.out, "CMIP5_dbh.sd_Drought.pdf"), height=11, width=8.5)
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    Ddates <- runs.all[runs.all$GCM == MOD & runs.all$rcp == RCP & runs.all$drought_flag == T, "Date"]
-    if(length(Ddates) > 0){
-      print(
-        ggplot(data=runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP,]) +
-          ggtitle(paste(MOD, RCP)) +
-          geom_line(aes(x=Date, y=dbh.sd, color = Management))+
-          geom_vline(xintercept = Ddates, linetype = 4)
-      )
-    }
-  }
-}
-dev.off()
-
-
-pdf(file.path(path.out, "CMIP5_soil.moist.deep_Drought.pdf"), height=11, width=8.5)
-for(MOD in unique(runs.all$GCM)){
-  for(RCP in unique(runs.all[runs.all$GCM == MOD, "rcp"])){
-    Ddates <- runs.all[runs.all$GCM == MOD & runs.all$rcp == RCP & runs.all$drought_flag == T, "Date"]
-    if(length(Ddates) > 0){
-      print(
-        ggplot(data=runs.all[runs.all$GCM==MOD & runs.all$rcp == RCP,]) +
-          ggtitle(paste(MOD, RCP)) +
-          geom_line(aes(x=Date, y=soil.moist.deep, color = Management))+
-          geom_vline(xintercept = Ddates, linetype = 4)
-      )
-    }
-  }
-}
-dev.off()
+write.csv(drought.df, "../Resilience_dataframe.csv", row.names = F)

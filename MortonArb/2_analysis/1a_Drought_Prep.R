@@ -28,10 +28,15 @@ dat.precip$Drought_flag <-  ifelse(dat.precip$mean == 0, 1, 0)
 
 write.csv(dat.precip, "../Drought_Weather_Daily.csv", row.names = F)
 
-dat.plot <- dat.precip[dat.precip$days_since_rain > 5 & dat.precip$days_since_rain <75 ,]
+
 library(ggplot2)
-ggplot(dat.plot, aes(days_since_rain))+
-  geom_histogram()
+png(file.path('../figures', 'Days_since_rain.png'))
+ggplot(dat.precip, aes(days_since_rain))+
+  geom_bar( color = "black")+
+  scale_y_log10()+
+  ggtitle("Log transformed days since rain")+
+  geom_vline(xintercept = 14)
+dev.off()
 
 dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 
@@ -39,11 +44,10 @@ dat.precip <- read.csv("../Drought_Weather_Daily.csv")
 #Defining the end of a drought for flagging
 dat.end <- data.frame()
 for(i in 2:nrow(dat.precip)){
-  if(dat.precip[i, "days_since_rain"] == 0 & nchar(dat.precip[i-1, "days_since_rain"]) > 1){
+  if(dat.precip[i, "days_since_rain"] == 0 & dat.precip[i-1,"Drought_flag"] == 1){
     dat.end <- rbind(dat.end, dat.precip[i-1,])
   }
 }
-
 
 dat.end$D.start <- as.Date(dat.end$Date) - dat.end$days_since_rain
 library(lubridate)
