@@ -85,6 +85,7 @@ for(RUNID in runs.raw){
                                        psurf=ncdf4::ncvar_get(fnow, "MMEAN_ATM_PRSS_PY"), # Pa
                                        wind=ncdf4::ncvar_get(fnow, "MMEAN_ATM_VELS_PY"), # m/s
                                        CO2=ncdf4::ncvar_get(fnow, "MMEAN_ATM_CO2_PY"), # umol/mol
+                                       VPD=ncdf4::ncvar_get(fnow, "MMEAN_ATM_VPDEF_PY"), # Pa
                                        
                                        # Forest structure (trees only)
                                        basal.area.tree = sum(ncdf4::ncvar_get(fnow, "BASAL_AREA_PY")[pfts.trees,]), # cm2/m2??
