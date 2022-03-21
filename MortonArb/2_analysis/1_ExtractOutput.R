@@ -1,18 +1,18 @@
 # Comparing size distributions between understory and overstory thin attempts
 library(ggplot2)
 
-path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
+#path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
 path.out <- "extract.v3"
 pfts.grass <- 5
 pfts.trees <- 6:11
 
 if(!dir.exists(path.out)) dir.create(path.out)
 
-dat.base <- "../1_runs/MortonArb_ed_runs.v3/"
+dat.base <- "../../../../crollinson/MANDIFORE_modeling/MortonArb/1_runs/MortonArb_ed_runs.v3/"
 runs.raw <- dir(dat.base, "statCO2")  # This gets a list of model ensemble members for static CO2 only; adding increases in CO2 that will make trees more efficient has been a low priority because ED is unrealistically sensitive
-runs.process <- dir(path.out)
+#runs.process <- dir(path.out)
 
-runs.raw <- runs.raw[!paste(runs.raw, "Site.csv", sep="_") %in% (runs.process)]
+#runs.raw <- runs.raw[!paste(runs.raw, "Site.csv", sep="_") %in% (runs.process)]
 
 yr2sec <- 1/(365*24*60*60)
 dpm <- lubridate::days_in_month(1:12)
@@ -85,6 +85,7 @@ for(RUNID in runs.raw){
                                        psurf=ncdf4::ncvar_get(fnow, "MMEAN_ATM_PRSS_PY"), # Pa
                                        wind=ncdf4::ncvar_get(fnow, "MMEAN_ATM_VELS_PY"), # m/s
                                        CO2=ncdf4::ncvar_get(fnow, "MMEAN_ATM_CO2_PY"), # umol/mol
+                                       VPD=ncdf4::ncvar_get(fnow, "MMEAN_ATM_VPDEF_PY"), # Pa
                                        
                                        # Forest structure (trees only)
                                        basal.area.tree = sum(ncdf4::ncvar_get(fnow, "BASAL_AREA_PY")[pfts.trees,]), # cm2/m2??
