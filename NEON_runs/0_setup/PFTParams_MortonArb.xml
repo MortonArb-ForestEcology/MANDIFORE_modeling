@@ -1,0 +1,25 @@
+<config>
+  <disturbance>
+    <mature_harvest_age>50</mature_harvest_age>
+    <plantation_rotation>30</plantation_rotation>
+  </disturbance>
+  <pft>
+    <num>5</num>
+  </pft>
+  <pft>
+    <num>9</num>
+    <plant_min_temp>223</plant_min_temp>
+    <fire_s_gtht>0.15</fire_s_gtht>
+    <fire_s_ltht>0</fire_s_ltht>
+  </pft>
+  <pft>
+    <num>10</num>
+    <fire_s_gtht>0.75</fire_s_gtht>
+    <fire_s_ltht>0.33</fire_s_ltht>
+  </pft>
+  <pft>
+    <num>11</num>
+    <fire_s_gtht>0.1</fire_s_gtht>
+    <fire_s_ltht>0</fire_s_ltht>
+  </pft>
+</config>
