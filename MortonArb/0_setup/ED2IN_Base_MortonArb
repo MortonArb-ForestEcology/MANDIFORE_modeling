@@ -171,11 +171,11 @@ $ED_NL
    !              0.  Let ED decide the best way of splitting the polygons.  Commonest     !
    !                  option and default.                                                  !
    !              1.  One of the methods to split polygons based on their previous         !
-   !                  work load.  Developpers only.                                        !
+   !                  work load.  Developers only.                                        !
    !              2.  Try to load an equal number of SITES per node.  Useful for when      !
    !                  total number of polygon is the same as the total number of cores.    !
    !              3.  Another method to split polygons based on their previous work load.  !
-   !                  Developpers only.                                                    !
+   !                  Developers only.                                                    !
    !---------------------------------------------------------------------------------------!
    NL%LOADMETH  = 0
    !---------------------------------------------------------------------------------------!

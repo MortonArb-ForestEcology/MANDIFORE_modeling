@@ -64,8 +64,11 @@ summary(droplevels(tree.2018$Spp.Name))
 # ------------------------------
 unique(tree.2018$Spp.Name)
 
+# Early Succesional
 tde.09 <- c("Gleditsia triacanthos", "Gymnocladus dioicus", "Populus alba", "Populus deltoides", "Populus grandidentata", "Prunus serotina", "Robinia pseudoacacia", "Salix sp.", "Rhamnus cathartica", "Phellodendron amurense", "Lonicera maackii", "Cercis canadensis")
+# Mid Successional
 tdm.10 <- c("Carya cordiformis", "Carya ovata", "Celtis occidentalis", "Crataegus sp.", "Fraxinus americana", "Fraxinus pennsylvanica", "Fraxinus quadrangulata", "Fraxinus sp.", "Juglans nigra", "Morus alba", "Ostrya virginiana", "Quercus alba", "Quercus ellipsoidalis", "Quercus macrocarpa", "Quercus palustris", "Quercus rubra", "Ulmus americana", "Ulmus pumila", "Ulmus rubra")
+# Late Successional
 tdl.11 <- c("Acer negundo", "Acer platanoides", "Acer saccharinum", "Acer saccharum", "Aesculus sp.", "Tilia americana")
 
 tree.2018$PFT <- as.factor(ifelse(tree.2018$Spp.Name %in% tde.09, "9", ifelse(tree.2018$Spp.Name %in% tdm.10, "10", ifelse(tree.2018$Spp.Name %in% tdl.11, "11", NA))))
