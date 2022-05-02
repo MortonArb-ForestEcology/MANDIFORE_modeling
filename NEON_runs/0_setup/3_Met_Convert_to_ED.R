@@ -14,10 +14,10 @@ source("pecan_met_conversion/met2model.ED2.R")
 
 
 
-SITE=site.name= "MortonArb"
-vers=".v3"
-site.lat = 41.82
-site.lon = -88.04
+vers=".v1"
+site.name= "BART"
+site.lat = 44.063889
+site.lon = -71.287375
 
 met.base=file.path("/mnt/data/crollinson/MANDIFORE_modeling/MortonArb", paste0("met_ed", vers))
 in.base=file.path("..", paste0("met_raw", vers), "subdaily_tdm", SITE)

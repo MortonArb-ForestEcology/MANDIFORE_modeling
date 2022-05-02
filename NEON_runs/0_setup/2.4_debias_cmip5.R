@@ -43,10 +43,10 @@ library(lubridate)
 path.pecan <- "~/Desktop/Research/pecan"
 
 # Defining a site name -- this can go into a function later
-vers=".v3"
-site.name= "MortonArb"
-site.lat = 41.82
-site.lon = -88.04
+vers=".v1"
+site.name= "BART"
+site.lat = 44.063889
+site.lon = -71.287375
 
 ens=1
 n.ens=1

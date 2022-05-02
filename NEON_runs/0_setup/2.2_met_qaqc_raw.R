@@ -1,10 +1,13 @@
 # Plot the raw model outputs for assessment
 
-path.out = "../met_raw.v3"
 
-site.name= "MortonArb"
-site.lat = 41.82
-site.lon = -88.04
+site.name= "BART"
+site.lat = 44.063889
+site.lon = -71.287375
+
+path.out = "../met_raw.v1"
+path.qaqc = file.path(path.out, "met_raw_qaqc", site.name)
+dir.create(path.qaqc, recursive=T)
 
 # Get a list of everything we have to work with
 dir.mods <- file.path(path.out, "daily", site.name)
@@ -120,7 +123,7 @@ yrs.bad <- yrs.bad[order(yrs.bad$model, yrs.bad$scenario, yrs.bad$var),]
 yrs.bad
 yrs.bad[yrs.bad$scenario=="rcp45",]
 
-write.csv(yrs.bad, "../met_problems.csv", row.names=F)
+write.csv(yrs.bad, file.path(path.qaqc, "met_problems.csv"), row.names=F)
 
 library(ggplot2)
 ggplot(data=all.yr[,]) +
@@ -134,9 +137,7 @@ ggplot(data=all.day) +
   geom_line(aes(x=yday, y=mean, color=model))
 
 
-if(!dir.exists(file.path(path.out, "met_raw_qaqc"))) dir.create(file.path(path.out, "met_raw_qaqc"))
-
-pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_year_byModel.pdf"), height=11, width=8.5)
+pdf(file.path(path.qaqc, "CMIP5_raw_year_byModel.pdf"), height=11, width=8.5)
 for(MOD in mods.raw){
   print(
   ggplot(data=all.yr[all.yr$model==MOD,]) +
@@ -150,7 +151,7 @@ for(MOD in mods.raw){
 dev.off()
 
 
-pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_day_byModel.pdf"), height=11, width=8.5)
+pdf(file.path(path.qaqc, "CMIP5_raw_day_byModel.pdf"), height=11, width=8.5)
 for(MOD in mods.raw){
   print(
     ggplot(data=all.day[all.day$model==MOD,]) +
@@ -164,7 +165,7 @@ for(MOD in mods.raw){
 dev.off()
 
 
-pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_year_byVar.pdf"), height=11, width=8.5)
+pdf(file.path(path.qaqc, "CMIP5_raw_year_byVar.pdf"), height=11, width=8.5)
 for(VAR in vars.all){
   print(
     ggplot(data=all.yr[all.yr$var==VAR,]) +
@@ -177,7 +178,7 @@ for(VAR in vars.all){
 }
 dev.off()
 
-pdf(file.path(path.out, "met_raw_qaqc", "CMIP5_raw_day_byVar.pdf"), height=11, width=8.5)
+pdf(file.path(path.qaqc, "CMIP5_raw_day_byVar.pdf"), height=11, width=8.5)
 for(VAR in vars.all){
   print(
     ggplot(data=all.day[all.day$var==VAR,]) +

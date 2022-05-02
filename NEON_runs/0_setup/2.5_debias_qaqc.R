@@ -2,10 +2,10 @@
 # Plot the raw model outputs for assessment
 
 
-site.name= "MortonArb"
-vers=".v3"
-site.lat = 41.82
-site.lon = -88.04
+vers=".v1"
+site.name= "BART"
+site.lat = 44.063889
+site.lon = -71.287375
 
 path.out = file.path("..",paste0("met_raw", vers))
 
