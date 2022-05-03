@@ -40,7 +40,7 @@ library(lubridate)
 # setwd(wd.base)
 
 # Setting some important file paths
-path.pecan <- "~/Desktop/Research/pecan"
+# path.pecan <- "~/Desktop/Research/pecan"
 
 # Defining a site name -- this can go into a function later
 vers=".v1"
@@ -68,10 +68,10 @@ if(!dir.exists(out.base)) dir.create(out.base, recursive=T)
 # Run a loop to do all of the downscaling steps for each GCM and put in 1 place
 # -----------------------------------
 # Source the functions we need
-source(file.path(path.pecan, "modules/data.atmosphere/R", "align_met.R"))
-source(file.path(path.pecan, "modules/data.atmosphere/R", "debias_met_regression.R"))
-
-
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "align_met.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "debias_met_regression.R"))
+source("pecan_met_utils/align_met.R")
+source("pecan_met_utils/debias_met_regression.R")
 
 # --------------------------
 # 1. Debias 
@@ -88,6 +88,8 @@ for(GCM in GCM.list){
   ens.ID=GCM
   
   for(SCEN in scenarios){
+    print(paste(GCM, "-", SCEN, sep=" "))
+    
     source.path <- file.path(raw.base, GCM, SCEN)
     
     # We're now pulling an ensemble because we've set up the file paths and copied LDAS over 
@@ -110,7 +112,7 @@ for(GCM in GCM.list){
                           yrs.save=NULL, ens.name=paste(ens.ID, SCEN, sep="_"), ens.mems=ens.mems, lat.in=site.lat, lon.in=site.lon,
                           save.diagnostics=TRUE, path.diagnostics=file.path(out.base, "bias_correct_qaqc"), 
                           force.sanity=TRUE, sanity.tries=25, sanity.sd=6,
-                          parallel = FALSE, n.cores = NULL, overwrite = TRUE, verbose = FALSE) 
+                          parallel = FALSE, n.cores = NULL, overwrite = FALSE, verbose = FALSE) 
     
   }
 }

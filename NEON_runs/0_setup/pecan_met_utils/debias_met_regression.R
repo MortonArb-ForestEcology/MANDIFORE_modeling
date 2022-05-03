@@ -644,13 +644,13 @@ debias.met.regression <- function(train.data, source.data, n.ens, vars.debias=NU
           # sim1b.norm <- apply(sim1b, 1, mean)
           # What we need is to remove the mean-trend from the anomalies and then add the trend (with uncertinaties) back in
           # Note that for a single-member ensemble, this just undoes itself
-          anom.detrend <- met.src[met.src$ind==ind,"anom.raw"] - predict(mod.anom)
+          anom.detrend <- met.src[met.src$ind==ind & !is.na(met.src$X),"anom.raw"] - predict(mod.anom)
 
           # NOTE: This section can probably be removed and simplified since it should always be a 1-column array now
           if(length(cols.redo)>1){
-            sim1b[,cols.redo] <- apply(sim1b[,cols.redo], 2, FUN=function(x){x+anom.detrend}) # Get the range around that medium-frequency trend
+            sim1b[!is.na(met.src$X),cols.redo] <- apply(sim1b[!is.na(met.src$X),cols.redo], 2, FUN=function(x){x+anom.detrend}) # Get the range around that medium-frequency trend
           } else {
-            sim1b[,cols.redo] <- as.matrix(sim1b[,cols.redo] + anom.detrend)
+            sim1b[!is.na(met.src$X),cols.redo] <- as.matrix(sim1b[!is.na(met.src$X),cols.redo] + anom.detrend)
           }
 
         }
