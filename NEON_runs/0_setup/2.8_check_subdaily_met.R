@@ -35,7 +35,7 @@ site.lon = -71.287375
 
 wd.base <- file.path("..", paste0("met_raw", vers))
 path.dat <- file.path(wd.base, "subdaily_tdm", site.name)
-path.out <- file.path(wd.base, "met_tdm_qaqc")
+path.out <- file.path(wd.base, "met_tdm_qaqc", site.name)
 
 dir.create(path.out, recursive=T, showWarnings = F)
 # GCM.list <- c("bcc-csm1-1", "CCSM4", "MIROC-ESM", "MPI-ESM-P")

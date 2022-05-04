@@ -60,8 +60,8 @@ wd.base = file.path("..", paste0("met_raw", vers))
 path.train <- file.path(wd.base, "subdaily", site.name, "NLDAS")
 yrs.train=NULL
 
-path.out <- file.path(wd.base, "mods.tdm")
-path.pecan <- "../../../pecan/"
+path.out <- file.path(wd.base, "mods.tdm", site.name)
+# path.pecan <- "../../../pecan/"
 
 fig.dir <- file.path(path.out, "model_qaqc")
 
@@ -74,14 +74,18 @@ if(!dir.exists(fig.dir)) dir.create(fig.dir, recursive = T)
 # ------------------------------------------
 # Name of dat.train file in netcdf format meeting CF standards
 # dat.trian.nc <- ()
-scripts.tdm <- dir(path.pecan, "tdm")
-source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_generate_subdaily_models.R"))
-source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_temporal_downscale_functions.R"))
-source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_model_train.R"))
-source(file.path(path.pecan, "modules/data.atmosphere/R", "align_met.R"))
+# scripts.tdm <- dir(path.pecan, "tdm")
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_generate_subdaily_models.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_temporal_downscale_functions.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_model_train.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "align_met.R"))
+source("pecan_met_utils/tdm_generate_subdaily_models.R")
+source("pecan_met_utils/tdm_temporal_downscale_functions.R")
+source("pecan_met_utils/tdm_model_train.R")
+source("pecan_met_utils/align_met.R")
 
 gen.subdaily.models(outfolder=path.out, path.train=path.train,
                     yrs.train=NULL, direction.filter="forward", in.prefix=site.name,
                     n.beta=1, day.window=7, seed=1026, resids = FALSE, 
-                    parallel = FALSE, n.cores = NULL, overwrite = TRUE, verbose = FALSE, print.progress=T) 
+                    parallel = FALSE, n.cores = NULL, overwrite = FALSE, verbose = FALSE, print.progress=T) 
 # ------------------------------------------

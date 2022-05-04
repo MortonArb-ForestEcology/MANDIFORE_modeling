@@ -126,7 +126,7 @@ ggplot(data=all.day) +
 
 if(!dir.exists(file.path(path.out, "met_bc_qaqc"))) dir.create(file.path(path.out, "met_bc_qaqc"))
 
-pdf(file.path(path.out, "met_bc_qaqc", "CMIP5_bc_year_byModel.pdf"), height=11, width=8.5)
+pdf(file.path(path.out, "met_bc_qaqc", site.name, "CMIP5_bc_year_byModel.pdf"), height=11, width=8.5)
 for(MOD in unique(all.yr$model)){
   print(
     ggplot(data=all.yr[all.yr$model==MOD,]) +
@@ -140,7 +140,7 @@ for(MOD in unique(all.yr$model)){
 dev.off()
 
 
-pdf(file.path(path.out, "met_bc_qaqc", "CMIP5_bc_day_byModel.pdf"), height=11, width=8.5)
+pdf(file.path(path.out, "met_bc_qaqc", site.name, "CMIP5_bc_day_byModel.pdf"), height=11, width=8.5)
 for(MOD in unique(all.day$model)){
   print(
     ggplot(data=all.day[all.day$model==MOD,]) +
@@ -167,7 +167,7 @@ for(VAR in unique(all.yr$var)){
 }
 dev.off()
 
-pdf(file.path(path.out, "met_bc_qaqc", "CMIP5_bc_day_byVar.pdf"), height=11, width=8.5)
+pdf(file.path(path.out, "met_bc_qaqc", site.name, "CMIP5_bc_day_byVar.pdf"), height=11, width=8.5)
 for(VAR in unique(all.day$var)){
   print(
     ggplot(data=all.day[all.day$var==VAR,]) +

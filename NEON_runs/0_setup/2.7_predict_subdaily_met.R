@@ -69,7 +69,7 @@ wd.base = file.path("..", paste0("met_raw", vers))
 # 
 
 path.train <- file.path(wd.base, "subdaily", site.name, "NLDAS")
-path.lm <- file.path(wd.base, "mods.tdm")
+path.lm <- file.path(wd.base, "mods.tdm", site.name)
 path.in <- file.path(wd.base, "daily_bc", site.name)
 path.out <- file.path(wd.base, "subdaily_tdm", site.name)
 # path.in <- file.path(dat.base, "met_ensembles", paste0(site.name, vers), "day/ensembles")
@@ -102,11 +102,16 @@ seed.vec <- sample.int(1e6, size=500, replace=F)
 # -----------------------------------
 # 2. Apply the model
 # -----------------------------------
-source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_predict_subdaily_met.R"))
-source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_lm_ensemble_sims.R"))
-source(file.path(path.pecan, "modules/data.atmosphere/R", "align_met.R"))
-source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_subdaily_pred.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_predict_subdaily_met.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_lm_ensemble_sims.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "align_met.R"))
+# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_subdaily_pred.R"))
 # source(file.path(path.pecan, "tdm_predict_subdaily_met.R"))
+source("pecan_met_utils/tdm_predict_subdaily_met.R")
+source("pecan_met_utils/tdm_lm_ensemble_sims.R")
+source("pecan_met_utils/tdm_subdaily_pred.R")
+source("pecan_met_utils/align_met.R")
+
 
 # Set & create the output directory
 if(!dir.exists(path.out)) dir.create(path.out, recursive=T)
