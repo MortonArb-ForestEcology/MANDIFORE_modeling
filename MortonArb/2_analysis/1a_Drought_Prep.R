@@ -150,4 +150,130 @@ for(i in 1:nrow(dat.end)){
   }
 }
 
-write.csv(dat.end, "../Drought_Periods_End_Monthly.csv", row.names = F)
+write.csv("../Drought_Periods_End_Monthly.csv", row.names = F)
+
+dat.month <- read.csv("../Drought_Periods_End_Monthly.csv")
+
+#----------------------------------------------------------------------------------------------------------------------#
+# Script by : Lucien Fitzpatrick
+# Project: Mandifore Morton arb casee study
+# Purpose: This script creates dataframes focused on drought and precipitaiton to be used in analaysis scripts
+# Inputs: ED2 Morton Arb site data
+# Outputs: Dataframes focusing on daily precipitaiton weather and periods of drought
+# Notes: 
+#----------------------------------------------------------------------------------------------------------------------#
+library(readbulk)
+library(lubridate)
+
+path.read <- "../data/"
+runs.all <- read.csv(paste0(path.read, "All_runs_mod.csv"))
+
+runs.start <- runs.all[runs.all$Date <= "2025-01-01",]
+
+vpd.avg <- aggregate(VPD~month+rcp, runs.start, FUN = mean)
+vpd.avg$sd <- aggregate(VPD~month+rcp, runs.start, FUN = sd)[, "VPD"]
+
+for(RCP in unique(runs.all$rcp)){
+  for(MON in unique(runs.all$month)){
+    runs.all[runs.all$month == MON & runs.all$rcp == RCP, "vpd.flag"] <- 
+      ifelse(runs.all[runs.all$month == MON & runs.all$rcp == RCP, "VPD"] > 
+               (vpd.avg[vpd.avg$month == MON & vpd.avg$rcp == RCP, "VPD"] +3*vpd.avg[vpd.avg$month == MON & vpd.avg$rcp == RCP, "sd"]) ,T,F)
+  }
+}
+
+dat.end <- runs.all[runs.all$vpd.flag == T, ]
+
+dat.end$season <- NA
+for(i in 1:nrow(dat.end)){ 
+  if(month(dat.end[i, "month"]) >= 3 & month(dat.end[i, "month"]) <= 5){
+    dat.end[i, "season"] <- "Spring"
+  } else if(month(dat.end[i, "month"]) >= 6 & month(dat.end[i, "month"]) <= 8){
+    dat.end[i, "season"] <- "Summer"
+  } else if(month(dat.end[i, "month"]) >= 9 & month(dat.end[i, "month"]) <= 11){
+    dat.end[i, "season"] <- "Fall"
+  } else {
+    dat.end[i, "season"] <- "Winter"
+  }
+}
+
+dat.end <- dat.end[,c("GCM", "rcp", "Management", "year", "month", "VPD", "Date", "vpd.flag", "season")]
+
+dat.end <- dat.end[dat.end$Date >= as.Date("2025-01-01"),]
+
+write.csv(dat.end, "../Drought_Periods_VPD.csv", row.names = F)
+
+dat.vpd <- dat.end
+
+#----------------------------------------------------------------------------------------------------------------------#
+# Script by : Lucien Fitzpatrick
+# Project: Mandifore Morton arb casee study
+# Purpose: This script creates dataframes focused on drought and precipitaiton to be used in analaysis scripts
+# Inputs: ED2 Morton Arb site data
+# Outputs: Dataframes focusing on daily precipitaiton weather and periods of drought
+# Notes: 
+#----------------------------------------------------------------------------------------------------------------------#
+library(readbulk)
+library(lubridate)
+
+path.read <- "../data/"
+runs.all <- read.csv(paste0(path.read, "All_runs_mod.csv"))
+
+runs.start <- runs.all[runs.all$Date <= "2025-01-01",]
+
+swc.avg <- aggregate(soil.moist.deep~month+rcp+GCM, runs.start, FUN = mean)
+swc.avg$sd <- aggregate(soil.moist.deep~month+rcp+GCM, runs.start, FUN = sd)[, "soil.moist.deep"]
+for(MOD in unique(runs.all$GCM)){
+  for(RCP in unique(runs.all$rcp)){
+    for(MON in unique(runs.all$month)){
+      runs.all[runs.all$GCM == MOD & runs.all$month == MON & runs.all$rcp == RCP, "swc.flag"] <- 
+        ifelse(runs.all[runs.all$GCM == MOD & runs.all$month == MON & runs.all$rcp == RCP, "soil.moist.deep"] < 
+                 (swc.avg[swc.avg$GCM == MOD & swc.avg$month == MON & swc.avg$rcp == RCP, "soil.moist.deep"] +3*swc.avg[swc.avg$GCM == MOD & swc.avg$month == MON & swc.avg$rcp == RCP, "sd"]) ,T,F)
+    }
+  }
+}
+
+#dat.end <- runs.all[runs.all$swc.flag == T, ]
+dat.end <- runs.all[runs.all$soil.moist.deep <= .25, ]
+
+
+dat.end$season <- NA
+for(i in 1:nrow(dat.end)){ 
+  if(month(dat.end[i, "month"]) >= 3 & month(dat.end[i, "month"]) <= 5){
+    dat.end[i, "season"] <- "Spring"
+  } else if(month(dat.end[i, "month"]) >= 6 & month(dat.end[i, "month"]) <= 8){
+    dat.end[i, "season"] <- "Summer"
+  } else if(month(dat.end[i, "month"]) >= 9 & month(dat.end[i, "month"]) <= 11){
+    dat.end[i, "season"] <- "Fall"
+  } else {
+    dat.end[i, "season"] <- "Winter"
+  }
+}
+
+dat.end <- dat.end[,c("GCM", "rcp", "Management", "year", "month", "soil.moist.deep", "Date", "season")]
+
+dat.end <- dat.end[dat.end$Date >= as.Date("2025-01-01"),]
+
+write.csv(dat.end, "../Drought_Periods_SWC.csv", row.names = F)
+
+dat.swc <- dat.end
+
+#---------------------------------------------------------------------------------------------#
+#Area for comparison between drought metrics
+#---------------------------------------------------------------------------------------------#
+
+hist(runs.all$VPD)
+hist(runs.all$soil.moist.deep)
+
+
+dat.precip <- read.csv("../Drought_Periods_End.csv")
+dat.precip <- dat.precip[dat.precip$days_since_rain >= 14,]
+
+dat.month <- read.csv("../Drought_Periods_End_Monthly.csv")
+
+dat.vpd <- read.csv("../Drought_Periods_VPD.csv")
+
+dat.swc <- read.csv("../Drought_Periods_SWC.csv")
+
+hist(dat.swc$soil.moist.deep)
+
+hist(dat.vpd$VPD)
