@@ -34,3 +34,8 @@ MortonArb/met_problems.csv
 met_raw*
 met_ed*
 MortonArb/2_analysis/extract.v3
+*.xml
+*.csv
+*.png
+*.csv
+*.csv
