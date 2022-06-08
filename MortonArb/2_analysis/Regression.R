@@ -28,29 +28,33 @@ runs.all <- read.csv(paste0(path.read, "All_runs.csv"))
 
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
-runs.year <- aggregate(cbind(tair, VPD, agb, lai, soil.moist.deep, soil.moist.surf)~year+Management+GCM+rcp, runs.all, FUN = mean)
+runs.year <- aggregate(cbind(tair, VPD, agb, lai, soil.moist.deep, soil.moist.surf ,
+                             density.tree, height.sd, height.mean, dbh.mean, dbh.sd)~year+Management+GCM+rcp, runs.all, FUN = mean)
 
 runs.comb <- merge(runs.year, dat.year, by.x = c("year", "GCM", "rcp"), by.y = c("year", "model", "scenario"))
 
 runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Gap", "Shelter", "Under"))
 
 
+
 for(i in 2:nrow(runs.comb)){
   #Difference between current year and previous year
-  runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[i-1, "agb"]
+  GCM <- runs.comb[i, "GCM"]
+  rcp <- runs.comb[i, "rcp"]
+  MNG <- runs.comb[i, "Management"]
+  year <- runs.comb[i, "year"]
+  if(year > 2006){
+  runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == year-1, "agb"]  
   
   #Shifting agb up a year for easier regression
-  runs.comb[i, "future.agb"] <- runs.comb[i + 1, "agb"]
-  
-  #Difference between current year and previous year
-  runs.comb[i, "lai.diff"] <- runs.comb[i, "lai"] - runs.comb[i-1, "lai"]
-  
-  #Shifting laii up a year for easier regression
-  runs.comb[i, "future.lai"] <- runs.comb[i + 1, "lai"]
+  runs.comb[i, "future.agb"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == year+1, "agb"]
+  }
   
 }
 
 runs.late <- runs.comb[runs.comb$year >= 2025, ]
+
+write.csv(runs.late, paste0(path.read, "All_runs_yearly.csv"))
 
 #---------------------------------------------------------------#
 #Summary figures for soil moisture at the deep and surface level
@@ -440,33 +444,6 @@ dev.off()
 #---------------------------------------------------------------------#
 # Attempting to check multiple sturctucal variables against our weather metrics
 
-runs.year <- aggregate(cbind(tair, VPD, agb, lai, soil.moist.deep, soil.moist.surf ,
-                             density.tree, height.sd, height.mean, dbh.mean, dbh.sd)~year+Management+GCM+rcp, runs.all, FUN = mean)
-
-runs.comb <- merge(runs.year, dat.year, by.x = c("year", "GCM", "rcp"), by.y = c("year", "model", "scenario"))
-
-runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Gap", "Shelter", "Under"))
-
-
-for(i in 2:nrow(runs.comb)){
-  #Difference between current year and previous year
-  runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[i-1, "agb"]
-  
-  #Shifting agb up a year for easier regression
-  runs.comb[i, "future.agb"] <- runs.comb[i + 1, "agb"]
-  
-  #Difference between current year and previous year
-  runs.comb[i, "lai.diff"] <- runs.comb[i, "lai"] - runs.comb[i-1, "lai"]
-  
-  #Shifting laii up a year for easier regression
-  runs.comb[i, "future.lai"] <- runs.comb[i + 1, "lai"]
-  
-}
-
-runs.late <- runs.comb[runs.comb$year >= 2025, ]
-
-
-#Seeing if Management has an effect on the change in agb
 pred.Vars <- c("tair", "VPD", "soil.moist.deep", "soil.moist.surf")
 struc.Vars <- c("density.tree", "height.sd", "height.mean", "dbh.mean", "dbh.sd")
 
@@ -489,7 +466,11 @@ for(COL in pred.Vars){
   }
 }
 
-dat.agb <- dplyr::bind_rows(dry.list)
+dat.struc <- dplyr::bind_rows(dry.list)
 
-dat.agbsig <- dat.agb[dat.agb$pvalue <= .05,]
+dat.strucsig <- dat.struc[dat.struc$pvalue <= .05,]
 
+
+write.csv(dat.struc, "../tables/Structural_variables_vs_Management.csv")
+write.csv(dat.agb, "../tables/Weather_variables_vs_AGB.csv")
+write.csv(dat.struc, "../tables/Weather_variables_vs_LAI.csv")
