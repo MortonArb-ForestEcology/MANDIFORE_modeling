@@ -3,17 +3,17 @@
 # Christy Rollinson, crollinson@mortonarb.org
 
 # Number of sites you want to run
-n=4 # 4 = 1 site x 1 management x 1 GCM x 2 rcps x 2 CO2 scenarios
+n=4 # 4 = 1 site x 4 management x 1 GCM x 1 rcps x 1 CO2 scenarios
 
 # Define constants & file paths for the scripts
-file_base=/mnt/data/crollinson/MANDIFORE_modeling/MortonArb # whatever you want the base output file path to be
+file_base=/mnt/data/crollinson/MANDIFORE_modeling/NEON # whatever you want the base output file path to be
 EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
-met_base=${file_base}/met_ed.v3/
+met_base=${file_base}/met_ed.v1/
 
 ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
-file_dir=${file_base}/1_runs/MortonArb_ed_runs.v3 # Where everything will go
+file_dir=${file_base}/1_runs/NEON_ed_runs.v1 # Where everything will go
 setup_dir=${file_base}/0_setup # Where some constant setup files are
-site_file=${setup_dir}/MortonArb_CaseStudy_Experiment.csv # # Path to list of ED sites w/ status
+site_file=${setup_dir}/NEON_Experiment.csv # # Path to list of ED sites w/ status
 # init_dir=${file_base}/1_spin/ed_spin.v3
 lu_dir=${file_base}/lu_files # Where some constant setup files are
 
@@ -63,13 +63,13 @@ file_done=(${file_done[@]/"*"/})
 # - DO NOT imitate this with a large array
 runs=()
 sites=()
-#lat=()
-#lon=()
+lat=()
+lon=()
 clay=()
 sand=()
 depth=()
 finit=()
-#pft=()
+pft=()
 GCM=()
 scenario=()
 #fire=()
@@ -85,13 +85,13 @@ for((i=0;i<${#runs_all[@]};i++)); do
     if [[ ${#TEST[@]} == ${#file_done[@]} ]]; then
 		runs+=("$RUN")
 		sites+=("${sites_all[i]}")
-		#lat+=("${lat_all[i]}")
-		#lon+=("${lon_all[i]}")
+		lat+=("${lat_all[i]}")
+		lon+=("${lon_all[i]}")
 		clay+=("${clay_all[i]}")
 		sand+=("${sand_all[i]}")
 		depth+=("${depth_all[i]}")
 		finit+=("${finit_all[i]}")
-		#pft+=("${pft_all[i]}")
+		pft+=("${pft_all[i]}")
 		GCM+=("${GCM_all[i]}")
 		scenario+=("${scenario_all[i]}")
 		#fire+=("${fire_all[i]}")
@@ -122,11 +122,11 @@ do
     #     GCM_now=${GCM_now/"-"/"_"}
     # fi
 
-	#lat_now=${lat[FILE]}
-	#lon_now=${lon[FILE]}
+	lat_now=${lat[FILE]}
+	lon_now=${lon[FILE]}
 
-	#pft_now=${pft[FILE]}
-	#pft_now=${pft_now//"-"/","}
+	pft_now=${pft[FILE]}
+	pft_now=${pft_now//"-"/","}
 
 	# ---------------------------------------------
 	# subsetting soil layers based on soil depth; deepest layer = soil_depth
@@ -239,8 +239,8 @@ do
     sed -i "s/NL%METCYC1     =.*/NL%METCYC1     = $metfirst/" ED2IN # Set met start
     sed -i "s/NL%METCYCF     =.*/NL%METCYCF     = $metlast/" ED2IN # Set met end
 
-    #sed -i "s/POI_LAT  =.*/POI_LAT  = $lat_now/" ED2IN # set site latitude
-    #sed -i "s/POI_LON  =.*/POI_LON  = $lon_now/" ED2IN # set site longitude
+    sed -i "s/POI_LAT  =.*/POI_LAT  = $lat_now/" ED2IN # set site latitude
+    sed -i "s/POI_LON  =.*/POI_LON  = $lon_now/" ED2IN # set site longitude
     sed -i "s/SLXCLAY =.*/SLXCLAY = ${clay[FILE]}/" ED2IN # set fraction soil clay
     sed -i "s/SLXSAND =.*/SLXSAND = ${sand[FILE]}/" ED2IN # set fraction soil sand
     sed -i "s/NZG =.*/NZG = $NZG/" ED2IN # set number soil layers
@@ -248,8 +248,8 @@ do
     sed -i "s/SLMSTR  =.*/SLMSTR = $SLMSTR/" ED2IN # set initial soil moisture
     sed -i "s/STGOFF  =.*/STGOFF = $STGOFF/" ED2IN # set initial soil temp offset
 
-    #sed -i "s/NL%INCLUDE_THESE_PFT =.*/NL%INCLUDE_THESE_PFT = $pft_now/" ED2IN # set possible PFTs
-    #sed -i "s/NL%IEDCNFGF   =.*/NL%IEDCNFGF   = 'PFTParams_MANDIFORE_${SITE}.xml'/" ED2IN # set possible PFTs
+    sed -i "s/NL%INCLUDE_THESE_PFT =.*/NL%INCLUDE_THESE_PFT = $pft_now/" ED2IN # set possible PFTs
+    sed -i "s/NL%IEDCNFGF   =.*/NL%IEDCNFGF   = 'PFTParams_MANDIFORE_${SITE}.xml'/" ED2IN # set possible PFTs
 
     # sed -i "s/NL%SM_FIRE         = .*/NL%SM_FIRE         = ${fire[FILE]}/" ED2IN # adjust fire threshold
     # sed -i "s/NL%IANTH_DISTURB   = .*/NL%IANTH_DISTURB   = ${ianth[FILE]}/" ED2IN # turn on disturbance
