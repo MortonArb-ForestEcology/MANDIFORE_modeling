@@ -32,7 +32,7 @@ $ED_NL
    !---------------------------------------------------------------------------------------!
    NL%IMONTHA  = 06
    NL%IDATEA   = 01
-   NL%IYEARA   = 2016
+   NL%IYEARA   = 2006
    NL%ITIMEA   = 0000
    !---------------------------------------------------------------------------------------!
 
@@ -158,9 +158,9 @@ $ED_NL
    !            soil types                                                                 !
    !---------------------------------------------------------------------------------------!
     NL%N_POI    =    1
-    NL%POI_LAT  =  41.82
-    NL%POI_LON  = -88.04
-    NL%POI_RES  = 0.125
+    NL%POI_LAT  =  41.82 !! NEEDS TO BE MODIFIED FOR EACH NEON SITE
+    NL%POI_LON  = -88.04 !! NEEDS TO BE MODIFIED FOR EACH NEON SITE
+    NL%POI_RES  = 0.125 !! LOOK AT THIS; MAYBE MODIFY FOR EACH GCM, BUT PROB NOT NECESSARY
    !---------------------------------------------------------------------------------------!
 
 
@@ -237,7 +237,7 @@ $ED_NL
    !                                                                                       !
    !---------------------------------------------------------------------------------------!
    NL%IADD_SITE_MEANS   = 1
-   NL%IADD_PATCH_MEANS  = 0
+   NL%IADD_PATCH_MEANS  = 1
    NL%IADD_COHORT_MEANS = 0
    !---------------------------------------------------------------------------------------!
 
@@ -386,6 +386,7 @@ $ED_NL
    !              path+prefix will be used, as the history for every grid must have come   !
    !              from the same simulation.                                                !
    !---------------------------------------------------------------------------------------!
+   
    NL%SFILIN   = '/mnt/data/crollinson/MANDIFORE_modeling/MortonArb/init_files/MortonArb_EastWoods_All'
    !---------------------------------------------------------------------------------------!
 
@@ -1214,7 +1215,7 @@ $ED_NL
    !             4.  Same as 0, but if finds the ground conductance following CLM          !
    !                 technical note (equations 5.98-5.100).                                !
    !---------------------------------------------------------------------------------------!
-   NL%ICANTURB        = 0
+   NL%ICANTURB        = 1
    !---------------------------------------------------------------------------------------!
 
 
@@ -1559,7 +1560,7 @@ $ED_NL
    ! MIN_RECRUIT_DBH -- Minimum DBH that is measured in the census, in cm.                 !
    !---------------------------------------------------------------------------------------!
    NL%DT_CENSUS       = 1
-   NL%YR1ST_CENSUS    = 1850
+   NL%YR1ST_CENSUS    = 2000
    NL%MON1ST_CENSUS   = 1
    NL%MIN_RECRUIT_DBH = 0.01
    !---------------------------------------------------------------------------------------!

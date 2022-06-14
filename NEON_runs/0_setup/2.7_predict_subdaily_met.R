@@ -2,8 +2,8 @@
 # Script Information
 # -----------------------------------
 # Purpose: Create statistical models to predict subdaily meteorology from daily means
-# Creator: Christy Rollinson, 7 September 2017
-# Contact: crollinson@gmail.com
+# Creator: Christy Rollinson, updated 14 June 2022
+# Contact: crollinson@mortonarb.org
 # -----------------------------------
 
 # -----------------------------------
@@ -53,11 +53,7 @@ rm(list=ls())
 
 # setwd(wd.base)
 
-path.pecan <- "../../../pecan/"
-# path.pecan <- "/home/crollinson/pecan"
-# path.pecan <- "~/Desktop/Research/pecan"
-
-# Hard-coding numbers for Morton Arb
+# Hard-coding numbers for a single site for now
 vers=".v1"
 site.name= "BART"
 site.lat = 44.063889
@@ -68,10 +64,10 @@ wd.base = file.path("..", paste0("met_raw", vers))
 
 # 
 
-path.train <- file.path(wd.base, "subdaily", site.name, "NLDAS")
-path.lm <- file.path(wd.base, "mods.tdm", site.name)
-path.in <- file.path(wd.base, "daily_bc", site.name)
-path.out <- file.path(wd.base, "subdaily_tdm", site.name)
+path.train <- file.path(wd.base, "3hr", site.name, "NLDAS")
+path.lm <- file.path(wd.base, "3hr_mods.tdm", site.name)
+path.in <- file.path(wd.base, "daily", site.name)
+path.out <- file.path(wd.base, "3hr", site.name)
 # path.in <- file.path(dat.base, "met_ensembles", paste0(site.name, vers), "day/ensembles")
 # path.out <- file.path(dat.base, "met_ensembles", paste0(site.name, vers), "1hr/ensembles")
 
@@ -80,13 +76,13 @@ GCM.list <- dir(path.in)
 
 # Get rid of known problematic ensemble members
 # GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC", "IPSL-CM5A-MR")]
-GCM.list <- GCM.list[!GCM.list %in% c("bias_correct_qaqc")]
+GCM.list <- GCM.list[!GCM.list %in% c("bias_correct_qaqc", "NLDAS")]
 
 ens.hr  <- 1 # Number of hourly ensemble members to create
 n.day <- 1 # Number of daily ensemble members to process
 # yrs.plot <- c(2015, 1985, 1920, 1875, 1800, 1000, 850)
 yrs.plot <- c(2010, 2025, 2050, 2075, 2099)
-timestep="1hr"
+timestep="3hr"
 # years.sim=2015:1900
 yrs.sim=2006:2099
 
@@ -128,14 +124,14 @@ for(GCM in GCM.list){
   
   # Doing this one ensemble member at at time
   # Figure out what's been done already
-  # for(SCEN in scenarios){
-      # out.scen <- file.path(path.out, GCM, SCEN)
-      predict_subdaily_met(outfolder=path.out, in.path=file.path(path.in, GCM),
-                           in.prefix=GCM, lm.models.base=path.lm,
+  for(SCEN in scenarios){
+      out.scen <- file.path(path.out, GCM, SCEN)
+      predict_subdaily_met(outfolder=path.out, in.path=file.path(path.in, GCM, SCEN),
+                           in.prefix=paste(GCM, SCEN, sep="_"), lm.models.base=path.lm,
                            path.train=path.train, direction.filter="forward", yrs.predict=yrs.sim,
                            ens.labs = "tdm", resids = FALSE,
                            adjust.pr=1,
-                           overwrite = TRUE, seed=seed.vec[1], print.progress = TRUE)
-  # }
+                           overwrite = FALSE, seed=seed.vec[1], print.progress = TRUE)
+  }
 }
 # -----------------------------------
