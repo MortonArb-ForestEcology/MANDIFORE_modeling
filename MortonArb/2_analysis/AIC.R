@@ -1054,17 +1054,25 @@ random.aic; relp.random.aic; relagb.random.aic; both.random.aic
 #The order of the other models rankings changes to more structural variables, although this doesn't really change our final result of the best model
 diff.aic; relp.diff.aic; relagb.diff.aic; both.diff.aic
 
+p.MNG.agb.orig <- lme(agb.diff ~ sum*Management*agb, random=list(GCM=~1, rcp=~1), data = runs.late, method = "ML")
+summary(p.MNG.agb.orig)
+anova(p.MNG.agb.orig)
 
+p.MNG.rel.agb <- lme(agb.rel.diff ~ sum*Management*agb, random=list(GCM=~1, rcp=~1), data = runs.late, method = "ML")
+summary(p.MNG.rel.agb)
+anova(p.MNG.rel.agb)
+
+p.MNG.agb.rel.precip <- lme(agb.diff ~ rel.precip*Management*agb, random=list(GCM=~1, rcp=~1), data = runs.late, method = "ML")
+summary(p.MNG.agb.rel.precip)
+anova(p.MNG.agb.rel.precip)
+
+p.MNG.agb.both <- lme(agb.rel.diff ~ rel.precip*Management*agb, random=list(GCM=~1, rcp=~1), data = runs.late, method = "ML")
+summary(p.MNG.agb.both)
+anova(p.MNG.agb.both)
 
 #Looking at an aic comparision when using a time lag the results are very different.
 #The basic style uses "p.MNG.agb" like the others but then all the relative metrics "p.height.sd" with "p.MNG.height.sd" as second 
 lag.aic; relp.lag.aic; relagb.lag.aic; both.lag.aic
-
-#SD of height
-p.height.sd.test <- lme(agb.rel.diff ~ rel.precip*height.sd, random=list(GCM=~1, rcp=~1), data = runs.late, method = "ML")
-summary(p.height.sd.test)
-anova(p.height.sd.test)
-
 
 random.bic; relp.random.bic; relagb.random.bic; both.random.bic
 diff.bic; relp.diff.bic; relagb.diff.bic; both.diff.bic;
