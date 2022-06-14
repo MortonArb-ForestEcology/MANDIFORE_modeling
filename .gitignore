@@ -39,3 +39,4 @@ MortonArb/2_analysis/extract.v3
 *.png
 *.csv
 *.csv
+NEON_runs/neon_data_raw
