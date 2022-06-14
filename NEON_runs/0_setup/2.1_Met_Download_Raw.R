@@ -30,13 +30,13 @@ for(i in 1:nrow(sites.neon)){
   # CM3: https://www.gfdl.noaa.gov/coupled-physical-model-cm3/
   
   for(ENS in ENS.all[1]){
-    download.GFDL(outfolder=file.path(path.out, "subdaily", site.name), 
+    download.GFDL(outfolder=file.path(path.out, "3hr", site.name), 
                   start_date="2006-01-01", end_date="2099-12-31", 
                   lat.in=site.lat, lon.in=site.lon,
                   overwrite = FALSE, verbose = FALSE,
                   model = ENS, scenario = "rcp45", ensemble_member = "r1i1p1", add.co2=TRUE, method="local", local.path="/Volumes/Celtis/Meteorology/CMIP5/")
     
-    download.GFDL(outfolder=file.path(path.out, "subdaily", site.name), 
+    download.GFDL(outfolder=file.path(path.out, "3hr", site.name), 
                   start_date="2006-01-01", end_date="2100-12-31", 
                   lat.in=site.lat, lon.in=site.lon,
                   overwrite = FALSE, verbose = FALSE,
@@ -51,7 +51,7 @@ for(i in 1:nrow(sites.neon)){
   source(file.path(path.pecan, "modules/data.atmosphere/R", "extract_local_NLDAS.R"))
   ldas.type = "NLDAS"
   path.nldas = "/Volumes/Celtis/Meteorology/LDAS/NLDAS_FORA0125_H.002/netcdf/"
-  extract.local.NLDAS(outfolder=file.path(path.out, "subdaily", site.name, "NLDAS"), in.path=path.nldas, 
+  extract.local.NLDAS(outfolder=file.path(path.out, "1hr", site.name, "NLDAS"), in.path=path.nldas, 
                       start_date="1980-01-01", end_date="2019-12-31", 
                       site_id=site.name, lat.in=site.lat, lon.in=site.lon)
   # -------------------------------

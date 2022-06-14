@@ -42,10 +42,10 @@ site.lat = 44.063889
 site.lon = -71.287375
 
 
-path.ldas <- file.path("../", paste0("met_raw", vers), "subdaily", site.name, "NLDAS")
+path.ldas <- file.path("../", paste0("met_raw", vers), "1hr", site.name, "NLDAS")
 files.train <- dir(path.ldas, ".nc")
 
-outfolder <- file.path("..", paste0("met_raw", vers), "daily", site.name, "NLDAS")
+outfolder <- file.path("..", paste0("met_raw", vers), "3hr", site.name, "NLDAS")
 dir.create(outfolder, recursive=T)
 # -----------------------------------
 
