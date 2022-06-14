@@ -45,19 +45,6 @@ for(i in 1:nrow(sites.neon)){
   # -------------------------------
   
   # -------------------------------
-  # Get NLDAS so we can do the temporal downscaling
-  # -------------------------------
-  # source("~/Desktop/Research/pecan/")
-  source(file.path(path.pecan, "modules/data.atmosphere/R", "extract_local_NLDAS.R"))
-  ldas.type = "NLDAS"
-  path.nldas = "/Volumes/Celtis/Meteorology/LDAS/NLDAS_FORA0125_H.002/netcdf/"
-  extract.local.NLDAS(outfolder=file.path(path.out, "1hr", site.name, "NLDAS"), in.path=path.nldas, 
-                      start_date="1980-01-01", end_date="2019-12-31", 
-                      site_id=site.name, lat.in=site.lat, lon.in=site.lon)
-  # -------------------------------
-  
-  
-  # -------------------------------
   # Additional Datasets Downloaded by Lucien
   # -------------------------------
   source(file.path(path.pecan, "modules/data.atmosphere/R", "extract_local_CMIP5.R"))
@@ -88,4 +75,20 @@ for(i in 1:nrow(sites.neon)){
     } # end GCM.scenarios
   } # End GCM lop
   # -------------------------------
+  
+    
+  # -------------------------------
+  # Get NLDAS so we can do the temporal downscaling -- doing this last because it takes so long
+  # -------------------------------
+  # source("~/Desktop/Research/pecan/")
+  source(file.path(path.pecan, "modules/data.atmosphere/R", "extract_local_NLDAS.R"))
+  ldas.type = "NLDAS"
+  path.nldas = "/Volumes/Celtis/Meteorology/LDAS/NLDAS_FORA0125_H.002/netcdf/"
+  extract.local.NLDAS(outfolder=file.path(path.out, "1hr", site.name, "NLDAS"), in.path=path.nldas, 
+                      start_date="1990-01-01", end_date="2019-12-31", 
+                      site_id=site.name, lat.in=site.lat, lon.in=site.lon)
+  # -------------------------------
+  
+  
+
 }
