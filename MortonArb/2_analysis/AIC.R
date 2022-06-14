@@ -11,6 +11,8 @@ runs.late <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
 
 runs.late <- runs.late[!is.na(runs.late$agb.diff),]
 
+runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "Shelter", "Under"))
+
 #--------------------------------#
 #Here we look at the best random effects to use
 #--------------------------------#
@@ -521,6 +523,8 @@ runs.late <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
 
 runs.late <- runs.late[!is.na(runs.late$agb.rel.diff),]
 
+runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "Shelter", "Under"))
+
 #--------------------------------#
 #Here we look at the best random effects to use
 #--------------------------------#
@@ -778,6 +782,8 @@ relagb.random.aic; relagb.random.bic; relagb.diff.aic; relagb.diff.bic; relagb.l
 runs.late <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
 
 runs.late <- runs.late[!is.na(runs.late$agb.rel.diff),]
+
+runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "Shelter", "Under"))
 
 #--------------------------------#
 #Here we look at the best random effects to use
@@ -1048,11 +1054,16 @@ random.aic; relp.random.aic; relagb.random.aic; both.random.aic
 #The order of the other models rankings changes to more structural variables, although this doesn't really change our final result of the best model
 diff.aic; relp.diff.aic; relagb.diff.aic; both.diff.aic
 
+
+
 #Looking at an aic comparision when using a time lag the results are very different.
 #The basic style uses "p.MNG.agb" like the others but then all the relative metrics "p.height.sd" with "p.MNG.height.sd" as second 
 lag.aic; relp.lag.aic; relagb.lag.aic; both.lag.aic
 
-
+#SD of height
+p.height.sd.test <- lme(agb.rel.diff ~ rel.precip*height.sd, random=list(GCM=~1, rcp=~1), data = runs.late, method = "ML")
+summary(p.height.sd.test)
+anova(p.height.sd.test)
 
 
 random.bic; relp.random.bic; relagb.random.bic; both.random.bic
