@@ -1,9 +1,9 @@
 # -----------------------------------
 # Script Information
 # -----------------------------------
-# Purpose: Generate teh statistical models to predict subdaily meteorology from daily means
-# Creator: Christy Rollinson, 6 September, 2017
-# Contact: crollinson@gmail.com
+# Purpose: Generate the statistical models to predict subdaily meteorology from daily means
+# Creator: Christy Rollinson, Updated  14 June 2022
+# Contact: crollinson@mortonarb.org
 # -----------------------------------
 
 # -----------------------------------
@@ -57,10 +57,10 @@ site.lon = -71.287375
 
 wd.base = file.path("..", paste0("met_raw", vers))
 
-path.train <- file.path(wd.base, "subdaily", site.name, "NLDAS")
+path.train <- file.path(wd.base, "3hr", site.name, "NLDAS")
 yrs.train=NULL
 
-path.out <- file.path(wd.base, "mods.tdm", site.name)
+path.out <- file.path(wd.base, "3hr_mods.tdm", site.name)
 # path.pecan <- "../../../pecan/"
 
 fig.dir <- file.path(path.out, "model_qaqc")
@@ -85,7 +85,7 @@ source("pecan_met_utils/tdm_model_train.R")
 source("pecan_met_utils/align_met.R")
 
 gen.subdaily.models(outfolder=path.out, path.train=path.train,
-                    yrs.train=NULL, direction.filter="forward", in.prefix=site.name,
+                    yrs.train=1990:2019, direction.filter="forward", in.prefix=site.name,
                     n.beta=1, day.window=7, seed=1026, resids = FALSE, 
                     parallel = FALSE, n.cores = NULL, overwrite = FALSE, verbose = FALSE, print.progress=T) 
 # ------------------------------------------

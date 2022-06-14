@@ -78,6 +78,10 @@ gen.subdaily.models <- function(outfolder, path.train, yrs.train, direction.filt
                          yrs.train=yrs.file, yrs.source=yrs.file[1], 
                          n.ens=1, seed=seed, pair.mems = FALSE)
     
+    if(!"air_temperature" %in% names(met.out$dat.train)){
+      met.out$dat.train$air_temperature <- data.frame(air_temperature=apply(cbind(met.out$dat.train$air_temperature_minimum, met.out$dat.train$air_temperature_maximum), 1, mean))
+    }
+    
     dat.train <- data.frame(year = met.out$dat.train$time$Year, 
                             doy = met.out$dat.train$time$DOY, 
                             date = met.out$dat.train$time$Date,

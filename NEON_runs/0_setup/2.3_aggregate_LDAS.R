@@ -2,7 +2,7 @@
 # Script Information
 # -----------------------------------
 # Purpose: Aggregate NLDAS dataset to daily resolution for use in bias correction
-# Creator: Christy Rollinson, 21 October 2020
+# Creator: Christy Rollinson, 14 June 2022
 # Contact: crollinson@mortonarb.org
 # -----------------------------------
 
@@ -40,13 +40,14 @@ vers=".v1"
 site.name= "BART"
 site.lat = 44.063889
 site.lon = -71.287375
+hrs.new = 3 # Number of hours in the new resolution
 
 
 path.ldas <- file.path("../", paste0("met_raw", vers), "1hr", site.name, "NLDAS")
 files.train <- dir(path.ldas, ".nc")
 
 outfolder <- file.path("..", paste0("met_raw", vers), "3hr", site.name, "NLDAS")
-dir.create(outfolder, recursive=T)
+dir.create(outfolder, recursive=T, showWarnings = F)
 # -----------------------------------
 
 # -----------------------------------
@@ -74,12 +75,12 @@ nc.info <- data.frame(CF.name = c("air_temperature_minimum", "air_temperature_ma
 
 
 for(i in 1:length(files.train)){
-  
   # Figure out what year we're working with
   yr.now <- as.numeric(strsplit(files.train[i], "[.]")[[1]][2])
   nday <- ifelse(leap_year(yr.now), 366, 365)
+  npts <- nday*24/hrs.new # Number of new timepoints
   
-  dat.day <- list()
+  dat.new <- list()
   
   # Open the file so we can query from it
   ncT <- nc_open(file.path(path.ldas, files.train[i]))
@@ -89,40 +90,40 @@ for(i in 1:length(files.train)){
   lon.nc <- ncvar_get(ncT, "longitude")
   
   time.nc <- ncvar_get(ncT, "time") 
-  time.day <- apply(matrix(time.nc, ncol=nday), 2, mean) # get the daily time stamps
+  time.new <- apply(matrix(time.nc, ncol=npts), 2, mean) # get the daily time stamps
   
   # Extract plot info & aggregate to daily resolution
   for(v in names(ncT$var)){
-    dat.hr <- matrix(ncvar_get(ncT, v), ncol=nday)
+    dat.hr <- matrix(ncvar_get(ncT, v), ncol=npts)
     if(v == "air_temperature"){
-      dat.day[["air_temperature_minimum"]] <- apply(dat.hr, 2, min)
-      dat.day[["air_temperature_maximum"]] <- apply(dat.hr, 2, max)
+      dat.new[["air_temperature_minimum"]] <- apply(dat.hr, 2, min)
+      dat.new[["air_temperature_maximum"]] <- apply(dat.hr, 2, max)
     } else if(v %in% c("eastward_wind", "northward_wind")) {
-      wind.e <- matrix(ncvar_get(ncT, "eastward_wind"), ncol=nday)
-      wind.n <- matrix(ncvar_get(ncT, "northward_wind"), ncol=nday)
+      wind.e <- matrix(ncvar_get(ncT, "eastward_wind"), ncol=npts)
+      wind.n <- matrix(ncvar_get(ncT, "northward_wind"), ncol=npts)
       wind <- sqrt(wind.e^2 + wind.n^2)
-      dat.day[["wind_speed"]] <- apply(wind, 2, mean)
+      dat.new[["wind_speed"]] <- apply(wind, 2, mean)
     } else {
-      dat.day[[v]] <- apply(dat.hr, 2, mean)
+      dat.new[[v]] <- apply(dat.hr, 2, mean)
     }
   }
   
   # Create a daily .nc file for each year
   dim.lat <- ncdim_def(name='latitude', units='degree_north', vals=lat.nc, create_dimvar=TRUE)
   dim.lon <- ncdim_def(name='longitude', units='degree_east', vals=lon.nc, create_dimvar=TRUE)
-  dim.time <- ncdim_def(name='time', units="sec", vals=time.day, create_dimvar=TRUE, unlim=TRUE)
+  dim.time <- ncdim_def(name='time', units="sec", vals=time.new, create_dimvar=TRUE, unlim=TRUE)
   nc.dim=list(dim.lat,dim.lon,dim.time)
   
   var.list = list()
-  for(v in names(dat.day)){
+  for(v in names(dat.new)){
     var.list[[v]] = ncvar_def(name=v, units=as.character(nc.info[nc.info$CF.name==v, "units"]), dim=nc.dim, missval=-999, verbose=F)
   }
   
-  loc.file <- file.path(outfolder, paste("NLDAS_day", str_pad(yr.now, width=4, side="left",  pad="0"), "nc", sep = "."))
+  loc.file <- file.path(outfolder, paste("NLDAS_3hr", str_pad(yr.now, width=4, side="left",  pad="0"), "nc", sep = "."))
   loc <- nc_create(filename = loc.file, vars = var.list, verbose = F)
   
-  for (v in names(dat.day)) {
-    ncvar_put(nc = loc, varid = as.character(v), vals = dat.day[[v]])
+  for (v in names(dat.new)) {
+    ncvar_put(nc = loc, varid = as.character(v), vals = dat.new[[v]])
   }
   nc_close(loc)	
 }
