@@ -1,9 +1,9 @@
 # Plot the raw model outputs for assessment
+sites.neon <- read.csv("NEON_Field_Site_FOREST_CORE.csv")
 
-
-site.name= "BART"
-site.lat = 44.063889
-site.lon = -71.287375
+site.name= "UNDE"
+site.lat = 46.23391
+site.lon = -89.537254
 
 path.out = "../met_raw.v1"
 path.qaqc = file.path(path.out, "met_raw_qaqc", site.name)
@@ -190,3 +190,48 @@ for(VAR in vars.all){
   )
 }
 dev.off()
+
+
+# -----------------------------------
+# Doing some extra checks on precip
+# -----------------------------------
+dat.precip <- all.yr[all.yr$var=="precipitation_flux",]
+summary(dat.precip)
+
+precip.gcm <- aggregate(mean ~ model + scenario, data=dat.precip, FUN="mean")
+precip.gcm$mean.yr <- precip.gcm$mean*60*60*24*365
+
+ggplot(data=dat.precip[dat.precip$scenario=="rcp45",])+
+  facet_wrap(~model) +
+  geom_histogram(aes(x=mean*60*60*24*365)) +
+  geom_vline(xintercept=sites.neon$field_mean_annual_precipitation_mm[sites.neon$field_site_id==site.name], color="red")
+
+ ggplot(data=precip.gcm[precip.gcm$scenario=="rcp45",]) +
+  geom_histogram(aes(x=mean.yr)) +
+  geom_vline(xintercept=sites.neon$field_mean_annual_precipitation_mm[sites.neon$field_site_id==site.name], color="red")
+# -----------------------------------
+
+ 
+ # -----------------------------------
+ # Doing some extra checks on temperature
+ # -----------------------------------
+ dat.temp <- all.yr[all.yr$var=="air_temperature_maximum",]
+ dat.temp$tmax <- dat.temp$mean
+ dat.temp$tmin <- all.yr[all.yr$var=="air_temperature_minimum","mean"]
+ dat.temp$min <- dat.temp$tmin
+ dat.temp$mean <- (dat.temp$tmax + dat.temp$tmin)/2
+ summary(dat.temp)
+ 
+ temp.gcm <- aggregate(mean ~ model + scenario, data=dat.temp, FUN="mean")
+ # temp.gcm$mean.yr <- temp.gcm$mean*60*60*24*365
+ 
+ ggplot(data=dat.temp[dat.temp$scenario=="rcp45",])+
+   facet_wrap(~model) +
+   geom_histogram(aes(x=mean-273.15)) +
+   geom_vline(xintercept=sites.neon$field_mean_annual_temperature_C[sites.neon$field_site_id==site.name], color="red")
+ 
+ggplot(data=temp.gcm[temp.gcm$scenario=="rcp45",]) +
+   geom_histogram(aes(x=mean - 273.15)) +
+   geom_vline(xintercept=sites.neon$field_mean_annual_temperature_C[sites.neon$field_site_id==site.name], color="red")
+ # -----------------------------------
+ 

@@ -24,7 +24,6 @@
 ##' @param date.origin (optional) specify the date of origin for timestamps in the files being read.
 ##'                    If NULL defaults to 1850 for historical simulations (except MPI-ESM-P) and
 ##'                    850 for p1000 simulations (plus MPI-ESM-P historical).  Format: YYYY-MM-DD
-##' @param adjust.pr - adjustment factor fore preciptiation when the extracted values seem off
 ##' @param overwrite logical. Download a fresh version even if a local file with the same name already exists?
 ##' @param verbose logical. to control printing of debug info
 ##' @param ... Other arguments, currently ignored
@@ -32,7 +31,7 @@
 ##'
 # -----------------------------------
 extract.local.CMIP5 <- function(outfolder, in.path, start_date, end_date, lat.in, lon.in,
-                                model , scenario , ensemble_member = "r1i1p1", date.origin=NULL, adjust.pr=1,
+                                model , scenario , ensemble_member = "r1i1p1", date.origin=NULL,
                                 overwrite = FALSE, verbose = FALSE, ...){
 
   # Some GCMs don't do leap year; we'll have to deal with this separately
@@ -183,6 +182,7 @@ extract.local.CMIP5 <- function(outfolder, in.path, start_date, end_date, lat.in
     # print(var.now)
 
     dat.all[[v]] <- vector() # initialize the layer
+    
     # Figure out the temporal resolution of the variable
     v.res <- ifelse(var.now %in% vars.gcm.day, "day", "month")
     p.res <- ifelse(var.now %in% vars.gcm.day, path.day, path.mo)
@@ -395,9 +395,6 @@ extract.local.CMIP5 <- function(outfolder, in.path, start_date, end_date, lat.in
     for(v in 1:nrow(var)){
       dat.list[[v]] <- dat.all[[v]][yr.ind]
     } # End variable loop
-
-    # Adjusting Preciptiation if necessary
-    dat.list[["precipitation_flux"]] <- dat.list[["precipitation_flux"]]*adjust.pr
 
     if("mole_fraction_of_carbon_dioxide_in_air" %in% names(dat.list)){
         co2.mol <- dat.list[["mole_fraction_of_carbon_dioxide_in_air"]]/co2.molmass # kg co2

@@ -2,8 +2,8 @@
 # Script Information
 # -----------------------------------
 # Purpose: Perform a visual check on the met that has been temporally downscaled
-# Creator: Christy Rollinson, 5 September 2017
-# Contact: crollinson@gmail.com
+# Creator: Christy Rollinson, updated 15 June 2022
+# Contact: crollinson@mortonarb.org
 # -----------------------------------
 # Description
 # -----------------------------------
@@ -32,19 +32,25 @@ vers=".v1"
 site.name= "BART"
 site.lat = 44.063889
 site.lon = -71.287375
+timestep = 3
 
 wd.base <- file.path("..", paste0("met_raw", vers))
-path.dat <- file.path(wd.base, "subdaily_tdm", site.name)
-path.out <- file.path(wd.base, "met_tdm_qaqc", site.name)
+path.dat <- file.path(wd.base, paste0(timestep, "hr"), site.name)
+path.out <- file.path(wd.base, paste0(timestep, "hr_tdm_qaqc"), site.name)
 
 dir.create(path.out, recursive=T, showWarnings = F)
 # GCM.list <- c("bcc-csm1-1", "CCSM4", "MIROC-ESM", "MPI-ESM-P")
 # GCM.list <- c("bcc-csm1-1", "CCSM4", "MIROC-ESM")
 GCM.list <- dir(path.dat)
-# GCM.list <- GCM.list[!GCM.list %in% c("NLDAS", "figures_qaqc")]
+GCM.list <- GCM.list[!GCM.list %in% c("NLDAS", "figures_qaqc")]
 
-mods.df <- data.frame(matrix(unlist(strsplit(GCM.list, "_")), byrow = T, nrow=length(GCM.list)))
-names(mods.df) <- c("model", "scenario", "type")
+# Cleaning up the names a little bit to make life easier
+GCM.info <- gsub(".tdm", "", GCM.list) # Get rid of the tdm suffix
+GCM.info <- gsub("r1i1p1", "", GCM.info) # Get rid of the run type for GFDL-CM3
+GCM.info <- gsub("GFDL_CM3", "GFDL-CM3", GCM.info) # Make a consistent pattern match with other GCMS
+
+mods.df <- data.frame(runID=GCM.list, matrix(unlist(strsplit(GCM.info, "_")), byrow = T, nrow=length(GCM.list)))
+names(mods.df)[2:3] <- c("model", "scenario")
 
 
 scen.all <- c("rcp45", "rcp85")
@@ -82,25 +88,25 @@ vars.short <- c("tair", "precip", "swdown", "lwdown", "press", "qair", "wind")
 mods.all <- unique(mods.df$model)
 scen.all <- unique(mods.df$scenario)
 all.yr <- data.frame(model=as.factor(rep(mods.all, each=length(yrs.all)*length(scen.all)*(length(vars.CF)+2))),
-                     scenario=as.factor(rep(scen.all, each=length(yrs.all)*(length(vars.CF)+2))),
+                     scenario=as.factor(rep(scen.all, each=length(yrs.all)*(length(vars.CF)))),
                      var=as.factor(rep(c("air_temperature_maximum", "air_temperature_minimum", vars.CF), each=length(yrs.all))),
-                     year=rep(yrs.all, length.out=length(scen.all)*length(mods.all)*(length(vars.CF)+2)*length(yrs.all)))
+                     year=rep(yrs.all, length.out=length(scen.all)*length(mods.all)*(length(vars.CF))*length(yrs.all)))
 all.yr[,c("mean", "min", "max")] <- NA
 
 
 all.day <- data.frame(model=as.factor(rep(mods.all, each=length(doy.all)*length(scen.all)*(length(vars.CF)+2))),
-                      scenario=as.factor(rep(scen.all, each=length(doy.all)*(length(vars.CF)+2))),
+                      scenario=as.factor(rep(scen.all, each=length(doy.all)*(length(vars.CF)))),
                       var=as.factor(rep(c("air_temperature_maximum", "air_temperature_minimum", vars.CF), each=length(doy.all))),
                       yday=rep(1:365, length.out=length(scen.all)*length(mods.all)*(length(vars.CF)+2)*length(doy.all)))
 all.day[,c("mean", "min", "max")] <- NA
 
-all.hr <- data.frame(model=as.factor(rep(mods.all, each=24*nrow(days.graph)*length(scen.all)*length(vars.CF)*length(yrs.check))),
-                     scenario=as.factor(rep(scen.all, each=24*nrow(days.graph)*length(vars.CF)*length(yrs.check))),
-                     var=as.factor(rep(vars.CF, each=24*nrow(days.graph)*length(yrs.check))),
-                     year=rep(yrs.check, each=24*nrow(days.graph)),
-                     season=as.factor(rep(c("winter", "spring", "summer", "fall"), each=24*daywin)),
-                     yday=rep(days.graph$yday, each=24),
-                     hour=seq(0.5, 24, by=1))
+all.hr <- data.frame(model=as.factor(rep(mods.all, each=24/timestep*nrow(days.graph)*length(scen.all)*length(vars.CF)*length(yrs.check))),
+                     scenario=as.factor(rep(scen.all, each=24/timestep*nrow(days.graph)*length(vars.CF)*length(yrs.check))),
+                     var=as.factor(rep(vars.CF, each=24/timestep*nrow(days.graph)*length(yrs.check))),
+                     year=rep(yrs.check, each=24/timestep*nrow(days.graph)),
+                     season=as.factor(rep(c("winter", "spring", "summer", "fall"), each=24/timestep*daywin)),
+                     yday=rep(days.graph$yday, each=24/timestep),
+                     hour=seq(timestep/2, 24, by=timestep))
 all.hr$date <- as.POSIXct(paste(all.hr$year, all.hr$yday, all.hr$hour, sep="-"), format=("%Y-%j-%H"), tz="UTC")
 all.hr$season <- factor(all.hr$season, levels=c("winter", "spring", "summer", "fall"))
 # summary(all.hr$season)
@@ -132,31 +138,20 @@ for(i in 1:length(GCM.list)){
       ncT <- ncdf4::nc_open(file.path(path.dat, GCM.list[i], nc.now))
       time.nc <- ncdf4::ncvar_get(ncT, "time")
       
-      dat.temp <- data.frame(GCM=GCM, scenario=SCEN, year = YR, yday = rep(1:365, each=24), hour=rep(seq(0.5, 24, by=1)))
+      dat.temp <- data.frame(GCM=GCM, scenario=SCEN, year = YR, yday = rep(1:365, each=24/timestep), hour=rep(seq(timestep/2, 24, by=timestep)))
       dat.temp$date <- strptime(paste(dat.temp$year, dat.temp$yday, dat.temp$hour, sep="-"), format=("%Y-%j-%H"), tz="UTC")
       
       for(VAR in vars.CF){
         if(VAR %in% names(ncT$var)){
-
-          if(GCM=="GFDL-CM3"){
-            tmp <- ncdf4::ncvar_get(ncT, VAR, start=c(1,1,1), count=c(1,1,365*8))
-            dat.temp[,VAR] <- rep(tmp, each=3)
-          } else {
-            dat.temp[,VAR] <- ncdf4::ncvar_get(ncT, VAR, start=c(1,1,1), count=c(1,1,365*24))
-          }
+          dat.temp[,VAR] <- ncdf4::ncvar_get(ncT, VAR, start=c(1,1,1), count=c(1,1,365*24/timestep))
         } else if(VAR=="wind_speed" & "eastward_wind" %in% names(ncT$var)){
-          ew <- ncdf4::ncvar_get(ncT, "eastward_wind", start=c(1,1,1), count=c(1,1,max(doy.all)))
-          nw <- ncdf4::ncvar_get(ncT, "northward_wind", start=c(1,1,1), count=c(1,1,max(doy.all)))
+          ew <- ncdf4::ncvar_get(ncT, "eastward_wind", start=c(1,1,1), count=c(1,1,365*24/timestep))
+          nw <- ncdf4::ncvar_get(ncT, "northward_wind", start=c(1,1,1), count=c(1,1,365*24/timestep))
           
           # Calculate wind speed from ew/nw using pythagorean theorem
           wnd <- sqrt(ew^2 + nw^2)
           
-          if(GCM=="GFDL-CM3"){
-            dat.temp[,VAR] <- rep(wnd, each=8)
-          } else {
-            dat.temp[,VAR] <- wnd 
-          }
-
+          dat.temp[,VAR] <- wnd 
         } else next
         
          
@@ -306,7 +301,23 @@ for(VAR in vars.CF){
   }
   dev.off()
 }
+# -----------------------------------
 
 
 # -----------------------------------
+# Doing some extra checks on precip
+# -----------------------------------
+dat.precip <- all.yr[all.yr$var=="precipitation_flux",]
+summary(dat.precip)
 
+precip.gcm <- aggregate(mean ~ model + scenario, data=dat.precip, FUN="mean")
+precip.gcm$mean.yr <- precip.gcm$mean*60*60*24*365
+
+ggplot(data=dat.precip[dat.precip$scenario=="rcp45",])+
+  facet_wrap(~model) +
+  geom_histogram(aes(x=mean))
+
+ggplot(data=precip.gcm[precip.gcm$scenario=="rcp45",]) +
+  geom_histogram(aes(x=mean.yr)) +
+  geom_vline(xintercept=precip.gcm$mean.yr[precip.gcm$model=="GFDL-CM3" & precip.gcm$scenario=="rcp45"], color="red")
+# -----------------------------------
