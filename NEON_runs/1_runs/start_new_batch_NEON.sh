@@ -6,18 +6,19 @@
 n=4 # 4 = 1 site x 4 management x 1 GCM x 1 rcps x 1 CO2 scenarios
 
 # Define constants & file paths for the scripts
-file_base=/mnt/data/crollinson/MANDIFORE_modeling/NEON # whatever you want the base output file path to be
-EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
+file_base=/mnt/data/crollinson/MANDIFORE_modeling/NEON_runs # whatever you want the base output file path to be
 met_base=${file_base}/met_ed.v1/
 
 ed_exec=/home/crollinson/ED2/ED/build/ed_2.1-opt # Location of the ED Executable
+EDI_base=/home/models/ED_inputs/ # The location of basic ED Inputs for you
+
 file_dir=${file_base}/1_runs/NEON_ed_runs.v1 # Where everything will go
 setup_dir=${file_base}/0_setup # Where some constant setup files are
 site_file=${setup_dir}/NEON_Experiment.csv # # Path to list of ED sites w/ status
 # init_dir=${file_base}/1_spin/ed_spin.v3
 lu_dir=${file_base}/lu_files # Where some constant setup files are
 
-# Want to do a 25-year spin that ends in the year we want to starts
+# Want to do a 15-year "spin"/transient run that ends in the year we want to starts
 startyear=2006
 finalyear=2100 #
 finalfull=2099
@@ -33,8 +34,8 @@ mkdir -p $file_dir
 # Extract the file names of sites that haven't been started yet
 runs_all=($(awk -F ',' 'NR>1 {print $1}' ${site_file}))
 sites_all=($(awk -F ',' 'NR>1 {print $2}' ${site_file}))
-#lat_all=($(awk -F ',' 'NR>1 {print $4}' ${site_file}))
-#lon_all=($(awk -F ',' 'NR>1 {print $5}' ${site_file}))
+lat_all=($(awk -F ',' 'NR>1 {print $4}' ${site_file}))
+lon_all=($(awk -F ',' 'NR>1 {print $5}' ${site_file}))
 
 clay_all=($(awk -F ',' 'NR>1 {print $6}' ${site_file}))
 sand_all=($(awk -F ',' 'NR>1 {print $7}' ${site_file}))
@@ -102,10 +103,10 @@ for((i=0;i<${#runs_all[@]};i++)); do
 
 done
 
-
+# adjust number of runs to be either how many are left or how many we said we wanted to do
 n=$(($n<${#runs[@]}?$n:${#runs[@]}))
 
-
+## THIS IS WHERE THE SETTING UP OF FILE STRUCTURES AND ED2IN ACTUALLY HAPPENS!!
 # for FILE in $(seq 0 (($n-1)))
 for ((FILE=0; FILE<$n; FILE++)) # This is a way of doing it so that we don't have to modify N
 do
