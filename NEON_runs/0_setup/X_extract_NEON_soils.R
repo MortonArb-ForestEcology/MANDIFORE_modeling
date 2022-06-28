@@ -3,7 +3,7 @@
 
 # 1) no option for peat (ED class #12), bedrock (#13), clayey sand (#16), or clayey silt (#17), FIX LATER 
 
-# 2) createTexturedata() function in soilassessment package can sometimes return double classes such 
+# 2) createTexturedata() function in 'soilassessment' package can sometimes return double classes such 
   #as "SaLo, Lo" implying possibility of a tie for two classes, figure out something later to deal w/this
 
 
