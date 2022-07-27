@@ -28,7 +28,7 @@ runs.all <- read.csv(paste0(path.read, "All_runs.csv"))
 
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
-runs.year <- aggregate(cbind(tair, VPD, agb, lai, soil.moist.deep, soil.moist.surf ,
+runs.year <- aggregate(cbind(tair, VPD, agb, lai, npp,soil.moist.deep, soil.moist.surf ,
                              density.tree, height.sd, height.mean, dbh.mean, dbh.sd)~year+Management+GCM+rcp, runs.all, FUN = mean)
 
 runs.comb <- merge(runs.year, dat.year, by.x = c("year", "GCM", "rcp"), by.y = c("year", "model", "scenario"))
@@ -36,18 +36,43 @@ runs.comb <- merge(runs.year, dat.year, by.x = c("year", "GCM", "rcp"), by.y = c
 runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Gap", "Shelter", "Under"))
 
 
-
 for(i in 2:nrow(runs.comb)){
   #Difference between current year and previous year
   GCM <- runs.comb[i, "GCM"]
   rcp <- runs.comb[i, "rcp"]
   MNG <- runs.comb[i, "Management"]
-  year <- runs.comb[i, "year"]
-  if(year > 2006){
-  runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == year-1, "agb"]  
+  Year <- runs.comb[i, "year"]
+  
+  mean.precip <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "sum"])
+  mean.VPD <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "VPD"])
+  mean.tair <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "tair"])
+  
+  
+  runs.comb[i, "rel.precip"] <- (runs.comb[i, "sum"] - mean.precip)/mean.precip
+  runs.comb[i, "rel.VPD"] <- (runs.comb[i, "VPD"] - mean.VPD)/mean.VPD
+  runs.comb[i, "rel.tair"] <- (runs.comb[i, "tair"] - mean.tair)/mean.tair
+  
+  if(Year > 2006 & Year < 2099){
+  
+  runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
+    
+  runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"]  
+  
+  runs.comb[i, "agb.rel.diff"] <- (runs.comb[i, "agb"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"] 
+  
+  runs.comb[i, "agb.rel.lag1"] <- (runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "agb"] - runs.comb[i, "agb"])/runs.comb[i, "agb"]  
   
   #Shifting agb up a year for easier regression
-  runs.comb[i, "future.agb"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == year+1, "agb"]
+  runs.comb[i, "future.agb"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "agb"]
+  
+  runs.comb[i, "lai.diff"] <- runs.comb[i, "lai"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "lai"] 
+  
+  runs.comb[i, "lai.rel.diff"] <- (runs.comb[i, "lai"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "lai"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "lai"] 
+  
+  runs.comb[i, "lai.lag"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "lai"] - runs.comb[i, "lai"] 
+  
+  #Shifting agb up a year for easier regression
+  runs.comb[i, "future.lai"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "lai"]
   }
   
 }
@@ -55,6 +80,10 @@ for(i in 2:nrow(runs.comb)){
 runs.late <- runs.comb[runs.comb$year >= 2025, ]
 
 write.csv(runs.late, paste0(path.read, "All_runs_yearly.csv"))
+
+ggplot(data=runs.late)+
+  geom_point(aes(x=rel.precip, y = agb.rel.lag1, color = Management))
+
 
 #---------------------------------------------------------------#
 #Summary figures for soil moisture at the deep and surface level
