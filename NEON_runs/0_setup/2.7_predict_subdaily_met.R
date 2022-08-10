@@ -87,7 +87,7 @@ for(i in 1:nrow(sites.neon)){
   
   GCM.list <- dir(path.in)
   
-  GCM.list <- GCM.list[!GCM.list %in% c("bias_correct_qaqc", "NLDAS")]
+  GCM.list <- GCM.list[!GCM.list %in% c("bias_correct_qaqc", "NLDAS", "ACCESS1-3")]
 
   # Get rid of known problematic ensemble members
   # GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC", "IPSL-CM5A-MR")]
@@ -100,6 +100,7 @@ for(i in 1:nrow(sites.neon)){
   
   for(GCM in GCM.list){
     for(SCEN in scenarios){
+      print(paste(GCM, SCEN, sep=": "))
       # out.scen <- file.path(path.out, GCM, SCEN)
       predict_subdaily_met(outfolder=path.out, in.path=file.path(path.in, GCM, SCEN),
                            in.prefix=paste(GCM, SCEN, sep="_"), lm.models.base=path.lm,
