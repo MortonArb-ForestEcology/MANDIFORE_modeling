@@ -97,9 +97,11 @@ for(i in 1:nrow(sites.neon)){
   # -----------------------------------
   # Set & create the output directory
   if(!dir.exists(path.out)) dir.create(path.out, recursive=T)
-  
+  print("----------------------------------------")
+  print(site.name)
   for(GCM in GCM.list){
     for(SCEN in scenarios){
+      print("")
       print(paste(GCM, SCEN, sep=": "))
       # out.scen <- file.path(path.out, GCM, SCEN)
       predict_subdaily_met(outfolder=path.out, in.path=file.path(path.in, GCM, SCEN),
