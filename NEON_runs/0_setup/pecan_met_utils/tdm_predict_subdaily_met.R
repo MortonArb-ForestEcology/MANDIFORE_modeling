@@ -201,6 +201,21 @@ predict_subdaily_met <- function(outfolder, in.path, in.prefix, path.train, dire
       met.out$dat.source$wind_speed <- sqrt(met.out$dat.source$eastward_wind^2 + met.out$dat.source$northward_wind^2)
     } 
     
+    # out.ens <- file.path(outfolder, paste(in.prefix, ens.labs[i], sep="."))
+    
+    # If we're not overwriting our files and this file exists, pull from our pulled ata and move on
+    if(!overwrite & any(grepl(yrs.tdm[y], dir(file.path(outfolder, paste(in.prefix, ens.labs[1], sep=".")))))){
+      lag.use <- ifelse(direction.filter=="backward", 1, nrow(met.out$dat.source$time))
+      lags.init <- list()
+      lags.init[["air_temperature"]] <- data.frame(array(mean(met.out$dat.source$air_temperature_maximum[lag.use], met.out$dat.source$air_temperature_minimum[lag.use]), dim=c(1, n.ens)))
+      lags.init[["air_temperature_min"]] <- data.frame(array(met.out$dat.source$air_temperature_minimum[lag.use], dim=c(1, n.ens)))
+      lags.init[["air_temperature_max"]] <- data.frame(array(met.out$dat.source$air_temperature_maximum[lag.use], dim=c(1, n.ens)))
+      for(v in vars.hour[2:length(vars.hour)]){
+        lags.init[[v]] <- data.frame(array(met.out$dat.source[[v]][lag.use], dim=c(1,n.ens)))
+      }
+      next
+    }
+    
     
     # Package the raw data into the dataframe that will get passed into the function
     dat.ens <- data.frame(year = met.out$dat.source$time$Year, 
@@ -403,9 +418,11 @@ predict_subdaily_met <- function(outfolder, in.path, in.prefix, path.train, dire
     # print(paste0("finished year ", yrs.tdm[y]))
     # -----------------------------------
     
-    rm(met.out, dat.ens, met.nxt, dat.nxt, dat.nxt2, ens.sims)
+    rm(met.out, dat.ens, met.nxt, dat.nxt, dat.nxt2, ens.sims, loc.file)
     
   } # End year loop
   msg.done <- paste("Temporal Downscaling Complete:", in.prefix, min(yrs.tdm), "-", max(yrs.tdm), sep=" ")
   return(msg.done)
+  
+  rm(pb, y, precip.dist, lags.init)
 } # End function

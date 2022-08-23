@@ -48,43 +48,24 @@ library(parallel)
 # library(tictoc)
 rm(list=ls())
 
-# wd.base <- "/home/crollinson/met_ensemble/"
-# wd.base <- "~/Desktop/Research/met_ensembles/"
+source("pecan_met_utils/tdm_predict_subdaily_met.R")
+source("pecan_met_utils/tdm_lm_ensemble_sims.R")
+source("pecan_met_utils/tdm_subdaily_pred.R")
+source("pecan_met_utils/align_met.R")
 
-# setwd(wd.base)
 
-# Hard-coding numbers for a single site for now
-vers=".v1"
-site.name= "BART"
-site.lat = 44.063889
-site.lon = -71.287375
-
-wd.base = file.path("..", paste0("met_raw", vers))
-# dat.base <- file.path(wd.base, "data")
-
-# 
-
-path.train <- file.path(wd.base, "3hr", site.name, "NLDAS")
-path.lm <- file.path(wd.base, "3hr_mods.tdm", site.name)
-path.in <- file.path(wd.base, "daily", site.name)
-path.out <- file.path(wd.base, "3hr", site.name)
-# path.in <- file.path(dat.base, "met_ensembles", paste0(site.name, vers), "day/ensembles")
-# path.out <- file.path(dat.base, "met_ensembles", paste0(site.name, vers), "1hr/ensembles")
-
+sites.neon <- read.csv("NEON_Field_Site_FOREST_CORE.csv")
+wd.base = "../met_raw.v1"
 scenarios <- c("rcp45", "rcp85")
-GCM.list <- dir(path.in)
-
-# Get rid of known problematic ensemble members
-# GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC", "IPSL-CM5A-MR")]
-GCM.list <- GCM.list[!GCM.list %in% c("bias_correct_qaqc", "NLDAS")]
 
 ens.hr  <- 1 # Number of hourly ensemble members to create
 n.day <- 1 # Number of daily ensemble members to process
 # yrs.plot <- c(2015, 1985, 1920, 1875, 1800, 1000, 850)
 yrs.plot <- c(2010, 2025, 2050, 2075, 2099)
 timestep="3hr"
-# years.sim=2015:1900
 yrs.sim=2006:2099
+
+yrs.train=NULL
 
 # Setting up parallelization
 parallel=FALSE
@@ -93,45 +74,47 @@ cores.max = 20
 # Set up the appropriate seed
 set.seed(0017)
 seed.vec <- sample.int(1e6, size=500, replace=F)
-# -----------------------------------
 
-# -----------------------------------
-# 2. Apply the model
-# -----------------------------------
-# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_predict_subdaily_met.R"))
-# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_lm_ensemble_sims.R"))
-# source(file.path(path.pecan, "modules/data.atmosphere/R", "align_met.R"))
-# source(file.path(path.pecan, "modules/data.atmosphere/R", "tdm_subdaily_pred.R"))
-# source(file.path(path.pecan, "tdm_predict_subdaily_met.R"))
-source("pecan_met_utils/tdm_predict_subdaily_met.R")
-source("pecan_met_utils/tdm_lm_ensemble_sims.R")
-source("pecan_met_utils/tdm_subdaily_pred.R")
-source("pecan_met_utils/align_met.R")
-
-
-# Set & create the output directory
-if(!dir.exists(path.out)) dir.create(path.out, recursive=T)
-
-for(GCM in GCM.list){
-  # GCM="Ameriflux"
-  # tic()
-  # Set the directory where the output is & load the file
-  # path.gcm <- file.path(path.in, GCM)
+for(i in 1:nrow(sites.neon)){
+  site.name= sites.neon$field_site_id[i]
+  site.lat = sites.neon$field_latitude[i]
+  site.lon = sites.neon$field_longitude[i]
   
-  # gcm.splt <- strsplit(GCM, "_")[[1]]
-  # MOD=gcm.splt[1]
-  # SCEN=gcm.splt[2]
+  path.train <- file.path(wd.base, "3hr", site.name, "NLDAS")
+  path.lm <- file.path(wd.base, "3hr_mods.tdm", site.name)
+  path.in <- file.path(wd.base, "daily", site.name)
+  path.out <- file.path(wd.base, "3hr", site.name)
   
-  # Doing this one ensemble member at at time
-  # Figure out what's been done already
-  for(SCEN in scenarios){
-      out.scen <- file.path(path.out, GCM, SCEN)
+  GCM.list <- dir(path.in)
+  
+  GCM.list <- GCM.list[!GCM.list %in% c("bias_correct_qaqc", "NLDAS", "ACCESS1-3")]
+
+  # Get rid of known problematic ensemble members
+  # GCM.list <- GCM.list[!GCM.list %in% c("ACCESS1-3", "HadGEM2-ES", "HadGEM2-CC", "IPSL-CM5A-MR")]
+  
+  # -----------------------------------
+  # 2. Apply the model
+  # -----------------------------------
+  # Set & create the output directory
+  if(!dir.exists(path.out)) dir.create(path.out, recursive=T)
+  
+  for(GCM in GCM.list){
+    for(SCEN in scenarios){
+      print(paste(GCM, SCEN, sep=": "))
+      # out.scen <- file.path(path.out, GCM, SCEN)
       predict_subdaily_met(outfolder=path.out, in.path=file.path(path.in, GCM, SCEN),
                            in.prefix=paste(GCM, SCEN, sep="_"), lm.models.base=path.lm,
                            path.train=path.train, direction.filter="forward", yrs.predict=yrs.sim,
                            ens.labs = "tdm", resids = FALSE,
                            adjust.pr=1,
                            overwrite = FALSE, seed=seed.vec[1], print.progress = TRUE)
-  }
-}
+    } # End SCEN
+  } # End GCM
+  # ----------------------------------
+} # End Site Loop (i)
+
+
+
+
 # -----------------------------------
+
