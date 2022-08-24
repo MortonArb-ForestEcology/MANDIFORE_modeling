@@ -220,9 +220,9 @@ models <- list(p.test, VPD.test, rel.VPD.test, tair.test, MNG.test, height.sd.te
                tair.MNG.test, p.height.sd.test, VPD.height.sd.test, rel.VPD.height.sd.test, tair.height.sd.test,
                p.MNG.height.sd.test, VPD.MNG.height.sd.test, rel.VPD.MNG.height.sd.test, tair.MNG.height.sd.test, tair.VPD.p.test)
 
-model.names <- c('p.test', 'VPD.test', 'rel.VPD.test', 'tair.test', 'MNG.test', 'height.sd.test', 'p.MNG.test', 'VPD.MNG.test', 'rel.VPD.MNG.test',
-                 'tair.MNG.test', 'p.height.sd.test', 'VPD.height.sd.test', 'rel.VPD.height.sd.test', 'tair.height.sd.test',
-                 'p.MNG.height.sd.test', 'VPD.MNG.height.sd.test', 'rel.VPD.MNG.height.sd.test', 'tair.MNG.height.sd.test', 'tair.VPD.p.test')
+model.names <- c('Precip', 'VPD', 'Relative.VPD', 'Air.temp', 'Manage', 'Height.sd', 'Precip*Manage', 'VPD*Manage', 'Relative.VPD*Manage',
+                 'Air.temp*Manage', 'Precip*height.sd', 'VPD*height.sd', 'Relative*VPD.height.sd', 'Air.temp*height.sd',
+                 'Precip*Manage*height.sd', 'VPD*Manage*height.sd', 'Relative.VPD*Manage*height.sd', 'Air.temp*Manage*height.sd', 'Air.temp*VPD*Precip')
 
 both.diff.aic <- aictab(models, model.names)
 
@@ -283,7 +283,7 @@ png(width= 750, filename= file.path(path.figures, paste0('Relative_Agb_Change_Ov
 ggplot(data=runs.late)+
   ggtitle("Relative Change in above ground biomass (AGB) over time by Management")+
   facet_wrap(~Management)+
-  geom_point(aes(x=year, y = agb.rel.diff, color = rcp))+
+  geom_line(aes(x=year, y = agb.rel.diff, color = GCM, linetype = rcp))+
   ylab("Relative change in AGB")+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
@@ -322,17 +322,39 @@ ggplot(data=runs.late)+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
 
-
 #Relative AGB over height sd by management
-png(width= 750, filename= file.path(path.figures, paste0('Relative_change_in_AGB_vs_Height_sd_by_Management.png')))
+png(width= 800, filename= file.path(path.figures, paste0('Relative_change_in_AGB_vs_Height_sd_by_Management.png')))
 ggplot(data=runs.late)+
   ggtitle("Relative change in above ground biomass (AGB) vs. standard deviaiton of tree height by management")+
   facet_wrap(~Management)+
-  geom_point(aes(x=height.sd, y = agb.rel.diff, color = rcp))+
+  geom_point(aes(x=VPD, y = height.sd, color = rcp))+
   ylab("Relative change in AGB")+
   xlab("SD of tree height")+
+  theme(plot.title = element_text(size = 14, face = "bold"))
+dev.off()
+
+#height sd vs VPD by Management
+png(width= 750, filename= file.path(path.figures, paste0('Height_sd_vs_VPD_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Standard Deviation of Height vs. Vapor Pressure Deficit by Management")+
+  facet_wrap(~Management)+
+  geom_point(aes(x=VPD, y = height.sd, color = rcp))+
+  ylab("SD of tree height")+
+  xlab("VPD")+
   theme(plot.title = element_text(size = 16, face = "bold"))
-dev.off
+dev.off()
+
+
+#height sd over time by Management
+png(width= 750, filename= file.path(path.figures, paste0('Height_sd_vs_time_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Standard Deviation of Height over time by Management")+
+  facet_wrap(~Management)+
+  geom_line(aes(x=year, y = height.sd, color= GCM, linetype = rcp))+
+  ylab("SD of tree height")+
+  xlab("year")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
 
 
 #Boxplot I'm still figuring out
