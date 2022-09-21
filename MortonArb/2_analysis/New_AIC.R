@@ -164,6 +164,120 @@ VPD.height.sd.test <- lme(agb.rel.diff ~ VPD*height.sd, random=list(Driver.set=~
 VPD.MNG.height.sd.test <- lme(agb.rel.diff ~ VPD*Management*height.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
 
 
+#-----------------------------------------------------------------------------------#
+#Precipitation as the weather metric
+#-----------------------------------------------------------------------------------#
+rel.p.test <- lme(agb.rel.diff ~ rel.precip, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.p.MNG.test <- lme(agb.rel.diff ~ rel.precip*Management, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#AGB
+rel.p.agb.test <- lme(agb.rel.diff ~ rel.precip*agb, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.p.MNG.agb.test <- lme(agb.rel.diff ~ rel.precip*Management*agb, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#DBH mean
+rel.p.dbh.mean.test <- lme(agb.rel.diff ~ rel.precip*dbh.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.p.MNG.dbh.mean.test <- lme(agb.rel.diff ~ rel.precip*Management*dbh.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#SD of DBH section
+rel.p.dbh.sd.test <- lme(agb.rel.diff ~ rel.precip*dbh.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.p.MNG.dbh.sd.test <- lme(agb.rel.diff ~ rel.precip*Management*dbh.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#Tree density
+rel.p.density.tree.test <- lme(agb.rel.diff ~ rel.precip*density.tree, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.p.MNG.density.tree.test <- lme(agb.rel.diff ~ rel.precip*Management*density.tree, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#Height mean
+rel.p.height.mean.test <- lme(agb.rel.diff ~ rel.precip*height.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.p.MNG.height.mean.test <- lme(agb.rel.diff ~ rel.precip*Management*height.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#SD of height
+rel.p.height.sd.test <- lme(agb.rel.diff ~ rel.precip*height.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.p.MNG.height.sd.test <- lme(agb.rel.diff ~ rel.precip*Management*height.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+
+#-----------------------------------------------------------------------------------#
+#Temperature as the weather metric
+#-----------------------------------------------------------------------------------#
+rel.tair.test <- lme(agb.rel.diff ~ rel.tair, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.tair.MNG.test <- lme(agb.rel.diff ~ rel.tair*Management, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#AGB
+rel.tair.agb.test <- lme(agb.rel.diff ~ rel.tair*agb, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.tair.MNG.agb.test <- lme(agb.rel.diff ~ rel.tair*Management*agb, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#DBH mean
+rel.tair.dbh.mean.test <- lme(agb.rel.diff ~ rel.tair*dbh.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.tair.MNG.dbh.mean.test <- lme(agb.rel.diff ~ rel.tair*Management*dbh.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#SD of DBH section
+rel.tair.dbh.sd.test <- lme(agb.rel.diff ~ rel.tair*dbh.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.tair.MNG.dbh.sd.test <- lme(agb.rel.diff ~ rel.tair*Management*dbh.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#Tree density
+rel.tair.density.tree.test <- lme(agb.rel.diff ~ rel.tair*density.tree, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.tair.MNG.density.tree.test <- lme(agb.rel.diff ~ rel.tair*Management*density.tree, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#Height mean
+rel.tair.height.mean.test <- lme(agb.rel.diff ~ rel.tair*height.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.tair.MNG.height.mean.test <- lme(agb.rel.diff ~ rel.tair*Management*height.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#SD of height
+rel.tair.height.sd.test <- lme(agb.rel.diff ~ rel.tair*height.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.tair.MNG.height.sd.test <- lme(agb.rel.diff ~ rel.tair*Management*height.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+
+#-----------------------------------------------------------------------------------#
+#VPD as the weather metric
+#-----------------------------------------------------------------------------------#
+rel.VPD.test <- lme(agb.rel.diff ~ rel.VPD, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.VPD.MNG.test <- lme(agb.rel.diff ~ rel.VPD*Management, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#AGB
+rel.VPD.agb.test <- lme(agb.rel.diff ~ rel.VPD*agb, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.VPD.MNG.agb.test <- lme(agb.rel.diff ~ rel.VPD*Management*agb, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#DBH mean
+rel.VPD.dbh.mean.test <- lme(agb.rel.diff ~ rel.VPD*dbh.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.VPD.MNG.dbh.mean.test <- lme(agb.rel.diff ~ rel.VPD*Management*dbh.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#SD of DBH section
+rel.VPD.dbh.sd.test <- lme(agb.rel.diff ~ rel.VPD*dbh.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.VPD.MNG.dbh.sd.test <- lme(agb.rel.diff ~ rel.VPD*Management*dbh.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#Tree density
+rel.VPD.density.tree.test <- lme(agb.rel.diff ~ rel.VPD*density.tree, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.VPD.MNG.density.tree.test <- lme(agb.rel.diff ~ rel.VPD*Management*density.tree, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#Height mean
+rel.VPD.height.mean.test <- lme(agb.rel.diff ~ rel.VPD*height.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.VPD.MNG.height.mean.test <- lme(agb.rel.diff ~ rel.VPD*Management*height.mean, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+#SD of height
+rel.VPD.height.sd.test <- lme(agb.rel.diff ~ rel.VPD*height.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+rel.VPD.MNG.height.sd.test <- lme(agb.rel.diff ~ rel.VPD*Management*height.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+
+
 models <- list(agb.test, MNG.agb.test, dbh.mean.test, MNG.dbh.mean.test, dbh.sd.test, MNG.dbh.sd.test, density.tree.test, MNG.density.tree.test,
                height.mean.test, MNG.height.mean.test, height.sd.test, MNG.height.sd.test, 
                p.test, p.agb.test, p.MNG.test, p.MNG.agb.test, p.dbh.sd.test, p.MNG.dbh.sd.test, p.density.tree.test, p.MNG.density.tree.test,
@@ -171,7 +285,13 @@ models <- list(agb.test, MNG.agb.test, dbh.mean.test, MNG.dbh.mean.test, dbh.sd.
                tair.test, tair.agb.test, tair.MNG.test, tair.MNG.agb.test, tair.dbh.sd.test, tair.MNG.dbh.sd.test, tair.density.tree.test, tair.MNG.density.tree.test,
                tair.height.sd.test, tair.MNG.height.sd.test, tair.height.mean.test, tair.MNG.height.mean.test, tair.dbh.mean.test, tair.MNG.dbh.mean.test,
                VPD.test, VPD.agb.test, VPD.MNG.test, VPD.MNG.agb.test, VPD.dbh.sd.test, VPD.MNG.dbh.sd.test, VPD.density.tree.test, VPD.MNG.density.tree.test,
-               VPD.height.sd.test, VPD.MNG.height.sd.test, VPD.height.mean.test, VPD.MNG.height.mean.test, VPD.dbh.mean.test, VPD.MNG.dbh.mean.test) 
+               VPD.height.sd.test, VPD.MNG.height.sd.test, VPD.height.mean.test, VPD.MNG.height.mean.test, VPD.dbh.mean.test, VPD.MNG.dbh.mean.test,
+               rel.p.test, rel.p.agb.test, rel.p.MNG.test, rel.p.MNG.agb.test, rel.p.dbh.sd.test, rel.p.MNG.dbh.sd.test, rel.p.density.tree.test, rel.p.MNG.density.tree.test,
+               rel.p.height.sd.test, rel.p.MNG.height.sd.test, rel.p.height.mean.test, rel.p.MNG.height.mean.test, rel.p.dbh.mean.test, rel.p.MNG.dbh.mean.test,
+               rel.tair.test, rel.tair.agb.test, rel.tair.MNG.test, rel.tair.MNG.agb.test, rel.tair.dbh.sd.test, rel.tair.MNG.dbh.sd.test, rel.tair.density.tree.test, rel.tair.MNG.density.tree.test,
+               rel.tair.height.sd.test, rel.tair.MNG.height.sd.test, rel.tair.height.mean.test, rel.tair.MNG.height.mean.test, rel.tair.dbh.mean.test, rel.tair.MNG.dbh.mean.test,
+               rel.VPD.test, rel.VPD.agb.test, rel.VPD.MNG.test, rel.VPD.MNG.agb.test, rel.VPD.dbh.sd.test, rel.VPD.MNG.dbh.sd.test, rel.VPD.density.tree.test, rel.VPD.MNG.density.tree.test,
+               rel.VPD.height.sd.test, rel.VPD.MNG.height.sd.test, rel.VPD.height.mean.test, rel.VPD.MNG.height.mean.test, rel.VPD.dbh.mean.test, rel.VPD.MNG.dbh.mean.test) 
 
 
 model.names <- c('agb', 'MNG*agb', 'dbh,mean', 'MNG*dbh.mean', 'dbh.sd.test', 'MNG*dbh.sd', 'density.tree', 'MNG*density.tree',
@@ -181,12 +301,20 @@ model.names <- c('agb', 'MNG*agb', 'dbh,mean', 'MNG*dbh.mean', 'dbh.sd.test', 'M
                  'Air.temp','Air.temp*agb', 'Air.temp*MNG', 'Air.temp*MNG*agb', 'Air.temp*dbh.sd', 'Air.temp*MNG*dbh.sd', 'Air.temp*density.tree', 'Air.temp*MNG*density.tree',
                  'Air.temp*height.sd', 'Air.temp*MNG*height.sd', 'Air.temp*height.mean', 'Air.temp*MNG*height.mean', 'Air.temp*dbh.mean', 'Air.temp*MNG*dbh.mean',
                  'VPD','VPD*agb', 'VPD*MNG', 'VPD*MNG*agb', 'VPD*dbh.sd', 'VPD*MNG*dbh.sd', 'VPD*density.tree', 'VPD*MNG*density.tree',
-                 'VPD*height.sd', 'VPD*MNG*height.sd', 'VPD*height.mean', 'VPD*MNG*height.mean', 'VPD*dbh.mean', 'VPD*MNG*dbh.mean') 
+                 'VPD*height.sd', 'VPD*MNG*height.sd', 'VPD*height.mean', 'VPD*MNG*height.mean', 'VPD*dbh.mean', 'VPD*MNG*dbh.mean',
+                 'Rel.precip','Rel.precip*agb', 'Rel.precip*MNG', 'Rel.precip*MNG*agb', 'Rel.precip*dbh.sd', 'Rel.precip*MNG*dbh.sd', 'Rel.precip*density.tree', 'Rel.precip*MNG*density.tree',
+                 'Rel.precip*height.sd', 'Rel.precip*MNG*height.sd', 'Rel.precip*height.mean', 'Rel.precip*MNG*height.mean', 'Rel.precip*dbh.mean', 'Rel.precip*MNG*dbh.mean',
+                 'Rel.air.temp','Rel.air.temp*agb', 'Rel.air.temp*MNG', 'Rel.air.temp*MNG*agb', 'Rel.air.temp*dbh.sd', 'Rel.air.temp*MNG*dbh.sd', 'Rel.air.temp*density.tree', 'Rel.air.temp*MNG*density.tree',
+                 'Rel.air.temp*height.sd', 'Rel.air.temp*MNG*height.sd', 'Rel.air.temp*height.mean', 'Rel.air.temp*MNG*height.mean', 'Rel.air.temp*dbh.mean', 'Rel.air.temp*MNG*dbh.mean',
+                 'Rel.VPD','Rel.VPD*agb', 'Rel.VPD*MNG', 'Rel.VPD*MNG*agb', 'Rel.VPD*dbh.sd', 'Rel.VPD*MNG*dbh.sd', 'Rel.VPD*density.tree', 'Rel.VPD*MNG*density.tree',
+                 'Rel.VPD*height.sd', 'Rel.VPD*MNG*height.sd', 'Rel.VPD*height.mean', 'Rel.VPD*MNG*height.mean', 'Rel.VPD*dbh.mean', 'Rel.VPD*MNG*dbh.mean') 
 
 
 diff.aic <- aictab(models, model.names)
 
 diff.aic
+
+write.csv(diff.aic, "../data/Full_AIC.csv", row.names=F)
 
 #BIC of all models
 diff.bic <-  bictab(models, model.names)
