@@ -265,6 +265,21 @@ VPD.height.sd.MNG <- lme(agb.rel.diff ~ VPD*Management*height.sd, random=list(Dr
 summary(VPD.height.sd.MNG)
 anova(VPD.height.sd.MNG)
 plot(VPD.height.sd.MNG)
+
+#Counting the number of massive agb loss events
+agb.extreme <- as.numeric(quantile(runs.late$agb.rel.diff, probs = c(.025)))
+
+runs.late$loss.event <- ifelse(runs.late$agb.rel.diff <= agb.extreme, T, F)
+
+#Trying to do a regression on this but it keeps failing to converge. Not sure why, but I have a harder time setting up binomial regression
+lm.test <- lme4::glmer(loss.event ~ VPD + (1|Driver.set), family = binomial, data = runs.late)
+summary(lm.test)
+anova(lm.test)
+
+loss.freq <- as.data.frame(table(runs.late[runs.late$loss.event, "Management"]))
+colnames(loss.freq) <- c("Management", "Number_of_loss_events")
+write.csv(loss.freq, "../data/Frequency_of_major_loss.csv", row.names=F)
+
 #------------------------------------------------------------------------#
 # FIGURES SECTION
 #------------------------------------------------------------------------#
