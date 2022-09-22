@@ -249,28 +249,22 @@ both.diff.bic
 #-------------------------------------------------#
 # Actual model runs
 #-------------------------------------------------#
-
-#Just precip and management with relative precip
-rel.MNG.agb.both <- lme(agb.rel.diff ~ rel.precip*Management, random=list(Driver.set=~1), data = runs.late, method = "ML")
-summary(rel.MNG.agb.both)
-anova(rel.MNG.agb.both)
-plot(rel.MNG.agb.both)
-
-
-#Just precip and management with relative precip
-rel.MNG.agb.both <- lme(agb.rel.diff ~ VPD*Management, random=list(Driver.set=~1), data = runs.late, method = "ML")
-summary(rel.MNG.agb.both)
-anova(rel.MNG.agb.both)
-plot(rel.MNG.agb.both)
-
-
-#precip, management, and height sd
+#VPD, management, and height sd
 #THIS IS OUR BEST MODEL
+VPD.agb.MNG <- lme(agb.rel.diff ~ VPD*Management*agb, random=list(Driver.set=~1), data = runs.late, method = "ML")
+summary(VPD.agb.MNG)
+anova(VPD.agb.MNG)
+plot(VPD.agb.MNG)
+
+VPD.dbh.sd.MNG <- lme(agb.rel.diff ~ VPD*Management*dbh.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+summary(VPD.dbh.sd.MNG)
+anova(VPD.dbh.sd.MNG)
+plot(VPD.dbh.sd.MNG)
+
 VPD.height.sd.MNG <- lme(agb.rel.diff ~ VPD*Management*height.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
 summary(VPD.height.sd.MNG)
 anova(VPD.height.sd.MNG)
 plot(VPD.height.sd.MNG)
-
 #------------------------------------------------------------------------#
 # FIGURES SECTION
 #------------------------------------------------------------------------#
@@ -290,13 +284,23 @@ ggplot(data=runs.late)+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
 
+#Proportional agb change vs agb by management
+png(width= 750, filename= file.path(path.figures, paste0('Proportional_Agb_Change_to_AGB_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Proportional Change in above ground biomass (AGB) to current AGB increases by Management")+
+  facet_wrap(~Management)+
+  geom_point(aes(x=agb, y = agb.rel.diff, color = rcp))+
+  ylab("Proportional change in AGB")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
 
 #Proportional agb change vs time by management
 png(width= 750, filename= file.path(path.figures, paste0('Proportional_Agb_Change_Over_Time_by_Management.png')))
 ggplot(data=runs.late)+
   ggtitle("Proportional Change in above ground biomass (AGB) over time by Management")+
   facet_wrap(~Management)+
-  geom_line(aes(x=year, y = agb.rel.diff, color = GCM, linetype = rcp))+
+  geom_line(aes(x=year, y = agb.rel.diff, group = Driver.set, color = rcp))+
   ylab("Proportional change in AGB")+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
@@ -307,7 +311,7 @@ png(width= 750, filename= file.path(path.figures, paste0('AGB_Over_Time_by_Manag
 ggplot(data=runs.late)+
   ggtitle("Above ground biomass (AGB) over time by Management")+
   facet_wrap(~Management)+
-  geom_line(aes(x=year, y = agb, color = GCM, linetype = rcp))+
+  geom_line(aes(x=year, y = agb, group = Driver.set, color = rcp))+
   ylab("AGB")+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
