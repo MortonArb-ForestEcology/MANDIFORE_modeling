@@ -113,17 +113,13 @@ path.read <- "../data/"
 
 runs.comb <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
 
+runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Gap", "Shelter", "Under"))
+
+runs.comb$Driver.set <- paste0(runs.comb$GCM,"." ,runs.comb$rcp)
+
 runs.late <- runs.comb[runs.comb$year >= 2025,]
 
 runs.late <- runs.late[!is.na(runs.late$agb.rel.diff),]
-
-runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "Shelter", "Under"))
-
-runs.late$Driver.set <- paste0(runs.late$GCM,"." ,runs.late$rcp)
-
-runs.late$log.agb.rel.diff <- log(runs.late$agb.rel.diff + abs(min(runs.late$agb.rel.diff)) + 1)
-
-runs.late$log.agb.diff <- log(runs.late$agb.diff + abs(min(runs.late$agb.diff)) + 1)
 
 #------------------------------------------------------------------------#
 #AIC to determine our best model
@@ -265,25 +261,10 @@ VPD.height.sd.MNG <- lme(agb.rel.diff ~ VPD*Management*height.sd, random=list(Dr
 summary(VPD.height.sd.MNG)
 anova(VPD.height.sd.MNG)
 plot(VPD.height.sd.MNG)
-
-#Counting the number of massive agb loss events
-agb.extreme <- as.numeric(quantile(runs.late$agb.rel.diff, probs = c(.025)))
-
-runs.late$loss.event <- ifelse(runs.late$agb.rel.diff <= agb.extreme, T, F)
-
-#Trying to do a regression on this but it keeps failing to converge. Not sure why, but I have a harder time setting up binomial regression
-lm.test <- lme4::glmer(loss.event ~ VPD + (1|Driver.set), family = binomial, data = runs.late)
-summary(lm.test)
-anova(lm.test)
-
-loss.freq <- as.data.frame(table(runs.late[runs.late$loss.event, "Management"]))
-colnames(loss.freq) <- c("Management", "Number_of_loss_events")
-write.csv(loss.freq, "../data/Frequency_of_major_loss.csv", row.names=F)
-
 #------------------------------------------------------------------------#
 # FIGURES SECTION
 #------------------------------------------------------------------------#
-path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Outline Figures"
+path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Outline Figures"
 
 library(ggplot2)
 cbPalette  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
