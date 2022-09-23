@@ -331,6 +331,29 @@ ggplot(data=runs.late)+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
 
+#Example using a single GCM
+png(width= 750, filename= file.path(path.figures, paste0('Sinlge_GCM_AGB_Over_Time_by_Management.png')))
+ggplot(data=runs.late[runs.late$Driver.set == "BNU-ESM.rcp45",])+
+  ggtitle("Example: Above ground biomass (AGB) over time by Management for BNU-ESM.rcp45")+
+  #facet_wrap(~Management)+
+  geom_line(aes(x=year, y = agb, color = Management))+
+  ylab("AGB")+
+  theme(plot.title = element_text(size = 10, face = "bold"))
+dev.off()
+
+
+pdf(file= file.path(path.figures, paste0('AGB_Over_Time_Individual_GCM.pdf')))
+for(DRIVE in unique(runs.late$Driver.set)){
+  temp.fig <- ggplot(data=runs.late[runs.late$Driver.set == DRIVE,])+
+    ggtitle(paste0(DRIVE,": Above ground biomass (AGB) over time by Management"))+
+    #facet_wrap(~Management)+
+    geom_line(aes(x=year, y = agb, color = Management))+
+    ylab("AGB")+
+    theme(plot.title = element_text(size = 10, face = "bold"))
+  print(temp.fig)
+}
+dev.off()
+
 runs.late$total.precip <- runs.late$sum
 runs.late$air.temp <- runs.late$tair
 runs.long <- tidyr::gather(runs.late, var, values, air.temp, total.precip, VPD, factor_key=TRUE)
