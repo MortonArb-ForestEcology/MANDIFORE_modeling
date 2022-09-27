@@ -26,12 +26,19 @@ loss.freq <- as.data.frame(table(runs.late[runs.late$loss.event, "Management"]))
 colnames(loss.freq) <- c("Management", "Number_of_loss_events")
 write.csv(loss.freq, "../data/Frequency_of_major_loss.csv", row.names=F)
 
-
-
-for(DRIVE in unique(runs.late$Driver.set)){
-  temp <- runs.late[runs.late$Driver.set == DRIVE  & runs.late$year == 2025,]
-  
+for(i in 5:nrow(runs.late)){
+  DRIVE <- runs.late[i, "Driver.set"]
+  MNG <- runs.late[i, "Management"]
+  YR <- runs.late[i, "year"]
+  if(YR != 2025){
+  prev <- runs.late[runs.late$Driver.set == DRIVE & runs.late$Management == MNG & runs.late$year == YR-1 , "loss.event"]
+  runs.late[i, "nonseq.loss.event"] <- ifelse((runs.late[i, "loss.event"] == T & prev ==F), T, F)
+  }
 }
+
+loss.freq <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event, "Management"]))
+colnames(loss.freq) <- c("Management", "Number_of_non_sequential_loss_events")
+write.csv(loss.freq, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
 
 #Organizing data into long form for easier graphing. Only using the year immediately post harvest
 agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
@@ -87,8 +94,6 @@ dev.off()
 
 library(data.table)
 #Creating a figure that shows the structure of all the management styles before at least one of them crashed. 
-runs.before <- runs.late[shift(runs.late$loss.event==T, n=1L, type = "lag"),]
-
 runs.before <- data.frame()
 for(i in 1:nrow(runs.late)){
   if(runs.late[i, "loss.event"] == T){
@@ -97,7 +102,7 @@ for(i in 1:nrow(runs.late)){
     temp.lag <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == runs.late[i-1, "year"], ]
     #Flagging the Management that ha the loss event
     temp.lag$loss.event <- temp.lead$loss.event
-    runs.MNG.comp <- rbind(runs.MNG.comp, temp.lag)
+    runs.before <- rbind(runs.before, temp.lag)
   }
 }
 
