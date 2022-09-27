@@ -52,3 +52,78 @@ ggplot(plot.stack)+
 dev.off()
   
 
+runs.MNG.comp <- data.frame()
+for(i in 1:nrow(runs.late)){
+  if(runs.late[i, "loss.event"] == T){
+    temp.lead <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == runs.late[i, "year"], ]
+    #Now pulling the year before the crash
+    temp.lag <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == (runs.late[i, "year"]-1), ]
+    #Flagging the Management that ha the loss event
+    temp.lag$loss.event <- temp.lead$loss.event
+    runs.MNG.comp <- rbind(runs.MNG.comp, temp.lag)
+  }
+}
+
+#Creating a figure that shows the structure of all the management styles before at least one of them crashed. 
+agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management+loss.event, data = runs.MNG.comp, FUN = mean, na.action = NULL)
+
+plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.stack) <- c("values", "var")
+plot.stack[,c("GCM", "rcp", "Driver.set", "Management", "loss.event")] <- agg.stack[,c("GCM", "rcp", "Driver.set", "Management", "loss.event")]
+
+#We can now compare the year before a crash across management styles experiencing the same weather conditions
+png(width= 750, filename= file.path(path.figures, paste0('Pre-crash_Structure_by_whether_crash_occured.png')))
+ggplot(plot.stack)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=loss.event, y=values), show.legend = FALSE)+
+  ggtitle("Structural variables immediately pre-crash by whether they crashed")+
+  xlab("Was there a major loss event")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+
+
+
+library(data.table)
+#Creating a figure that shows the structure of all the management styles before at least one of them crashed. 
+runs.before <- runs.late[shift(runs.late$loss.event==T, n=1L, type = "lag"),]
+
+runs.before <- data.frame()
+for(i in 1:nrow(runs.late)){
+  if(runs.late[i, "loss.event"] == T){
+    temp.lead <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == runs.late[i, "year"], ]
+    #Now pulling the year before the crash
+    temp.lag <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == runs.late[i-1, "year"], ]
+    #Flagging the Management that ha the loss event
+    temp.lag$loss.event <- temp.lead$loss.event
+    runs.MNG.comp <- rbind(runs.MNG.comp, temp.lag)
+  }
+}
+
+
+agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management, data = runs.before, FUN = mean, na.action = NULL)
+
+plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.stack) <- c("values", "var")
+plot.stack[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.stack[,c("GCM", "rcp", "Driver.set", "Management")]
+
+#We can now compare the year before a crash across management styles experiencing the same weather conditions
+png(width= 750, filename= file.path(path.figures, paste0('Pre-crash_Structure_by_Management.png')))
+ggplot(plot.stack)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables immediately pre-crash by Management")+
+  xlab("Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+#T test on the structural metrics
+t.test(runs.MNG.comp[runs.MNG.comp$loss.event == T, "agb"], runs.MNG.comp[runs.MNG.comp$loss.event == F, "agb"])
+t.test(runs.MNG.comp[runs.MNG.comp$loss.event == T, "density.tree"], runs.MNG.comp[runs.MNG.comp$loss.event == F, "density.tree"])
+t.test(runs.MNG.comp[runs.MNG.comp$loss.event == T, "dbh.mean"], runs.MNG.comp[runs.MNG.comp$loss.event == F, "dbh.mean"])
+t.test(runs.MNG.comp[runs.MNG.comp$loss.event == T, "height.mean"], runs.MNG.comp[runs.MNG.comp$loss.event == F, "height.mean"])
+t.test(runs.MNG.comp[runs.MNG.comp$loss.event == T, "dbh.sd"], runs.MNG.comp[runs.MNG.comp$loss.event == F, "dbh.sd"])
+t.test(runs.MNG.comp[runs.MNG.comp$loss.event == T, "height.sd"], runs.MNG.comp[runs.MNG.comp$loss.event == F, "height.sd"])
+
