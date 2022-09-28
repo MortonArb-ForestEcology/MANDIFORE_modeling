@@ -17,7 +17,66 @@ runs.late <- runs.comb[runs.comb$year >= 2025,]
 
 runs.late <- runs.late[!is.na(runs.late$agb.rel.diff),]
 
+
+#---------------------------------------------------------#
+#Immediate post-harvest structure
+#---------------------------------------------------------#
+#Organizing data into long form for easier graphing. Only using the year immediately post harvest
+agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
+
+plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.stack) <- c("values", "var")
+plot.stack[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.stack[,c("GCM", "rcp", "Driver.set", "Management")]
+
+path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
+
+#Making a box plot of the variables immediately post-harvest
+png(width= 750, filename= file.path(path.figures, paste0('Immediate_post-harvest_Structure_by_Management.png')))
+ggplot(plot.stack)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables immediately post-harvest (2025) by Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Agb
+agb.reg <- lme(agb~Management, random=list(Driver.set=~1), data = runs.late[runs.late$year == 2025,], method = "ML")
+anova(agb.reg)
+summary(agb.reg)
+
+#Tree density
+density.reg <- lme(density.tree~Management, random=list(Driver.set=~1), data = runs.late[runs.late$year == 2025,], method = "ML")
+anova(density.reg)
+summary(density.reg)
+
+#Mean DBH
+dbh.mean.reg <- lme(dbh.mean~Management, random=list(Driver.set=~1), data = runs.late[runs.late$year == 2025,], method = "ML")
+anova(dbh.mean.reg)
+summary(dbh.mean.reg)
+
+#Mean tree height
+height.mean.reg <- lme(height.mean~Management, random=list(Driver.set=~1), data = runs.late[runs.late$year == 2025,], method = "ML")
+anova(height.mean.reg)
+summary(height.mean.reg)
+
+#SD of DBH
+dbh.sd.reg <- lme(dbh.sd~Management, random=list(Driver.set=~1), data = runs.late[runs.late$year == 2025,], method = "ML")
+anova(dbh.sd.reg)
+summary(dbh.sd.reg)
+
+#SD of tree height
+height.sd.reg <- lme(height.sd~Management, random=list(Driver.set=~1), data = runs.late[runs.late$year == 2025,], method = "ML")
+anova(height.sd.reg)
+summary(height.sd.reg)
+
+#Cant figure out how to do multiple comparisions that include our random effects.
+#Our random effects play a big role so I don't really feel they can be ignored.
+agb.hsd <- aov(agb~Management, data =runs.late[runs.late$year == 2025,])
+TukeyHSD(agb.hsd)
+#-------------------------------------------------------------#
 #Counting the number of massive agb loss events
+#-------------------------------------------------------------#
+
 #agb.extreme <- as.numeric(quantile(runs.late$agb.rel.diff, probs = c(.025)))
 
 runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.diff <= -.20, T, F)
@@ -100,8 +159,6 @@ stat.shape <- reshape(agg.duration, idvar ="Management", timevar = "rcp",directi
 colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crashes (rcp45)", "Median (rcp45)", "Mode (rcp45)",
                           "Mean # crashes (rcp85)", "SD # of crashes (rcp85)", "Median (rcp45)", "Mode (rcp85)")
 
-
-
 #Filling in the first year
 runs.late$nonseq.loss.event.20 <- ifelse(is.na(runs.late$nonseq.loss.event.20), F ,runs.late$nonseq.loss.event.20)
 
@@ -132,24 +189,6 @@ loss.freq.10 <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event.10, "M
 #colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
 write.csv(stat.shape, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
 
-#Organizing data into long form for easier graphing. Only using the year immediately post harvest
-agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
-
-plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
-names(plot.stack) <- c("values", "var")
-plot.stack[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.stack[,c("GCM", "rcp", "Driver.set", "Management")]
-
-path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
-
-#Making a box plot of the variables immediately post-harvest
-png(width= 750, filename= file.path(path.figures, paste0('Immediate_post-harvest_Structure_by_Management.png')))
-ggplot(plot.stack)+
-  facet_wrap(~var, scales = "free")+
-  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
-  ggtitle("Structural variables immediately post-harvest (2025) by Management")+
-  theme(plot.title = element_text(size = 16, face = "bold"))
-dev.off()
-  
 
 runs.MNG.comp <- data.frame()
 for(i in 1:nrow(runs.late)){
