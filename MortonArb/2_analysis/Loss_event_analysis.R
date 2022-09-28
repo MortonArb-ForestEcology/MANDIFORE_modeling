@@ -69,22 +69,41 @@ for(i in 5:nrow(runs.count)){
   }
 }
 
+#----------------------------------------------------------#
+#Getting stats for the duration of major crashes
+#----------------------------------------------------------#
+#Creating a mode function
 getmode <- function(v) {
   uniqv <- unique(v)
   uniqv[which.max(tabulate(match(v, uniqv)))]
 }
 
-#mean median and mode of duration of event
-mean(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]), na.rm = T)
-median(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]), na.rm = T)
-getmode(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]))
+runs.count$full.duration <- as.numeric(runs.count$full.duration)
 
+#General summary stats of duration
+#mean median and mode of duration of event
+Mean.years <- mean(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]), na.rm = T)
+Median.years <- median(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]), na.rm = T)
+Mode.years <- getmode(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]))
+
+duration.df <- data.frame(Mean.years, Median.years, Mode.years)
 #Seems like 1 year is the median and mode but the mean is just under 2
+
+
+#Aggregating our stats by Management and rcp
+agg.duration <- aggregate(full.duration~rcp+Management, data = runs.count[runs.count$full.duration >0,], FUN = mean, na.rm = T)
+agg.duration[, "sd"] <- aggregate(full.duration~rcp+Management, data = runs.count[runs.count$full.duration >0,], FUN = sd, na.rm = T)[, "full.duration"]
+agg.duration[, "median"] <- aggregate(full.duration~rcp+Management, data = runs.count[runs.count$full.duration >0,], FUN = median, na.rm = T)[, "full.duration"]
+agg.duration[, "mode"] <- aggregate(full.duration~rcp+Management, data = runs.count[runs.count$full.duration >0,], FUN = getmode)[, "full.duration"]
+
+stat.shape <- reshape(agg.duration, idvar ="Management", timevar = "rcp",direction = "wide")
+colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crashes (rcp45)", "Median (rcp45)", "Mode (rcp45)",
+                          "Mean # crashes (rcp85)", "SD # of crashes (rcp85)", "Median (rcp45)", "Mode (rcp85)")
+
+
 
 #Filling in the first year
 runs.late$nonseq.loss.event.20 <- ifelse(is.na(runs.late$nonseq.loss.event.20), F ,runs.late$nonseq.loss.event.20)
-runs.late$nonseq.loss.event.10 <- ifelse(is.na(runs.late$nonseq.loss.event.10), F ,runs.late$nonseq.loss.event.10)
-
 
 crash.count <- runs.late %>% count(nonseq.loss.event.20, Management, GCM, rcp)
 
