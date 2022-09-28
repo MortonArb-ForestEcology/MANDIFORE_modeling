@@ -21,10 +21,8 @@ runs.late <- runs.late[!is.na(runs.late$agb.rel.diff),]
 #agb.extreme <- as.numeric(quantile(runs.late$agb.rel.diff, probs = c(.025)))
 
 runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.diff <= -.20, T, F)
-runs.late$loss.event.10 <- ifelse(runs.late$agb.rel.diff <= -.10, T, F)
 
-write.csv(loss.freq, "../data/Frequency_of_major_loss.csv", row.names=F)
-
+#Counting individual instances of a crash beginning
 for(i in 5:nrow(runs.late)){
   DRIVE <- runs.late[i, "Driver.set"]
   MNG <- runs.late[i, "Management"]
@@ -32,10 +30,56 @@ for(i in 5:nrow(runs.late)){
   if(YR != 2025){
   prev.20 <- runs.late[runs.late$Driver.set == DRIVE & runs.late$Management == MNG & runs.late$year == YR-1 , "loss.event.20"]
   runs.late[i, "nonseq.loss.event.20"] <- ifelse((runs.late[i, "loss.event.20"] == T & prev.20 ==F), T, F)
-  prev.10 <- runs.late[runs.late$Driver.set == DRIVE & runs.late$Management == MNG & runs.late$year == YR-1 , "loss.event.10"]
-  runs.late[i, "nonseq.loss.event.10"] <- ifelse((runs.late[i, "loss.event.10"] == T & prev.10 ==F), T, F)
   }
 }
+
+#Counting the duration of the crash events
+runs.count <- data.frame()
+for(MOD in unique(runs.late$GCM)){
+  for(RCP in unique(runs.late$rcp)){
+    for(MNG in unique(runs.late$Management)){
+      temp <- runs.late[runs.late$GCM == MOD & runs.late$rcp == RCP & runs.late$Management == MNG,]
+      count <-0
+      for(i in 2:nrow(temp)){
+          #Teasing out the duration of the crashes
+          if(temp[i, "loss.event.20"] == T){
+            count <- count + 1
+          } else{
+            count <- 0
+          }
+        temp[i, "years.crash"] <- count
+
+      }
+      runs.count <- rbind(runs.count, temp)
+    }
+  }
+}
+
+#Calculating the full length of the crashes
+for(i in 5:nrow(runs.count)){
+  DRIVE <- runs.count[i, "Driver.set"]
+  MNG <- runs.count[i, "Management"]
+  YR <- runs.count[i, "year"]
+  if(YR != 2099){
+    post <- runs.count[runs.count$Driver.set == DRIVE & runs.count$Management == MNG & runs.count$year == YR+1 , "loss.event.20"]
+    runs.count[i, "full.duration"] <- ifelse((runs.count[i, "loss.event.20"] == T & post ==F), runs.count[i, "years.crash"], 0)
+  }else if(YR == 2099){
+    runs.count[i, "full.duration"] <- runs.count[i, "years.crash"]
+    
+  }
+}
+
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+#mean median and mode of duration of event
+mean(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]), na.rm = T)
+median(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]), na.rm = T)
+getmode(as.numeric(runs.count[runs.count$full.duration != 0 ,"full.duration"]))
+
+#Seems like 1 year is the median and mode but the mean is just under 2
 
 #Filling in the first year
 runs.late$nonseq.loss.event.20 <- ifelse(is.na(runs.late$nonseq.loss.event.20), F ,runs.late$nonseq.loss.event.20)
@@ -44,11 +88,30 @@ runs.late$nonseq.loss.event.10 <- ifelse(is.na(runs.late$nonseq.loss.event.10), 
 
 crash.count <- runs.late %>% count(nonseq.loss.event.20, Management, GCM, rcp)
 
+crash.df <- data.frame()
+for(MOD in unique(runs.late$GCM)){
+  for(RCP in unique(runs.late$rcp)){
+    for(MNG in unique(runs.late$Management)){
+      count <- nrow((runs.late[runs.late$GCM == MOD & runs.late$rcp == RCP & runs.late$Management == MNG & runs.late$nonseq.loss.event.20,]))
+      temp <- data.frame(MOD, RCP, MNG)
+      temp$crash.count <- count
+      crash.df <- rbind(crash.df, temp)
+    }
+  }
+}
+
+stat.df <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = mean)
+stat.df[,"sd"] <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = sd)[, "crash.count"]
+
+stat.shape <- reshape(stat.df, idvar ="MNG", timevar = "RCP",direction = "wide")
+colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crashes (rcp45)",
+                          "Mean # crashes (rcp85)", "SD # of crashes (rcp85)")
+
 loss.freq.20 <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event.20, "Management"]))
 loss.freq.10 <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event.10, "Management"]))
 
-colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
-write.csv(loss.freq.20, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
+#colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
+write.csv(stat.shape, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
 
 #Organizing data into long form for easier graphing. Only using the year immediately post harvest
 agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
@@ -147,7 +210,7 @@ t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "height.sd"], runs
 #Lead anaysis of 5 years
 #------------------------------------------------------#
 
-runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.lead5 <= -.50, T, F)#50%
+runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.lead2 <= -.50, T, F)#50%
 loss.freq.20 <- as.data.frame(table(runs.late[runs.late$loss.event.20, "Management"]))
 colnames(loss.freq.20) <- c("Management", "Number of Major Crashes (20%)")
 write.csv(loss.freq, "../data/Frequency_of_major_loss.csv", row.names=F)
@@ -157,7 +220,7 @@ for(i in 5:nrow(runs.late)){
   MNG <- runs.late[i, "Management"]
   YR <- runs.late[i, "year"]
   if(YR >= 2030){
-    prev.20 <- runs.late[runs.late$Driver.set == DRIVE & runs.late$Management == MNG & runs.late$year == YR-5 , "loss.event.20"]
+    prev.20 <- runs.late[runs.late$Driver.set == DRIVE & runs.late$Management == MNG & runs.late$year == YR-2 , "loss.event.20"]
     runs.late[i, "nonseq.loss.event.20"] <- ifelse((runs.late[i, "loss.event.20"] == T & prev.20 ==F), T, F)
     
   }
@@ -168,12 +231,56 @@ runs.late$nonseq.loss.event.20 <- ifelse(is.na(runs.late$nonseq.loss.event.20), 
 runs.late$nonseq.loss.event.10 <- ifelse(is.na(runs.late$nonseq.loss.event.10), F ,runs.late$nonseq.loss.event.10)
 
 
-crash.count <- runs.late %>% count(nonseq.loss.event.20, Management, GCM, rcp)
+crash.df <- data.frame()
+for(MOD in unique(runs.late$GCM)){
+  for(RCP in unique(runs.late$rcp)){
+    for(MNG in unique(runs.late$Management)){
+      count <- nrow((runs.late[runs.late$GCM == MOD & runs.late$rcp == RCP & runs.late$Management == MNG & runs.late$nonseq.loss.event.20,]))
+      temp <- data.frame(MOD, RCP, MNG)
+      temp$crash.count <- count
+      crash.df <- rbind(crash.df, temp)
+    }
+  }
+}
 
 
-loss.freq.20 <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event.20, "Management"]))
-colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
+stat.df <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = mean)
+stat.df[,"sd"] <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = sd)[, "crash.count"]
+
+stat.shape <- reshape(stat.df, idvar ="MNG", timevar = "RCP",direction = "wide")
+colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crashes (rcp45)",
+                          "Mean # crashes (rcp85)", "SD # of crashes (rcp85)")
+
 
 colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
 write.csv(loss.freq.20, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
 
+
+runs.MNG.comp <- data.frame()
+for(i in 1:nrow(runs.late)){
+  if(runs.late[i, "nonseq.loss.event.20"] == T){
+    temp.lead <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == runs.late[i, "year"], ]
+    #Now pulling the year before the crash
+    temp.lag <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == (runs.late[i, "year"]-1), ]
+    #Flagging the Management that ha the loss event
+    temp.lag$nonseq.loss.event.20 <- temp.lead$nonseq.loss.event.20
+    runs.MNG.comp <- rbind(runs.MNG.comp, temp.lag)
+  }
+}
+
+#Creating a figure that shows the structure of all the management styles before at least one of them crashed. 
+agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~rcp+Driver.set+Management+nonseq.loss.event.20, data = runs.MNG.comp, FUN = mean, na.action = NULL)
+
+plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.stack) <- c("values", "var")
+plot.stack[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")] <- agg.stack[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")]
+
+#We can now compare the year before a crash across management styles experiencing the same weather conditions
+png(width= 750, filename= file.path(path.figures, paste0('Pre-crash_Structure_by_whether_crash_occured.png')))
+ggplot(plot.stack)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=nonseq.loss.event.20, y=values, color = rcp))+
+  ggtitle("Structural variables immediately pre-crash by whether they crashed")+
+  xlab("Was there a major loss event")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
