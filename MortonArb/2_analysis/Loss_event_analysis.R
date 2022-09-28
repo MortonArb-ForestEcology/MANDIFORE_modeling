@@ -142,3 +142,38 @@ t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "height.mean"], ru
 t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "dbh.sd"], runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == F, "dbh.sd"])
 t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "height.sd"], runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == F, "height.sd"])
 
+
+#------------------------------------------------------#
+#Lead anaysis of 5 years
+#------------------------------------------------------#
+
+runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.lead5 <= -.50, T, F)#50%
+loss.freq.20 <- as.data.frame(table(runs.late[runs.late$loss.event.20, "Management"]))
+colnames(loss.freq.20) <- c("Management", "Number of Major Crashes (20%)")
+write.csv(loss.freq, "../data/Frequency_of_major_loss.csv", row.names=F)
+
+for(i in 5:nrow(runs.late)){
+  DRIVE <- runs.late[i, "Driver.set"]
+  MNG <- runs.late[i, "Management"]
+  YR <- runs.late[i, "year"]
+  if(YR >= 2030){
+    prev.20 <- runs.late[runs.late$Driver.set == DRIVE & runs.late$Management == MNG & runs.late$year == YR-5 , "loss.event.20"]
+    runs.late[i, "nonseq.loss.event.20"] <- ifelse((runs.late[i, "loss.event.20"] == T & prev.20 ==F), T, F)
+    
+  }
+}
+
+#Filling in the first year
+runs.late$nonseq.loss.event.20 <- ifelse(is.na(runs.late$nonseq.loss.event.20), F ,runs.late$nonseq.loss.event.20)
+runs.late$nonseq.loss.event.10 <- ifelse(is.na(runs.late$nonseq.loss.event.10), F ,runs.late$nonseq.loss.event.10)
+
+
+crash.count <- runs.late %>% count(nonseq.loss.event.20, Management, GCM, rcp)
+
+
+loss.freq.20 <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event.20, "Management"]))
+colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
+
+colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
+write.csv(loss.freq.20, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
+
