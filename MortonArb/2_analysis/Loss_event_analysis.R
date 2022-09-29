@@ -88,7 +88,6 @@ write.csv(sigmult.df, "../data/Post-harvest_structural_multcomp.csv", row.names 
 #-------------------------------------------------------------#
 #Counting the number of massive agb loss events
 #-------------------------------------------------------------#
-
 #agb.extreme <- as.numeric(quantile(runs.late$agb.rel.diff, probs = c(.025)))
 
 runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.diff <= -.20, T, F)
@@ -186,6 +185,7 @@ for(MOD in unique(runs.late$GCM)){
   }
 }
 
+
 stat.df <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = mean)
 stat.df[,"sd"] <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = sd)[, "crash.count"]
 
@@ -194,11 +194,17 @@ colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crash
                           "Mean # crashes (rcp85)", "SD # of crashes (rcp85)")
 
 loss.freq.20 <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event.20, "Management"]))
-loss.freq.10 <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event.10, "Management"]))
-
-#colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
+colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
 write.csv(stat.shape, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
 
+
+colnames(crash.df) <- c("GCM", "rcp", "Management", "crash.count")
+crash.df$Management <- factor(crash.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
+lm <- glm(crash.count~Management*rcp, data = crash.df, family = poisson)
+summary(lm)
+#--------------------------------------------------#
+# Structure after crash
+#--------------------------------------------------#
 
 runs.MNG.comp <- data.frame()
 for(i in 1:nrow(runs.late)){
@@ -228,8 +234,6 @@ ggplot(plot.stack)+
   xlab("Was there a major loss event")+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
-
-
 
 
 
@@ -275,10 +279,10 @@ t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "height.sd"], runs
 
 
 #------------------------------------------------------#
-#Lead anaysis of 5 years
+#Lead anaysis of 2 years
 #------------------------------------------------------#
 
-runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.lead2 <= -.50, T, F)#50%
+runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.lead2 <= -.40, T, F)#50%
 loss.freq.20 <- as.data.frame(table(runs.late[runs.late$loss.event.20, "Management"]))
 colnames(loss.freq.20) <- c("Management", "Number of Major Crashes (20%)")
 write.csv(loss.freq, "../data/Frequency_of_major_loss.csv", row.names=F)
@@ -296,8 +300,6 @@ for(i in 5:nrow(runs.late)){
 
 #Filling in the first year
 runs.late$nonseq.loss.event.20 <- ifelse(is.na(runs.late$nonseq.loss.event.20), F ,runs.late$nonseq.loss.event.20)
-runs.late$nonseq.loss.event.10 <- ifelse(is.na(runs.late$nonseq.loss.event.10), F ,runs.late$nonseq.loss.event.10)
-
 
 crash.df <- data.frame()
 for(MOD in unique(runs.late$GCM)){
@@ -319,6 +321,10 @@ stat.shape <- reshape(stat.df, idvar ="MNG", timevar = "RCP",direction = "wide")
 colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crashes (rcp45)",
                           "Mean # crashes (rcp85)", "SD # of crashes (rcp85)")
 
+colnames(crash.df) <- c("GCM", "rcp", "Management", "crash.count")
+crash.df$Management <- factor(crash.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
+lm <- glm(crash.count~Management*rcp, data = crash.df, family = poisson)
+summary(lm)
 
 colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
 write.csv(loss.freq.20, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
