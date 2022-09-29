@@ -110,13 +110,26 @@ for(MOD in unique(runs.late$GCM)){
     for(MNG in unique(runs.late$Management)){
       temp <- runs.late[runs.late$GCM == MOD & runs.late$rcp == RCP & runs.late$Management == MNG,]
       count <-0
-      for(i in 2:nrow(temp)){
+      f.crash <- F
+      for(i in 1:nrow(temp)){
           #Teasing out the duration of the crashes
-          if(temp[i, "loss.event.20"] == T){
+          if(temp[i, "loss.event.20"] == T & f.crash == F){
+            temp[i, "crash.status"] <- "first.crash"
             count <- count + 1
-          } else{
+            if(i < 75 & temp[i+1, "loss.event.20"] == F){ #Caveat, if first crash is year 2099 we don't flag. Doesn't present a problem with our data
+              f.crash <- T #Where we label that first crash happened
+            }
+          } else if(temp[i, "loss.event.20"] == F & f.crash == F){
+            temp[i, "crash.status"] <- "pre-crash"
             count <- 0
+          } else if(temp[i, "loss.event.20"] == F & f.crash == T){
+            temp[i, "crash.status"] <- "recovery"
+            count <- 0
+          } else if(temp[i, "loss.event.20"] == T & f.crash == T){
+            temp[i, "crash.status"] <- "subsequent.crash"
+            count <- count + 1
           }
+        
         temp[i, "years.crash"] <- count
 
       }
@@ -197,11 +210,13 @@ loss.freq.20 <- as.data.frame(table(runs.late[runs.late$nonseq.loss.event.20, "M
 colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
 write.csv(stat.shape, "../data/Frequency_of_nonsequential_major_loss.csv", row.names=F)
 
+hist(crash.df$crash.count)
 
 colnames(crash.df) <- c("GCM", "rcp", "Management", "crash.count")
 crash.df$Management <- factor(crash.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
-lm <- glm(crash.count~Management*rcp, data = crash.df, family = poisson)
+lm <- glm.nb(crash.count~Management*rcp, data = crash.df)
 summary(lm)
+
 #--------------------------------------------------#
 # Structure after crash
 #--------------------------------------------------#
@@ -321,9 +336,11 @@ stat.shape <- reshape(stat.df, idvar ="MNG", timevar = "RCP",direction = "wide")
 colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crashes (rcp45)",
                           "Mean # crashes (rcp85)", "SD # of crashes (rcp85)")
 
+hist(crash.df$crash.count)
+
 colnames(crash.df) <- c("GCM", "rcp", "Management", "crash.count")
 crash.df$Management <- factor(crash.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
-lm <- glm(crash.count~Management*rcp, data = crash.df, family = poisson)
+lm <- pscl::zeroinfl(crash.count~Management*rcp, data = crash.df, dist = "negbin")
 summary(lm)
 
 colnames(loss.freq.20) <- c("Management", "Number of Nonsequential Major Crashes (20%)")
