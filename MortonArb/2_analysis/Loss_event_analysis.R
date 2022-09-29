@@ -35,7 +35,7 @@ path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFO
 #Making a box plot of the variables immediately post-harvest
 png(width= 750, filename= file.path(path.figures, paste0('Immediate_post-harvest_Structure_by_Management.png')))
 ggplot(plot.stack)+
-  #facet_wrap(~var, scales = "free")+
+  facet_wrap(~var, scales = "free")+
   geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
   ggtitle("Structural variables immediately post-harvest (2025) by Management")+
   theme(plot.title = element_text(size = 16, face = "bold"))
@@ -151,6 +151,32 @@ for(i in 5:nrow(runs.count)){
     
   }
 }
+
+#Organizing data into long form for easier graphing. Only using the year immediately post harvest
+agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management+crash.status, data = runs.count, FUN = mean, na.action = NULL)
+
+plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.stack) <- c("values", "var")
+plot.stack[,c("GCM", "rcp", "Driver.set", "Management", "crash.status")] <- agg.stack[,c("GCM", "rcp", "Driver.set", "Management", "crash.status")]
+
+plot.stack$crash.status <- factor(plot.stack$crash.status, levels = c("pre-crash", "first.crash", "recovery", "subsequent.crash"))
+
+#Making a box plot of the variables by crash status
+png(width= 750, filename= file.path(path.figures, paste0('Structure_by_crash_status_boxplot.png')))
+ggplot(plot.stack)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=crash.status, y=values, color = crash.status))+
+  ggtitle("Structural variables by crash status")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+png(width= 750, filename= file.path(path.figures, paste0('Structure_by_crash_status_histogram.png')))
+ggplot(plot.stack)+
+  facet_wrap(~var, scales = "free")+
+  geom_histogram(aes(x=values, color = crash.status, fill = crash.status))+
+  ggtitle("Structural variables by crash status")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
 
 #----------------------------------------------------------#
 #Getting stats for the duration of major crashes
