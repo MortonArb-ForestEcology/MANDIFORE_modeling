@@ -41,6 +41,9 @@ runs.all <- read.csv(paste0(path.read, "All_runs.csv"))
 
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
+#REMOVING MIROC_ESM_CHEM BECUSE WE DONT HAVE RCP 45 data
+runs.all <- runs.all[runs.all$GCM != "MIROC-ESM-CHEM",]
+
 #Aggregating values by mean
 runs.year <- aggregate(cbind(tair, VPD, agb, lai, npp,soil.moist.deep, soil.moist.surf ,
                              density.tree, height.sd, height.mean, dbh.mean, dbh.sd)~year+Management+GCM+rcp, runs.all, FUN = mean)
@@ -69,7 +72,7 @@ for(i in 2:nrow(runs.comb)){
   runs.comb[i, "rel.VPD"] <- (runs.comb[i, "VPD"] - mean.VPD)/mean.VPD
   runs.comb[i, "rel.tair"] <- (runs.comb[i, "tair"] - mean.tair)/mean.tair
   
-  if(Year > 2006 & Year < 2099){
+  if(Year > 2006 & Year < 2098){
     
     #relative change in precip from one year to the next
     runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
@@ -80,15 +83,22 @@ for(i in 2:nrow(runs.comb)){
     #Relative change in agb
     runs.comb[i, "agb.rel.diff"] <- (runs.comb[i, "agb"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"] 
     
-    #Relative future change in agb by 1 year
-    runs.comb[i, "agb.rel.lag1"] <- (runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "agb"] - runs.comb[i, "agb"])/runs.comb[i, "agb"]  
+    #Relative future change in agb by 2 years
     
-    #Section for same calulation but lai. Currently not really used
-    runs.comb[i, "lai.diff"] <- runs.comb[i, "lai"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "lai"] 
+    runs.comb[i, "agb.rel.lead2"] <- (runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+2, "agb"] - runs.comb[i, "agb"])/runs.comb[i, "agb"]  
     
-    runs.comb[i, "lai.rel.diff"] <- (runs.comb[i, "lai"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "lai"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "lai"] 
+  }else if(Year>2097){
+    #relative change in precip from one year to the next
+    runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
     
-    runs.comb[i, "lai.lag"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "lai"] - runs.comb[i, "lai"] 
+    #Change in agb
+    runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"]  
+    
+    #Relative change in agb
+    runs.comb[i, "agb.rel.diff"] <- (runs.comb[i, "agb"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"] 
+    
+    #Relative future change in agb by 2 years
+    runs.comb[i, "agb.rel.lead2"] <- NA  
     
   }
   
@@ -478,19 +488,19 @@ ggplot(data = box.df)+
 dev.off()
 
 #------------------------------------------------#
-#Lag section
+#lead section
 #------------------------------------------------#
 
-runs.lag <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
+runs.lead <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
 
-runs.lag <- runs.late[!is.na(runs.late$agb.rel.lag1),]
+runs.lead <- runs.late[!is.na(runs.late$agb.rel.lead1),]
 
-runs.lag$Management <- factor(runs.lag$Management, levels = c("None", "Gap", "Shelter", "Under"))
+runs.lead$Management <- factor(runs.lead$Management, levels = c("None", "Gap", "Shelter", "Under"))
 
-#Lag of one year
-p.MNG.agb.lag1 <- lme(agb.rel.lag1 ~ rel.VPD*Management*height.sd, random=list(Driver.set=~1), data = runs.lag, method = "ML")
-summary(p.MNG.agb.lag1)
-anova(p.MNG.agb.lag1)
-plot(p.MNG.agb.lag1)
+#lead of one year
+p.MNG.agb.lead1 <- lme(agb.rel.lead1 ~ rel.VPD*Management*height.sd, random=list(Driver.set=~1), data = runs.lead, method = "ML")
+summary(p.MNG.agb.lead1)
+anova(p.MNG.agb.lead1)
+plot(p.MNG.agb.lead1)
 
 
