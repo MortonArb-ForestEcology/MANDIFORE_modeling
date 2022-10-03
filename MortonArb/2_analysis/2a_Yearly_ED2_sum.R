@@ -32,7 +32,6 @@ dat.year$rainless.days <- aggregate(no.rain~year+model+scenario, dat.precip, FUN
 #Reading in the Mandifore data
 #--------------------------------------------------------------#
 path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/output/"
-#path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/output/"
 
 runs.all <- read.csv(paste0(path.google, "All_runs.csv"))
 
