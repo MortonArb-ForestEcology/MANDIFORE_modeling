@@ -3,7 +3,7 @@
 # Project: Mandifore Morton arb casee study
 # Purpose: This script pulls hourly weather data and aggregates it to daily.
 # Inputs: Met output found in MANDIFORE_modeling/MortonArb/met_raw.v3/subdaily_tdm/MortonArb
-# Outputs: A dataframe of summaraized daily weather data that has been aggregated from hourly data
+# Outputs: A dataframe of summarized daily weather data that has been aggregated from hourly data
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
 #Folder containing the data
