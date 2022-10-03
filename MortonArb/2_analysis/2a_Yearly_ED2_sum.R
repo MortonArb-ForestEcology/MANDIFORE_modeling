@@ -83,7 +83,7 @@ for(i in 2:nrow(runs.comb)){
     
     runs.comb[i, "agb.rel.lead2"] <- (runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+2, "agb"] - runs.comb[i, "agb"])/runs.comb[i, "agb"]  
     
-  }else if(Year>2097){
+  }else if(Year>2097){ #This section exists for the last two years where we can't calculate the lead because the model run ends
     #relative change in precip from one year to the next
     runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
     
