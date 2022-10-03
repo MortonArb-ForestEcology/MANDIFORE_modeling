@@ -1,10 +1,10 @@
 #----------------------------------------------------------------------------------------------------------------------#
 # Script by : Lucien Fitzpatrick
 # Project: Mandifore/AGU 2022
-# Purpose: This script organizes our model data, runs AIC model selection, and does linear regression
-# Inputs: Arboretum weather data and MANDIFORE arboretum case study data
-# Outputs: 
-# Notes: This is a compact script that will likely be broken up down the line
+# Purpose: This script runs AIC model selection, does linear regression, and creates figures
+# Inputs: Yearly ED2 output csv from script 2a_Yearly_ED2_sum.R
+# Outputs: Figures and Tables
+# Notes: This script does not include any figures relating to loss event characterization
 #----------------------------------------------------------------------------------------------------------------------#
 library(lubridate)
 library(dplyr)
@@ -12,109 +12,9 @@ library(lubridate)
 library(nlme)
 library(AICcmodavg)
 
-#--------------------------------------------------#
-# This top section doesn't need to be run everytime. Read in the processed data in the next section
-#--------------------------------------------------#
 path.reg <- "../figures/regression/"
 if(!dir.exists(path.reg)) dir.create(path.reg, recursive=T, showWarnings = F)
 if(!dir.exists(paste(path.reg, "agb", sep=""))) dir.create(paste(path.reg, "agb", sep=""), recursive=T, showWarnings = F)
-if(!dir.exists(paste(path.reg, "lai", sep=""))) dir.create(paste(path.reg, "lai", sep=""), recursive=T, showWarnings = F)
-
-#Reading in weather data
-dat.precip <- read.csv("../Precip_Weather_Daily.csv")
-
-dat.precip$year <- lubridate::year(dat.precip$Date)
-
-dat.precip <- dat.precip[!is.na(dat.precip$mean),]
-
-#Tracking days without rain
-dat.precip$no.rain <- ifelse(dat.precip$sum == 0, 1 ,0)
-
-dat.year <- aggregate(sum~year+model+scenario, dat.precip, FUN = sum)
-
-dat.year$rainless.days <- aggregate(no.rain~year+model+scenario, dat.precip, FUN = sum)[, "no.rain"]
-
-#Reading in the Mandifore data
-path.read <- "../data/"
-
-runs.all <- read.csv(paste0(path.read, "All_runs.csv"))
-
-runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
-
-#REMOVING MIROC_ESM_CHEM BECUSE WE DONT HAVE RCP 45 data
-runs.all <- runs.all[runs.all$GCM != "MIROC-ESM-CHEM",]
-
-#Aggregating values by mean
-runs.year <- aggregate(cbind(tair, VPD, agb, lai, npp,soil.moist.deep, soil.moist.surf ,
-                             density.tree, height.sd, height.mean, dbh.mean, dbh.sd)~year+Management+GCM+rcp, runs.all, FUN = mean)
-
-#Joining the precipitation metrics and mandifore output with one dataframe
-runs.comb <- merge(runs.year, dat.year, by.x = c("year", "GCM", "rcp"), by.y = c("year", "model", "scenario"))
-
-runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Gap", "Shelter", "Under"))
-
-#Calculating our agb metrics for evaluation
-for(i in 2:nrow(runs.comb)){
-  
-  #Difference between current year and previous year
-  GCM <- runs.comb[i, "GCM"]
-  rcp <- runs.comb[i, "rcp"]
-  MNG <- runs.comb[i, "Management"]
-  Year <- runs.comb[i, "year"]
-  
-  #Calculating the average weather for the first 12 years of model run
-  mean.precip <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "sum"])
-  mean.VPD <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "VPD"])
-  mean.tair <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "tair"])
-  
-  #Calculating the relative difference in a metric from the mean
-  runs.comb[i, "rel.precip"] <- (runs.comb[i, "sum"] - mean.precip)/mean.precip
-  runs.comb[i, "rel.VPD"] <- (runs.comb[i, "VPD"] - mean.VPD)/mean.VPD
-  runs.comb[i, "rel.tair"] <- (runs.comb[i, "tair"] - mean.tair)/mean.tair
-  
-  if(Year > 2006 & Year < 2098){
-    
-    #relative change in precip from one year to the next
-    runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
-    
-    #Change in agb
-    runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"]  
-    
-    #Relative change in agb
-    runs.comb[i, "agb.rel.diff"] <- (runs.comb[i, "agb"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"] 
-    
-    #Relative future change in agb by 2 years
-    
-    runs.comb[i, "agb.rel.lead2"] <- (runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+2, "agb"] - runs.comb[i, "agb"])/runs.comb[i, "agb"]  
-    
-  }else if(Year>2097){
-    #relative change in precip from one year to the next
-    runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
-    
-    #Change in agb
-    runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"]  
-    
-    #Relative change in agb
-    runs.comb[i, "agb.rel.diff"] <- (runs.comb[i, "agb"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"] 
-    
-    #Relative future change in agb by 2 years
-    runs.comb[i, "agb.rel.lead2"] <- NA  
-    
-  }
-  
-}
-
-for(i in 1:nrow(runs.comb)){
-  if(runs.comb[i, "year"]<= 2017){
-    runs.comb[i, "harvest"] <- "Pre-harvest"
-  }else if(runs.comb[i, "year"]>= 2018 & runs.comb[i, "year"]<= 2024){
-    runs.comb[i, "harvest"] <- "Harvest"
-  } else {
-    runs.comb[i, "harvest"] <- "Post-harvest"
-  }
-}
-
-write.csv(runs.comb, paste0(path.read, "All_runs_yearly.csv"), row.names = F)
 
 #--------------------------------------------------------------#
 #Reading in our data if we have it already
@@ -278,7 +178,7 @@ path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFO
 
 library(ggplot2)
 cbPalette  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
-                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+                "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 #Proportional agb change vs VPD by management
 png(width= 750, filename= file.path(path.figures, paste0('Proportional_Agb_Change_to_VPD_by_Management.png')))
@@ -453,13 +353,13 @@ runs.comb$Driver.set <- paste0(runs.comb$GCM,"." ,runs.comb$rcp)
 box.df <- data.frame()
 for(DRIVE in unique(runs.comb$Driver.set)){
   for(MNG in unique(runs.comb$Management)){
-  temp <- runs.comb[runs.comb$Driver.set == DRIVE & runs.comb$Management == MNG, ]
-  temp$height.sd.diff <- mean(temp[temp$year >= 2089, "height.sd"]) - mean(temp[temp$year <= 2017, "height.sd"])
-  temp$dbh.sd.diff <-  mean(temp[temp$year >= 2089, "dbh.sd"]) - mean(temp[temp$year <= 2017, "dbh.sd"])
-  temp$agb.change <-  mean(temp[temp$year >= 2089, "agb"]) - mean(temp[temp$year <= 2017, "agb"])
-  out.df <- data.frame(unique(temp$Driver.set),unique(temp$Management), unique(temp$height.sd.diff), unique(temp$dbh.sd.diff), unique(temp$agb.change))
-  colnames(out.df) <- c("Driver.set","Management" ,"height.sd.diff", "dbh.sd.diff", "agb.change")
-  box.df <- rbind(box.df, out.df)
+    temp <- runs.comb[runs.comb$Driver.set == DRIVE & runs.comb$Management == MNG, ]
+    temp$height.sd.diff <- mean(temp[temp$year >= 2089, "height.sd"]) - mean(temp[temp$year <= 2017, "height.sd"])
+    temp$dbh.sd.diff <-  mean(temp[temp$year >= 2089, "dbh.sd"]) - mean(temp[temp$year <= 2017, "dbh.sd"])
+    temp$agb.change <-  mean(temp[temp$year >= 2089, "agb"]) - mean(temp[temp$year <= 2017, "agb"])
+    out.df <- data.frame(unique(temp$Driver.set),unique(temp$Management), unique(temp$height.sd.diff), unique(temp$dbh.sd.diff), unique(temp$agb.change))
+    colnames(out.df) <- c("Driver.set","Management" ,"height.sd.diff", "dbh.sd.diff", "agb.change")
+    box.df <- rbind(box.df, out.df)
   }
 }
 
@@ -486,21 +386,3 @@ ggplot(data = box.df)+
   ylab("Aboveground biomass")+
   xlab("Management")
 dev.off()
-
-#------------------------------------------------#
-#lead section
-#------------------------------------------------#
-
-runs.lead <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
-
-runs.lead <- runs.late[!is.na(runs.late$agb.rel.lead1),]
-
-runs.lead$Management <- factor(runs.lead$Management, levels = c("None", "Gap", "Shelter", "Under"))
-
-#lead of one year
-p.MNG.agb.lead1 <- lme(agb.rel.lead1 ~ rel.VPD*Management*height.sd, random=list(Driver.set=~1), data = runs.lead, method = "ML")
-summary(p.MNG.agb.lead1)
-anova(p.MNG.agb.lead1)
-plot(p.MNG.agb.lead1)
-
-

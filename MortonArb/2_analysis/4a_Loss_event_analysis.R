@@ -1,3 +1,11 @@
+#----------------------------------------------------------------------------------------------------------------------#
+# Script by : Lucien Fitzpatrick
+# Project: Mandifore/AGU 2022
+# Purpose: This script runs AIC model selection, does linear regression, and creates figures
+# Inputs: Yearly ED2 output csv from script 2a_Yearly_ED2_sum.R
+# Outputs: Figures and Tables
+# Notes: 
+#----------------------------------------------------------------------------------------------------------------------#
 library(lubridate)
 library(dplyr)
 library(lubridate)
@@ -24,17 +32,17 @@ runs.late <- runs.late[!is.na(runs.late$agb.rel.diff),]
 #Immediate post-harvest structure
 #---------------------------------------------------------#
 #Organizing data into long form for easier graphing. Only using the year immediately post harvest
-agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
+agg.harv <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
 
-plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
-names(plot.stack) <- c("values", "var")
-plot.stack[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.stack[,c("GCM", "rcp", "Driver.set", "Management")]
+plot.harv <- stack(agg.harv[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.harv) <- c("values", "var")
+plot.harv[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.harv[,c("GCM", "rcp", "Driver.set", "Management")]
 
 path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
 
 #Making a box plot of the variables immediately post-harvest
 png(width= 750, filename= file.path(path.figures, paste0('Immediate_post-harvest_Structure_by_Management.png')))
-ggplot(plot.stack)+
+ggplot(plot.harv)+
   facet_wrap(~var, scales = "free")+
   geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
   ggtitle("Structural variables immediately post-harvest (2025) by Management")+
@@ -42,13 +50,14 @@ ggplot(plot.stack)+
 dev.off()
 
 #Test attempt at including p-values in the boxplots
-ggboxplot(plot.stack, x = "Management", y = "values",
+ggboxplot(plot.harv, x = "Management", y = "values",
           color = "Management", palette = "jco")+
   facet_wrap(~var, scales = "free")+
   ggtitle("Structural variables immediately post-harvest (2025) by Management")+
   stat_compare_means(label = "p.signif", method = "t.test",
                      ref.group = "None") 
 
+#lme anova analysis of our structural variables and Tukey multiple comparison analysis
 struc.df <- data.frame()
 mult.df <- data.frame()
 struc.var <- c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")
@@ -72,7 +81,6 @@ for(COL in struc.var){
   post.hoc <- glht(lm.test, linfct = mcp(Management = 'Tukey'))
   output <- summary(post.hoc)
   mult.list[[paste(COL)]]$Var <- COL
-  #mult.list[[paste(COL)]]$Equation <- paste0(COL, " ~ Management")
   mult.list[[paste(COL)]]$Comp <- c("Gap-None", "Shelter-None", "Under-None", "Shelter-Gap", "Under-Gap", "Under-Shelter")
   mult.list[[paste(COL)]]$pvalue <- output$test$pvalues
   dat.mult <- dplyr::bind_rows(mult.list)
@@ -85,8 +93,9 @@ sigmult.df <- reshape2::dcast(mult.df, Comp ~ Var)
 write.csv(sigstruc.df, "../data/Post-harvest_structural_lme.csv", row.names = F)
 write.csv(sigmult.df, "../data/Post-harvest_structural_multcomp.csv", row.names = F)
 
+
 #-------------------------------------------------------------#
-#Counting the number of massive agb loss events
+#Counting the number of major agb loss events
 #-------------------------------------------------------------#
 #agb.extreme <- as.numeric(quantile(runs.late$agb.rel.diff, probs = c(.025)))
 
@@ -152,31 +161,33 @@ for(i in 5:nrow(runs.count)){
   }
 }
 
-#Organizing data into long form for easier graphing. Only using the year immediately post harvest
-agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management+crash.status, data = runs.count, FUN = mean, na.action = NULL)
+#Organizing data into long form for easier graphing.
+agg.status <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~GCM+rcp+Driver.set+Management+crash.status, data = runs.count, FUN = mean, na.action = NULL)
 
-plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
-names(plot.stack) <- c("values", "var")
-plot.stack[,c("GCM", "rcp", "Driver.set", "Management", "crash.status")] <- agg.stack[,c("GCM", "rcp", "Driver.set", "Management", "crash.status")]
+plot.status <- stack(agg.status[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.status) <- c("values", "var")
+plot.status[,c("GCM", "rcp", "Driver.set", "Management", "crash.status")] <- agg.status[,c("GCM", "rcp", "Driver.set", "Management", "crash.status")]
 
-plot.stack$crash.status <- factor(plot.stack$crash.status, levels = c("pre-crash", "first.crash", "recovery", "subsequent.crash"))
+plot.status$crash.status <- factor(plot.status$crash.status, levels = c("pre-crash", "first.crash", "recovery", "subsequent.crash"))
 
 #Making a box plot of the variables by crash status
 png(width= 750, filename= file.path(path.figures, paste0('Structure_by_crash_status_boxplot.png')))
-ggplot(plot.stack)+
+ggplot(plot.status)+
   facet_wrap(~var, scales = "free")+
   geom_boxplot(aes(x=crash.status, y=values, color = crash.status))+
   ggtitle("Structural variables by crash status")+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
 
+#Making a histogram of the variables by crash status
 png(width= 750, filename= file.path(path.figures, paste0('Structure_by_crash_status_histogram.png')))
-ggplot(plot.stack)+
+ggplot(plot.status)+
   facet_wrap(~var, scales = "free")+
   geom_histogram(aes(x=values, color = crash.status, fill = crash.status))+
   ggtitle("Structural variables by crash status")+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
+
 
 #----------------------------------------------------------#
 #Getting stats for the duration of major crashes
@@ -243,10 +254,10 @@ crash.df$Management <- factor(crash.df$Management, levels = c("None", "Gap", "Sh
 lm <- glm.nb(crash.count~Management*rcp, data = crash.df)
 summary(lm)
 
-#--------------------------------------------------#
-# Structure after crash
-#--------------------------------------------------#
 
+#--------------------------------------------------#
+# Looking at Structure after crash
+#--------------------------------------------------#
 runs.MNG.comp <- data.frame()
 for(i in 1:nrow(runs.late)){
   if(runs.late[i, "nonseq.loss.event.20"] == T){
@@ -260,15 +271,15 @@ for(i in 1:nrow(runs.late)){
 }
 
 #Creating a figure that shows the structure of all the management styles before at least one of them crashed. 
-agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~rcp+Driver.set+Management+nonseq.loss.event.20, data = runs.MNG.comp, FUN = mean, na.action = NULL)
+agg.crash <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~rcp+Driver.set+Management+nonseq.loss.event.20, data = runs.MNG.comp, FUN = mean, na.action = NULL)
 
-plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
-names(plot.stack) <- c("values", "var")
-plot.stack[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")] <- agg.stack[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")]
+plot.crash <- stack(agg.crash[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.crash) <- c("values", "var")
+plot.crash[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")] <- agg.crash[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")]
 
 #We can now compare the year before a crash across management styles experiencing the same weather conditions
 png(width= 750, filename= file.path(path.figures, paste0('Pre-crash_Structure_by_whether_crash_occured.png')))
-ggplot(plot.stack)+
+ggplot(plot.crash)+
   facet_wrap(~var, scales = "free")+
   geom_boxplot(aes(x=nonseq.loss.event.20, y=values, color = rcp))+
   ggtitle("Structural variables immediately pre-crash by whether they crashed")+
@@ -386,15 +397,15 @@ for(i in 1:nrow(runs.late)){
 }
 
 #Creating a figure that shows the structure of all the management styles before at least one of them crashed. 
-agg.stack <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~rcp+Driver.set+Management+nonseq.loss.event.20, data = runs.MNG.comp, FUN = mean, na.action = NULL)
+agg.lead <- aggregate(cbind(agb, density.tree, dbh.mean, height.mean, dbh.sd, height.sd)~rcp+Driver.set+Management+nonseq.loss.event.20, data = runs.MNG.comp, FUN = mean, na.action = NULL)
 
-plot.stack <- stack(agg.stack[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
-names(plot.stack) <- c("values", "var")
-plot.stack[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")] <- agg.stack[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")]
+plot.lead <- stack(agg.lead[,c("agb", "density.tree", "dbh.mean", "height.mean", "dbh.sd", "height.sd")])
+names(plot.lead) <- c("values", "var")
+plot.lead[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")] <- agg.lead[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")]
 
 #We can now compare the year before a crash across management styles experiencing the same weather conditions
 png(width= 750, filename= file.path(path.figures, paste0('Pre-crash_Structure_by_whether_crash_occured.png')))
-ggplot(plot.stack)+
+ggplot(plot.lead)+
   facet_wrap(~var, scales = "free")+
   geom_boxplot(aes(x=nonseq.loss.event.20, y=values, color = rcp))+
   ggtitle("Structural variables immediately pre-crash by whether they crashed")+
