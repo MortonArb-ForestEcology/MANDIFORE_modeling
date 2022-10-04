@@ -7,7 +7,9 @@
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
 library(readbulk)
-dat.precip <- read.csv("../Precip_Weather_Daily.csv")
+path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/output/"
+
+dat.precip <- read.csv(file.path(path.google, "Precip_Weather_Daily.csv"))
 
 dat.precip$days_since_rain <- NA
 
@@ -26,7 +28,7 @@ for(i in 1:nrow(dat.precip)){
 
 dat.precip$Drought_flag <-  ifelse(dat.precip$mean == 0, 1, 0)
 
-write.csv(dat.precip, "../Drought_Weather_Daily.csv", row.names = F)
+write.csv(dat.precip, "../data/Drought_Weather_Daily.csv", row.names = F)
 
 
 library(ggplot2)
@@ -38,7 +40,7 @@ ggplot(dat.precip, aes(days_since_rain))+
   geom_vline(xintercept = 14)
 dev.off()
 
-dat.precip <- read.csv("../Drought_Weather_Daily.csv")
+dat.precip <- read.csv("../data/Drought_Weather_Daily.csv")
 
 #Creating a dataframe that contains the end date of every drought
 #Defining the end of a drought for flagging
@@ -65,7 +67,7 @@ for(i in 1:nrow(dat.end)){
   }
 }
 
-write.csv(dat.end, "../Drought_Periods_End.csv", row.names = F)
+write.csv(dat.end, "../data/Drought_Periods_End.csv", row.names = F)
  
 #----------------------------------------------------------------------------------------------------------------------#
 # Script by : Lucien Fitzpatrick
@@ -77,7 +79,7 @@ write.csv(dat.end, "../Drought_Periods_End.csv", row.names = F)
 #----------------------------------------------------------------------------------------------------------------------#
 library(readbulk)
 library(lubridate)
-dat.precip <- read.csv("../Precip_Weather_Daily.csv")
+dat.precip <- read.csv(file.path(path.google, "Precip_Weather_Daily.csv"))
 
 dat.precip$month <- lubridate::month(dat.precip$Date)
 dat.precip$year <- lubridate::year(dat.precip$Date)
@@ -111,7 +113,7 @@ for(i in 1:nrow(dat.flag)){
 } 
 
 
-write.csv(dat.flag, "../Drought_Weather_Monthly.csv", row.names = F)
+write.csv(dat.flag, "../data/Drought_Weather_Monthly.csv", row.names = F)
 
 
 library(ggplot2)
@@ -123,7 +125,7 @@ ggplot(dat.flag, aes(drought_months))+
   geom_vline(xintercept = 14)
 dev.off()
 
-dat.flag <- read.csv("../Drought_Weather_Monthly.csv")
+dat.flag <- read.csv("../data/Drought_Weather_Monthly.csv")
 
 #Creating a dataframe that contains the end date of every drought
 #Defining the end of a drought for flagging
@@ -150,9 +152,9 @@ for(i in 1:nrow(dat.end)){
   }
 }
 
-write.csv("../Drought_Periods_End_Monthly.csv", row.names = F)
+write.csv("../data/Drought_Periods_End_Monthly.csv", row.names = F)
 
-dat.month <- read.csv("../Drought_Periods_End_Monthly.csv")
+dat.month <- read.csv("../data/Drought_Periods_End_Monthly.csv")
 
 #----------------------------------------------------------------------------------------------------------------------#
 # Using yearly mean deep soil moisture
@@ -199,7 +201,7 @@ dat.end <- dat.end[,c("GCM", "rcp", "Management", "year", "soil.moist.deep", "sw
 dat.end <- dat.end[dat.end$year <= 2095,]
 
 
-write.csv(dat.end, "../Drought_Periods_SWC.deep.csv", row.names = F)
+write.csv(dat.end, "../data/Drought_Periods_SWC.deep.csv", row.names = F)
 
 dat.swc.deep <- dat.end
 
@@ -223,7 +225,7 @@ dat.end <- dat.end[,c("GCM", "rcp", "Management", "year", "soil.moist.surf", "sw
 dat.end <- dat.end[dat.end$year <= 2095,]
 
 
-write.csv(dat.end, "../Drought_Periods_SWC.surf.csv", row.names = F)
+write.csv(dat.end, "../data/Drought_Periods_SWC.surf.csv", row.names = F)
 
 dat.swc.surf <- dat.end
 
@@ -246,20 +248,20 @@ dat.end <- dat.end[,c("GCM", "rcp", "Management", "year", "tair", "tair.flag")]
 
 dat.end <- dat.end[dat.end$year <= 2095,]
 
-write.csv(dat.end, "../Drought_Periods_tair.csv", row.names = F)
+write.csv(dat.end, "../data/Drought_Periods_tair.csv", row.names = F)
 
 dat.tair <- dat.end
 
 #---------------------------------------------------------------------------------------------#
 #Area for comparison between drought metrics
 #---------------------------------------------------------------------------------------------#
-#dat.vpd <- read.csv("../Drought_Periods_VPD.csv")
+#dat.vpd <- read.csv("../data/Drought_Periods_VPD.csv")
 
-#dat.swc.deep <- read.csv("../Drought_Periods_SWC.deep.csv")
+#dat.swc.deep <- read.csv("../data/Drought_Periods_SWC.deep.csv")
 
-#dat.swc.surf <- read.csv("../Drought_Periods_SWC.surf.csv")
+#dat.swc.surf <- read.csv("../data/Drought_Periods_SWC.surf.csv")
 
-#dat.tair <- read.csv("../Drought_Periods_tair.csv")
+#dat.tair <- read.csv("../data/Drought_Periods_tair.csv")
 
 hist(runs.all$sum)
 hist(runs.all$rainless.days)
