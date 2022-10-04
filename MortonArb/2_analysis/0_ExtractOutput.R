@@ -167,6 +167,9 @@ for(RUNID in runs.raw){
                                      dens.pch=ncdf4::ncvar_get(fnow, "NPLANT") #trees/m2 PER PATCH
                                      )
     
+    # Establishing a new density variable so we can calculate stats for only things that would qualify as a tree as far as FIA is concerned
+    co.list[[lab.now]]$dens.pch.tree <- ifelse(co.list[[lab.now]]$dbh[rows.pch]>=12.7 & co.list[[lab.now]]$height[rows.pch]>= 1.37, col.list[[lab.now]]$dens.pch, 0) 
+    
     ncdf4::nc_close(fnow) # Closing the connection to the netcdf file; this is important otherwise your computer will get confused
   
     # -----------------
@@ -180,6 +183,9 @@ for(RUNID in runs.raw){
       co.list[[lab.now]][rows.pch, c("patchID", "patch.area", "patch.age")] <- pch.list[[lab.now]][j,c("patchID", "area.patch", "age")]
       
       co.list[[lab.now]][rows.pch,"dens.wt.pch"] <- co.list[[lab.now]]$dens.pch[rows.pch]/sum(co.list[[lab.now]]$dens.pch[rows.pch])
+      
+      co.list[[lab.now]][rows.pch,"dens.wt.pch.tree"] <- co.list[[lab.now]]$dens.pch.tree[rows.pch]/sum(co.list[[lab.now]]$dens.pch.tree[rows.pch], na.rm=T)
+      
     }
     # tail(co.list[[lab.now]])
     
