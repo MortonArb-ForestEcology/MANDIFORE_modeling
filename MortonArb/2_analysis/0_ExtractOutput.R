@@ -1,14 +1,16 @@
 # Comparing size distributions between understory and overstory thin attempts
 library(ggplot2)
 
-#path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
+path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
 path.out <- "extract.v3"
 pfts.grass <- 5
 pfts.trees <- 6:11
 
 if(!dir.exists(path.out)) dir.create(path.out)
 
-dat.base <- "../../../../crollinson/MANDIFORE_modeling/MortonArb/1_runs/MortonArb_ed_runs.v3/"
+# dat.base <- "../../../../crollinson/MANDIFORE_modeling/MortonArb/1_runs/MortonArb_ed_runs.v3/"
+dat.base <- "../1_runs/MortonArb_ed_runs.v3/"
+
 runs.raw <- dir(dat.base, "statCO2")  # This gets a list of model ensemble members for static CO2 only; adding increases in CO2 that will make trees more efficient has been a low priority because ED is unrealistically sensitive
 #runs.process <- dir(path.out)
 
@@ -88,8 +90,8 @@ for(RUNID in runs.raw){
                                        VPD=ncdf4::ncvar_get(fnow, "MMEAN_ATM_VPDEF_PY"), # Pa
                                        
                                        # Forest structure (trees only)
-                                       basal.area.tree = sum(ncdf4::ncvar_get(fnow, "BASAL_AREA_PY")[pfts.trees,]), # cm2/m2??
-                                       density.tree = sum(ncdf4::ncvar_get(fnow, "NPLANT_PY")[pfts.trees,]), # tree/m2??
+                                       basal.area.treePFT = sum(ncdf4::ncvar_get(fnow, "BASAL_AREA_PY")[pfts.trees,]), # cm2/m2??
+                                       density.treePFT = sum(ncdf4::ncvar_get(fnow, "NPLANT_PY")[pfts.trees,]), # tree/m2??
                                        
                                        # Carbon Storage & Flux
                                        agb=sum(ncdf4::ncvar_get(fnow, "AGB_PY")), # kg/m2??
@@ -167,10 +169,11 @@ for(RUNID in runs.raw){
                                      dens.pch=ncdf4::ncvar_get(fnow, "NPLANT") #trees/m2 PER PATCH
                                      )
     
-    # Establishing a new density variable so we can calculate stats for only things that would qualify as a tree as far as FIA is concerned
-    co.list[[lab.now]]$dens.pch.tree <- ifelse(co.list[[lab.now]]$dbh[rows.pch]>=12.7 & co.list[[lab.now]]$height[rows.pch]>= 1.37, col.list[[lab.now]]$dens.pch, 0) 
-    
     ncdf4::nc_close(fnow) # Closing the connection to the netcdf file; this is important otherwise your computer will get confused
+
+      # Establishing a new density variable so we can calculate stats for only things that would qualify as a tree as far as FIA is concerned
+    co.list[[lab.now]]$dens.pch.tree <- ifelse(co.list[[lab.now]]$dbh>=12.7 & co.list[[lab.now]]$height>= 1.37, co.list[[lab.now]]$dens.pch, 0) 
+    
   
     # -----------------
     # Merging patch and cohort information to help scale
@@ -194,15 +197,20 @@ for(RUNID in runs.raw){
     co.list[[lab.now]]$dens.site <- co.list[[lab.now]]$dens.pch*co.list[[lab.now]]$patch.area
     co.list[[lab.now]]$dens.wt.site <- co.list[[lab.now]]$dens.site/sum(co.list[[lab.now]]$dens.site)
     
+    co.list[[lab.now]]$dens.site.tree <- co.list[[lab.now]]$dens.pch.tree*co.list[[lab.now]]$patch.area
+    co.list[[lab.now]]$dens.wt.site.tree <- co.list[[lab.now]]$dens.site.tree/sum(co.list[[lab.now]]$dens.site.tree)
     
     # Extracting the tree data to make life easier
     dat.tree <- data.frame(pft=co.list[[lab.now]]$pft[co.list[[lab.now]]$pft %in% pfts.trees],
                            dbh=co.list[[lab.now]]$dbh[co.list[[lab.now]]$pft %in% pfts.trees],
                            hts=co.list[[lab.now]]$height[co.list[[lab.now]]$pft %in% pfts.trees],
                            pch=co.list[[lab.now]]$patchID[co.list[[lab.now]]$pft %in% pfts.trees],
+                           dens.site.tree = co.list[[lab.now]]$dens.site.tree[co.list[[lab.now]]$pft %in% pfts.trees],
                            wt.pch =co.list[[lab.now]]$dens.wt.pch[co.list[[lab.now]]$pft %in% pfts.trees],
-                           wt.site=co.list[[lab.now]]$dens.wt.site[co.list[[lab.now]]$pft %in% pfts.trees]
-                           )
+                           wt.site=co.list[[lab.now]]$dens.wt.site[co.list[[lab.now]]$pft %in% pfts.trees],
+                           wt.pch.tree =co.list[[lab.now]]$dens.wt.pch.tree[co.list[[lab.now]]$pft %in% pfts.trees],
+                           wt.site.tree=co.list[[lab.now]]$dens.wt.site.tree[co.list[[lab.now]]$pft %in% pfts.trees]
+    )
     # -----------------
 
     # -----------------
@@ -215,7 +223,7 @@ for(RUNID in runs.raw){
     #      sqrt(sum(w * (x-weighted.mean(x, w))^2))
     # -----------------
     # Just doing this patches as a loop to make life easier at the moment
-    pch.list[[lab.now]][,c("height.max", "height.mean", "height.sd", "dbh.max", "dbh.mean", "dbh.sd")] <- NA
+    pch.list[[lab.now]][,c("height.max", "height.mean", "height.sd", "dbh.max", "dbh.mean", "dbh.sd", "tree.height.mean", "tree.height.sd", "tree.dbh.mean", "tree.dbh.sd")] <- NA
     
     for(j in 1:nrow(pch.list[[lab.now]])){
       dat.pch <- dat.tree[dat.tree$pch==j,]
@@ -228,6 +236,13 @@ for(RUNID in runs.raw){
       pch.list[[lab.now]]$dbh.max[j] <- max(dat.pch$dbh)
       pch.list[[lab.now]]$dbh.mean[j] <- weighted.mean(dat.pch$dbh, dat.pch$wt.pch)
       pch.list[[lab.now]]$dbh.sd[j] <- sqrt(sum(dat.pch$wt.pch * (dat.pch$dbh-pch.list[[lab.now]]$dbh.mean[j])^2))
+
+      # Re-caculating mean & sd values for trees only (max shoudl be fine)
+      pch.list[[lab.now]]$tree.height.mean[j] <- weighted.mean(dat.pch$hts, dat.pch$wt.pch.tree)
+      pch.list[[lab.now]]$tree.height.sd[j] <- sqrt(sum(dat.pch$wt.pch.tree * (dat.pch$hts-pch.list[[lab.now]]$height.mean[j])^2))
+      
+      pch.list[[lab.now]]$tree.dbh.mean[j] <- weighted.mean(dat.pch$dbh, dat.pch$wt.pch.tree)
+      pch.list[[lab.now]]$tree.dbh.sd[j] <- sqrt(sum(dat.pch$wt.pch.tree * (dat.pch$dbh-pch.list[[lab.now]]$dbh.mean[j])^2))
       
     }
     
@@ -244,6 +259,17 @@ for(RUNID in runs.raw){
 
     site.list[[lab.now]]$dbh.mean <- weighted.mean(dat.tree$dbh, dat.tree$wt.site)
     site.list[[lab.now]]$dbh.sd <- sqrt(sum(dat.tree$wt.site * (dat.tree$dbh-site.list[[lab.now]]$dbh.mean)^2))
+
+    # Adding the tree-only vars
+    site.list[[lab.now]]$density.tree <- sum(dat.tree$dens.site.tree)
+    site.list[[lab.now]]$basal.area.tree <- sum(pi*((dat.tree$dbh/2)^2) * dat.tree$dens.site.tree)
+    
+    site.list[[lab.now]]$tree.height.mean <- weighted.mean(dat.tree$hts, dat.tree$wt.site.tree)
+    site.list[[lab.now]]$tree.height.sd <- sqrt(sum(dat.tree$wt.site.tree * (dat.tree$hts-site.list[[lab.now]]$height.mean)^2))
+    
+    site.list[[lab.now]]$tree.dbh.mean <- weighted.mean(dat.tree$dbh, dat.tree$wt.site.tree)
+    site.list[[lab.now]]$tree.dbh.sd <- sqrt(sum(dat.tree$wt.site.tree * (dat.tree$dbh-site.list[[lab.now]]$dbh.mean)^2))
+    
     # -----------------
     
     
