@@ -84,6 +84,8 @@ for(MOD in mods.raw){
   mod.name <- strsplit(MOD, "_")[[1]][1]
   if(mod.name=="GFDL") mod.name <- "GFDL-CM3"
   
+  rcp <- ifelse(grepl("45", MOD), "rcp45", "rcp85")
+  
   fmod <- dir(file.path(dir.mods, MOD))
   
   for(YR in yrs.all){
@@ -106,6 +108,7 @@ for(MOD in mods.raw){
       #Checking for the windspeed exception
       mod.list[[paste(MOD, YR, VAR)]] <- met.pull(ncT, VAR)
       mod.list[[paste(MOD, YR, VAR)]]$model <- mod.name
+      mod.list[[paste(MOD, YR, VAR)]]$sceario <- rcp
     } # end var loop
     ncdf4::nc_close(ncT)
   } # End file loop
@@ -146,6 +149,7 @@ for(MOD in mods.raw2){
       #Checking for the windspeed exception
       mod.list[[paste(MOD, YR, VAR)]] <- met.pull(ncT, VAR)
       mod.list[[paste(MOD, YR, VAR)]]$model <- mod.name
+      mod.list[[paste(MOD, YR, VAR)]]$sceario <- rcp
     } # end var loop
     ncdf4::nc_close(ncT)
   } # End file loop
@@ -157,7 +161,7 @@ for(MOD in mods.raw2){
 mod.df <- dplyr::bind_rows(mod.list)
 
 #Splitting the models and scenarios into two columns for easier cross-walking and analysis
-mod.df$scenario <- ifelse(grepl("85", mod.df$model, fixed = TRUE), "rcp85", "rcp45")
+# mod.df$scenario <- ifelse(grepl("85", mod.df$model, fixed = TRUE), "rcp85", "rcp45")
 # summary(mod.df)
 head(mod.df)
 
