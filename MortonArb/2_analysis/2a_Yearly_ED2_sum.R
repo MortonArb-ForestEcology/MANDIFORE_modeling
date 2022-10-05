@@ -13,13 +13,13 @@ library(nlme)
 library(AICcmodavg)
 library(readbulk)
 
-path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/processed_data/"
+path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
 
 #----------------------------------------------------------------#
 #Reading in weather data
 #----------------------------------------------------------------#
-dat.precip <- read.csv(file.path(path.google, "Precip_Weather_Daily.csv"))
+dat.precip <- read.csv(file.path(path.google, "processed_data/Precip_Weather_Daily.csv"))
 
 dat.precip$year <- lubridate::year(dat.precip$Date)
 
@@ -35,7 +35,7 @@ dat.year$rainless.days <- aggregate(no.rain~year+model+scenario, dat.precip, FUN
 #--------------------------------------------------------------#
 #Reading in the Mandifore data
 #--------------------------------------------------------------#
-runs.all <- read_bulk(directory = file.path(path.google, "../output"), extension = "Site.csv", header = TRUE)
+runs.all <- read_bulk(directory = file.path(path.google, "processed_data"), extension = "Site.csv", header = TRUE)
 summary(runs.all)
 
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
