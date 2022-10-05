@@ -87,7 +87,7 @@ for(i in 2:nrow(runs.comb)){
     runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
 
     #Change in agb
-    runs.comb[i, "agb.diff"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "agb"]- runs.comb[i, "agb"]  
+    runs.comb[i, "agb.diff"] <- NA  
     
     #Relative change in agb
     runs.comb[i, "agb.rel.diff"] <- NA
