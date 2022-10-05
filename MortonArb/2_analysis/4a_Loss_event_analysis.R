@@ -251,8 +251,8 @@ hist(crash.df$crash.count)
 
 colnames(crash.df) <- c("GCM", "rcp", "Management", "crash.count")
 crash.df$Management <- factor(crash.df$Management, levels = c("None", "Gap", "Shelter", "Under"))
-lm <- glm.nb(crash.count~Management*rcp, data = crash.df)
-summary(lm)
+crash.lm <- glm.nb(crash.count~Management*rcp, data = crash.df)
+summary(crash.lm)
 
 
 #--------------------------------------------------#
