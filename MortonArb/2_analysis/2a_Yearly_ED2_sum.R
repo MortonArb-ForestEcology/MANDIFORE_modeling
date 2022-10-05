@@ -24,12 +24,12 @@ dat.precip <- read.csv(file.path(path.google, "processed_data/Met_Precip_Daily.c
 
 dat.precip$year <- lubridate::year(dat.precip$Date)
 
-dat.precip <- dat.precip[!is.na(dat.precip$mean),]
+dat.precip <- dat.precip[!is.na(dat.precip$precip.mean),]
 
 #Tracking days without rain
-dat.precip$no.rain <- ifelse(dat.precip$sum == 0, 1 ,0)
+dat.precip$no.rain <- ifelse(dat.precip$precip.mean == 0, 1 ,0)
 
-dat.year <- aggregate(precip.mean~year+model+scenario, dat.precip, FUN = mean)
+dat.year <- aggregate(precip.mean~year+model+scenario,data=dat.precip, FUN = mean)
 dat.year$precip.total <- dat.year$precip.mean*365*24*60*60 # should now be in mm/yr
 
 # dat.year <- aggregate(sum~year+model+scenario, dat.precip, FUN = sum)
@@ -83,15 +83,15 @@ for(GCM in unique(runs.comb$GCM)){
       
       for(YR in 2007:2099){
         
+        agb.now <- dat.run$agb[dat.run$year==YR]
         if(YR>2007){
-          agb.now <- dat.run$agb[dat.run$year==YR]
           agb.past <- dat.run$agb[dat.run$year==(YR-1)]
           dat.run$agb.diff[dat.run$year==YR] <- agb.now - agb.past
           dat.run$agb.rel.diff[dat.run$year==YR] <- (agb.now - agb.past)/agb.past
         }
         
         if(YR<2099){ # If we're not at the end; add the future state
-          agb.future <- dat.run$agb[dat.run$year==(YR-1)]
+          agb.future <- dat.run$agb[dat.run$year==(YR+1)]
           dat.run$agb.diff.future[dat.run$year==YR] <- agb.future - agb.now
           dat.run$agb.rel.diff.future[dat.run$year==YR] <- (agb.future - agb.now)/agb.now
         }
