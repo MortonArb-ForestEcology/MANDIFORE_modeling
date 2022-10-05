@@ -11,8 +11,9 @@ library(dplyr)
 library(lubridate)
 library(nlme)
 library(AICcmodavg)
+library(readbulk)
 
-path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/output/"
+path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/processed_data/"
 
 
 #----------------------------------------------------------------#
@@ -34,7 +35,8 @@ dat.year$rainless.days <- aggregate(no.rain~year+model+scenario, dat.precip, FUN
 #--------------------------------------------------------------#
 #Reading in the Mandifore data
 #--------------------------------------------------------------#
-runs.all <- read.csv(paste0(path.google, "All_runs.csv"))
+runs.all <- read_bulk(directory = file.path(path.google, "../output"), extension = "Site.csv", header = TRUE)
+summary(runs.all)
 
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 
@@ -60,9 +62,9 @@ for(i in 2:nrow(runs.comb)){
   Year <- runs.comb[i, "year"]
   
   #Calculating the average weather for the first 12 years of model run
-  mean.precip <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "sum"])
-  mean.VPD <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "VPD"])
-  mean.tair <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2018, "tair"])
+  mean.precip <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2020, "sum"])
+  mean.VPD <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2020, "VPD"])
+  mean.tair <- mean(runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year <2020, "tair"])
   
   #Calculating the relative difference in a metric from the mean
   runs.comb[i, "rel.precip"] <- (runs.comb[i, "sum"] - mean.precip)/mean.precip
@@ -103,9 +105,9 @@ for(i in 2:nrow(runs.comb)){
 
 #Adding harvest flag markers
 for(i in 1:nrow(runs.comb)){
-  if(runs.comb[i, "year"]<= 2017){
+  if(runs.comb[i, "year"]< 2020){
     runs.comb[i, "harvest"] <- "Pre-harvest"
-  }else if(runs.comb[i, "year"]>= 2018 & runs.comb[i, "year"]<= 2024){
+  }else if(runs.comb[i, "year"]>= 2020 & runs.comb[i, "year"]<= 2024){
     runs.comb[i, "harvest"] <- "Harvest"
   } else {
     runs.comb[i, "harvest"] <- "Post-harvest"
