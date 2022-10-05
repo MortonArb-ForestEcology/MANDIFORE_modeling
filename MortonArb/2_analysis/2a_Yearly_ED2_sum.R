@@ -94,3 +94,4 @@ for(GCM in unique(runs.comb$GCM)){
 
 
 write.csv(runs.comb, paste0("../data/All_runs_yearly.csv"), row.names = F)
+write.csv(runs.comb, file.path(path.google, "processed_data/All_runs_yearly.csv"), row.names = F)
