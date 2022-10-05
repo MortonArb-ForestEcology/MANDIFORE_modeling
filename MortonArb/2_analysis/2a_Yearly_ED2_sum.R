@@ -35,7 +35,7 @@ dat.year$rainless.days <- aggregate(no.rain~year+model+scenario, dat.precip, FUN
 #--------------------------------------------------------------#
 #Reading in the Mandifore data
 #--------------------------------------------------------------#
-runs.all <- read_bulk(directory = file.path(path.google, "processed_data"), extension = "Site.csv", header = TRUE)
+runs.all <- read_bulk(directory = file.path(path.google, "output"), extension = "Site.csv", header = TRUE)
 summary(runs.all)
 
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
@@ -77,27 +77,20 @@ for(i in 2:nrow(runs.comb)){
     runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
     
     #Change in agb
-    runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"]  
+    runs.comb[i, "agb.diff"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "agb"]- runs.comb[i, "agb"]  
     
     #Relative change in agb
-    runs.comb[i, "agb.rel.diff"] <- (runs.comb[i, "agb"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"] 
+    runs.comb[i, "agb.rel.diff"] <- (runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "agb"]- runs.comb[i, "agb"])/runs.comb[i, "agb"] 
     
-    #Relative future change in agb by 2 years
-    
-    runs.comb[i, "agb.rel.lead2"] <- (runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+2, "agb"] - runs.comb[i, "agb"])/runs.comb[i, "agb"]  
-    
-  }else if(Year>2097){ #This section exists for the last two years where we can't calculate the lead because the model run ends
+  }else if(Year>2098){ #This section exists for the last two years where we can't calculate the lead because the model run ends
     #relative change in precip from one year to the next
     runs.comb[i, "diff.precip"] <- (runs.comb[i, "sum"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "sum"]
-    
+
     #Change in agb
-    runs.comb[i, "agb.diff"] <- runs.comb[i, "agb"] - runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"]  
+    runs.comb[i, "agb.diff"] <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year+1, "agb"]- runs.comb[i, "agb"]  
     
     #Relative change in agb
-    runs.comb[i, "agb.rel.diff"] <- (runs.comb[i, "agb"]- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"])/runs.comb[runs.comb$GCM==GCM & runs.comb$rcp == rcp & runs.comb$Management==MNG & runs.comb$year == Year-1, "agb"] 
-    
-    #Relative future change in agb by 2 years
-    runs.comb[i, "agb.rel.lead2"] <- NA  
+    runs.comb[i, "agb.rel.diff"] <- NA
     
   }
   
