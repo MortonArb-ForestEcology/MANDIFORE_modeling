@@ -108,7 +108,7 @@ for(MOD in mods.raw){
       #Checking for the windspeed exception
       mod.list[[paste(MOD, YR, VAR)]] <- met.pull(ncT, VAR)
       mod.list[[paste(MOD, YR, VAR)]]$model <- mod.name
-      mod.list[[paste(MOD, YR, VAR)]]$sceario <- rcp
+      mod.list[[paste(MOD, YR, VAR)]]$scenario <- rcp
     } # end var loop
     ncdf4::nc_close(ncT)
   } # End file loop
@@ -149,7 +149,7 @@ for(MOD in mods.raw2){
       #Checking for the windspeed exception
       mod.list[[paste(MOD, YR, VAR)]] <- met.pull(ncT, VAR)
       mod.list[[paste(MOD, YR, VAR)]]$model <- mod.name
-      mod.list[[paste(MOD, YR, VAR)]]$sceario <- rcp
+      mod.list[[paste(MOD, YR, VAR)]]$scenario <- rcp
     } # end var loop
     ncdf4::nc_close(ncT)
   } # End file loop
