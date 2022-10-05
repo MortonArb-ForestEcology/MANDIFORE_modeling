@@ -58,7 +58,7 @@ runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Gap", "
 runs.comb$harvest <- ifelse(runs.comb$year<2020, "pre-harvest", ifelse(runs.comb$year %in% 2020:2024, "harvest", "post-harvest")) 
 
 #Calculating our agb metrics for evaluation
-runs.comb[,c("agb.diff", "agb.rel.diff")] <- NA
+runs.comb[,c("agb.diff", "agb.rel.diff", "agb.diff.future", "agb.rel.diff.future")] <- NA
 for(GCM in unique(runs.comb$GCM)){
   for(RCP in unique(runs.comb$rcp[runs.comb$GCM==GCM])){
     for(MGMT in unique(runs.comb$Management[runs.comb$GCM==GCM & runs.comb$rcp==RCP])){
@@ -80,13 +80,23 @@ for(GCM in unique(runs.comb$GCM)){
       
       # Calculating running change in AGB
       dat.run <- runs.comb[run.rows,]
-      for(YR in 2008:2099){
-        agb.now <- dat.run$agb[dat.run$year==YR]
-        agb.past <- dat.run$agb[dat.run$year==(YR-1)]
-        dat.run$agb.diff[dat.run$year==YR] <- agb.now - agb.past
-        dat.run$agb.rel.diff[dat.run$year==YR] <- (agb.now - agb.past)/agb.past
+      
+      for(YR in 2007:2099){
+        
+        if(YR>2007){
+          agb.now <- dat.run$agb[dat.run$year==YR]
+          agb.past <- dat.run$agb[dat.run$year==(YR-1)]
+          dat.run$agb.diff[dat.run$year==YR] <- agb.now - agb.past
+          dat.run$agb.rel.diff[dat.run$year==YR] <- (agb.now - agb.past)/agb.past
+        }
+        
+        if(YR<2099){ # If we're not at the end; add the future state
+          agb.future <- dat.run$agb[dat.run$year==(YR-1)]
+          dat.run$agb.diff.future[dat.run$year==YR] <- agb.future - agb.now
+          dat.run$agb.rel.diff.future[dat.run$year==YR] <- (agb.future - agb.now)/agb.now
+        }
       }
-      runs.comb[run.rows, c("agb.diff", "agb.rel.diff")] <- dat.run[,c("agb.diff", "agb.rel.diff")]
+      runs.comb[run.rows, c("agb.diff", "agb.rel.diff", "agb.diff.future", "agb.rel.diff.future")] <- dat.run[,c("agb.diff", "agb.rel.diff", "agb.diff.future", "agb.rel.diff.future")]
       
     }
   }
