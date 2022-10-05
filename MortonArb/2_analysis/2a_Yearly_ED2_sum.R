@@ -89,6 +89,9 @@ for(GCM in unique(runs.comb$GCM)){
       runs.comb[run.rows, c("agb.diff", "agb.rel.diff")] <- dat.run[,c("agb.diff", "agb.rel.diff")]
       
     }
+  }
+}
+
 
 write.csv(runs.comb, paste0("../data/All_runs_yearly.csv"), row.names = F)
 write.csv(runs.comb, file.path(path.google, "processed_data/All_runs_yearly.csv"), row.names = F)
