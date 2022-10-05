@@ -4,8 +4,23 @@
 # Purpose: This script pulls hourly weather data and aggregates it to daily.
 # Inputs: Met output found in MANDIFORE_modeling/MortonArb/met_raw.v3/subdaily_tdm/MortonArb
 # Outputs: A dataframe of summarized daily weather data that has been aggregated from hourly data
+#          A dataframe containing all of the different gcm ED2 runs into one csv
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
+
+#-------------------------------------------------#
+#Reading in the Mandifore data and combined it into 1 file
+#-------------------------------------------------#
+path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+#path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+
+runs.load <- readbulk::read_bulk(directory = file.path(path.google, "output/"), extension = ".csv")
+write.csv(runs.load, file.path(path.google, "processed_data/All_runs.csv"), row.names = F)
+
+#---------------------------------------------------#
+#Getting the weather data
+#---------------------------------------------------#
+
 #Folder containing the data
 path.out = "../met_raw.v3"
 
@@ -121,7 +136,7 @@ colnames(heat.agg) <- c("var", "Date", "model", "scenario", "mean")
 heat.agg$Hwave.hours <- aggregate(Heatwave~var+Date+model+scenario, data =heat.df, FUN = sum)[,c("Heatwave")]
 
 #Saving the dataframe of temperature at daily resolution
-write.csv(heat.agg, "../Temp_Weather_Daily.csv", row.names=F)
+write.csv(heat.agg, file.path(path.google, "processed_data/Temp_Weather_Daily.csv"), row.names=F)
 
 
 #Making a precipitation specific dataframe for conversion
@@ -133,5 +148,5 @@ precip.agg <- aggregate(value~var+Date+model+scenario, data =precip.df, FUN = me
 colnames(precip.agg) <- c("var", "Date", "model", "scenario", "mean")
 precip.agg$sum <- aggregate(value~var+Date+model+scenario, data =precip.df, FUN = sum)[,c("value")]
 
-write.csv(precip.agg, "../Precip_Weather_Daily.csv", row.names=F)
+write.csv(precip.agg, file.path(path.google, "processed_data/Precip_Weather_Daily.csv"), row.names=F)
 
