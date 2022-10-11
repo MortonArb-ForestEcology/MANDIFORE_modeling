@@ -49,7 +49,7 @@ runs.all <- runs.all[runs.all$GCM != "MIROC-ESM-CHEM" & runs.all$year>2006,]
 
 #Aggregating values by mean
 runs.year <- aggregate(cbind(tair, VPD, agb, lai, npp,soil.moist.deep, soil.moist.surf ,
-                             density.tree, height.sd, height.mean, dbh.mean, dbh.sd)~year+Management+GCM+rcp, runs.all, FUN = mean)
+                             density.tree, tree.height.sd, tree.height.mean, tree.dbh.mean, tree.dbh.sd, basal.area.tree)~year+Management+GCM+rcp, runs.all, FUN = mean)
 
 #Joining the precipitation metrics and mandifore output with one dataframe
 runs.comb <- merge(runs.year, dat.year, by.x = c("year", "GCM", "rcp"), by.y = c("year", "model", "scenario"))
