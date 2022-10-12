@@ -28,105 +28,7 @@ runs.comb$RCP.name <- factor(runs.comb$RCP.name, levels=c("Low Emmissions", "Hig
 
 runs.late <- runs.comb[runs.comb$year >= 2025,]
 
-#runs.late <- runs.late[!is.na(runs.late$agb.rel.diff.future),]
-
-#---------------------------------------------------------#
-#Immediate post-harvest structure
-#---------------------------------------------------------#
-#Organizing data into long form for easier graphing. Only using the year immediately post harvest
-agg.harv <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
-
-plot.harv <- stack(agg.harv[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
-names(plot.harv) <- c("values", "var")
-plot.harv[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.harv[,c("GCM", "rcp", "Driver.set", "Management")]
-
-path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
-
-#Making a box plot of the variables immediately post-harvest
-png(width= 750, filename= file.path(path.figures, paste0('Immediate_post-harvest_Structure_by_Management.png')))
-ggplot(plot.harv)+
-  facet_wrap(~var, scales = "free")+
-  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
-  ggtitle("Structural variables immediately post-harvest (2025) by Management")+
-  theme(plot.title = element_text(size = 16, face = "bold"))
-dev.off()
-
-#Organizing data into long form for easier graphing. Only using the year immediately post harvest
-agg.end <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.comb[runs.comb$year == 2099,], FUN = mean, na.action = NULL)
-
-plot.end <- stack(agg.end[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
-names(plot.end) <- c("values", "var")
-plot.end[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.end[,c("GCM", "rcp", "Driver.set", "Management")]
-
-#Making a box plot of the variables immediately post-harvest
-png(width= 750, filename= file.path(path.figures, paste0('End_of_Run_Structure_by_Management.png')))
-ggplot(plot.end)+
-  facet_wrap(~var, scales = "free")+
-  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
-  ggtitle("Structural variables at run end (2099) by Management")+
-  theme(plot.title = element_text(size = 16, face = "bold"))
-dev.off()
-
-#Organizing data into long form for easier graphing. Only using the year immediately post harvest
-agg.mid <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.comb[runs.comb$year == 2050,], FUN = mean, na.action = NULL)
-
-plot.mid <- stack(agg.mid[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
-names(plot.mid) <- c("values", "var")
-plot.mid[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.mid[,c("GCM", "rcp", "Driver.set", "Management")]
-
-#Making a box plot of the variables immediately post-harvest
-png(width= 750, filename= file.path(path.figures, paste0('Midcentury_Structure_by_Management.png')))
-ggplot(plot.mid)+
-  facet_wrap(~var, scales = "free")+
-  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
-  ggtitle("Structural variables at mid century (2050) by Management")+
-  theme(plot.title = element_text(size = 16, face = "bold"))
-dev.off()
-
-#Test attempt at including p-values in the boxplots
-ggboxplot(plot.harv, x = "Management", y = "values",
-          color = "Management", palette = "jco")+
-  facet_wrap(~var, scales = "free")+
-  ggtitle("Structural variables immediately post-harvest (2025) by Management")+
-  stat_compare_means(label = "p.signif", method = "t.test",
-                     ref.group = "None") 
-
-#lme anova analysis of our structural variables and Tukey multiple comparison analysis
-struc.df <- data.frame()
-mult.df <- data.frame()
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")
-for(COL in struc.var){
-  dry.list <- list()
-  lm.test <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(Driver.set =~1), data = runs.late[runs.late$year == 2025,], method = "ML")
-  sum <- summary(lm.test)
-  df.eff <- as.data.frame(sum$tTable)
-  df.eff$Fixedeff <- rownames(df.eff)
-  df.eff$Equation <- paste(COL, "~", "Management")
-  dry.list[[paste(COL)]]$Var <- COL
-  dry.list[[paste(COL)]]$Equation <- df.eff$Equation
-  dry.list[[paste(COL)]]$Fixedeff <- df.eff$Fixedeff
-  dry.list[[paste(COL)]]$Value <- df.eff$Value
-  dry.list[[paste(COL)]]$pvalue <- df.eff$`p-value`
-  dat.dry <- dplyr::bind_rows(dry.list)
-  struc.df <- rbind(struc.df, dat.dry)
-  
-  #Doing a multiple comparison across the different management types
-  mult.list <- list()
-  post.hoc <- glht(lm.test, linfct = mcp(Management = 'Tukey'))
-  output <- summary(post.hoc)
-  mult.list[[paste(COL)]]$Var <- COL
-  mult.list[[paste(COL)]]$Comp <- c("Gap-None", "Shelter-None", "Under-None", "Shelter-Gap", "Under-Gap", "Under-Shelter")
-  mult.list[[paste(COL)]]$pvalue <- output$test$pvalues
-  dat.mult <- dplyr::bind_rows(mult.list)
-  mult.df <- rbind(mult.df, dat.mult)
-}
-
-sigstruc.df <- reshape2::dcast(struc.df, Fixedeff ~ Var)
-sigmult.df <- reshape2::dcast(mult.df, Comp ~ Var)
-
-write.csv(sigstruc.df, "../data/Post-harvest_structural_lme.csv", row.names = F)
-write.csv(sigmult.df, "../data/Post-harvest_structural_multcomp.csv", row.names = F)
-
+runs.late <- runs.late[!is.na(runs.late$agb.rel.diff.future),]
 
 #-------------------------------------------------------------#
 #Counting the number of major agb loss events
@@ -141,8 +43,8 @@ for(i in 5:nrow(runs.comb)){
   MNG <- runs.comb[i, "Management"]
   YR <- runs.comb[i, "year"]
   if(YR != 2007){
-  prev.20 <- runs.comb[runs.comb$Driver.set == DRIVE & runs.comb$Management == MNG & runs.comb$year == YR-1 , "loss.event.20"]
-  runs.comb[i, "nonseq.loss.event.20"] <- ifelse((runs.comb[i, "loss.event.20"] == T & prev.20 ==F), T, F)
+    prev.20 <- runs.comb[runs.comb$Driver.set == DRIVE & runs.comb$Management == MNG & runs.comb$year == YR-1 , "loss.event.20"]
+    runs.comb[i, "nonseq.loss.event.20"] <- ifelse((runs.comb[i, "loss.event.20"] == T & prev.20 ==F), T, F)
   }
 }
 
@@ -228,26 +130,26 @@ for(MOD in unique(runs.late$GCM)){
       count <-0
       f.crash <- F
       for(i in 1:nrow(temp)){
-          #Teasing out the duration of the crashes
-          if(temp[i, "loss.event.20"] == T & f.crash == F){
-            temp[i, "crash.status"] <- "first.crash"
-            count <- count + 1
-            if(i < 92 & temp[i+1, "loss.event.20"] == F){ #Caveat, if first crash is year 2099 we don't flag. Doesn't present a problem with our data
-              f.crash <- T #Where we label that first crash happened
-            }
-          } else if(temp[i, "loss.event.20"] == F & f.crash == F){
-            temp[i, "crash.status"] <- "pre-crash"
-            count <- 0
-          } else if(temp[i, "loss.event.20"] == F & f.crash == T){
-            temp[i, "crash.status"] <- "recovery"
-            count <- 0
-          } else if(temp[i, "loss.event.20"] == T & f.crash == T){
-            temp[i, "crash.status"] <- "subsequent.crash"
-            count <- count + 1
+        #Teasing out the duration of the crashes
+        if(temp[i, "loss.event.20"] == T & f.crash == F){
+          temp[i, "crash.status"] <- "first.crash"
+          count <- count + 1
+          if(i < 92 & temp[i+1, "loss.event.20"] == F){ #Caveat, if first crash is year 2099 we don't flag. Doesn't present a problem with our data
+            f.crash <- T #Where we label that first crash happened
           }
+        } else if(temp[i, "loss.event.20"] == F & f.crash == F){
+          temp[i, "crash.status"] <- "pre-crash"
+          count <- 0
+        } else if(temp[i, "loss.event.20"] == F & f.crash == T){
+          temp[i, "crash.status"] <- "recovery"
+          count <- 0
+        } else if(temp[i, "loss.event.20"] == T & f.crash == T){
+          temp[i, "crash.status"] <- "subsequent.crash"
+          count <- count + 1
+        }
         
         temp[i, "years.crash"] <- count
-
+        
       }
       runs.count <- rbind(runs.count, temp)
     }
@@ -269,10 +171,6 @@ for(i in 5:nrow(runs.count)){
 }
 
 # -----------------------------------------------------------
-
-
-
-
 
 #Organizing data into long form for easier graphing.
 agg.status <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management+crash.status, data = runs.comb, FUN = mean, na.action = NULL)
@@ -367,6 +265,120 @@ crash.df$Management <- factor(crash.df$Management, levels = c("None", "Gap", "Sh
 crash.lm <- glm.nb(crash.count~Management*rcp, data = crash.df)
 summary(crash.lm)
 
+#---------------------------------------------------------#
+#Immediate post-harvest structure
+#---------------------------------------------------------#
+#Organizing data into long form for easier graphing. Only using the year immediately post harvest
+agg.harv <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
+
+plot.harv <- stack(agg.harv[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.harv) <- c("values", "var")
+plot.harv[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.harv[,c("GCM", "rcp", "Driver.set", "Management")]
+
+path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
+
+#Making a box plot of the variables immediately post-harvest
+png(width= 750, filename= file.path(path.figures, paste0('Immediate_post-harvest_Structure_by_Management.png')))
+ggplot(plot.harv)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables immediately post-harvest (2025) by Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Organizing data into long form for easier graphing. Only using the year immediately post harvest
+agg.end <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.comb[runs.comb$year == 2099,], FUN = mean, na.action = NULL)
+
+plot.end <- stack(agg.end[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.end) <- c("values", "var")
+plot.end[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.end[,c("GCM", "rcp", "Driver.set", "Management")]
+
+#Making a box plot of the variables immediately post-harvest
+png(width= 750, filename= file.path(path.figures, paste0('End_of_Run_Structure_by_Management.png')))
+ggplot(plot.end)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables at run end (2099) by Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Organizing data into long form for easier graphing. Only using the year immediately post harvest
+agg.mid <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.comb[runs.comb$year == 2050,], FUN = mean, na.action = NULL)
+
+plot.mid <- stack(agg.mid[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.mid) <- c("values", "var")
+plot.mid[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.mid[,c("GCM", "rcp", "Driver.set", "Management")]
+
+#Making a box plot of the variables immediately post-harvest
+png(width= 750, filename= file.path(path.figures, paste0('Midcentury_Structure_by_Management.png')))
+ggplot(plot.mid)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables at mid century (2050) by Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Test attempt at including p-values in the boxplots
+ggboxplot(plot.harv, x = "Management", y = "values",
+          color = "Management", palette = "jco")+
+  facet_wrap(~var, scales = "free")+
+  ggtitle("Structural variables immediately post-harvest (2025) by Management")+
+  stat_compare_means(label = "p.signif", method = "t.test",
+                     ref.group = "None") 
+
+#lme anova analysis of our structural variables and Tukey multiple comparison analysis
+mult.df.25 <- data.frame()
+mult.df.50 <- data.frame()
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")
+for(RCP in unique(runs.late$rcp)){
+  for(COL in struc.var){
+    lm.test.25 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(Driver.set =~1), data = runs.late[runs.late$year == 2025 & runs.late$rcp == RCP,], method = "ML")
+    
+    #Doing a multiple comparison across the different management types
+    mult.list.25 <- list()
+    post.hoc <- glht(lm.test.25, linfct = mcp(Management = 'Tukey'))
+    output <- summary(post.hoc)
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    mult.list.25[[paste(COL)]]$Var <- COL
+    mult.list.25[[paste(COL)]]$rcp <- RCP
+    mult.list.25[[paste(COL)]]$Comp <- c("Gap-None", "Shelter-None", "Under-None", "Shelter-Gap", "Under-Gap", "Under-Shelter")
+    mult.list.25[[paste(COL)]]$pvalue <- output$test$pvalues
+    dat.mult.25 <- dplyr::bind_rows(mult.list.25)
+    mult.df.25 <- rbind(mult.df.25, dat.mult.25)
+    
+    
+    lm.test.50 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2050 & runs.late$rcp == RCP,], method = "ML")
+    
+    mult.list.50 <- list()
+    #Doing a multiple comparison across the different management types
+    post.hoc <- glht(lm.test.50, linfct = mcp(Management = 'Tukey'))
+    output <- summary(post.hoc)
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    mult.list.50[[paste(COL)]]$Var <- COL
+    mult.list.50[[paste(COL)]]$rcp <- RCP
+    mult.list.50[[paste(COL)]]$Comp <- c("Gap-None", "Shelter-None", "Under-None", "Shelter-Gap", "Under-Gap", "Under-Shelter")
+    mult.list.50[[paste(COL)]]$pvalue <- output$test$pvalues
+    dat.mult.50 <- dplyr::bind_rows(mult.list.50)
+    mult.df.50 <- rbind(mult.df.50, dat.mult.50)
+  }
+}
+rcp45.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp45",], Comp ~ Var)
+rcp45.25.df$Scenario <- "Low Emmissions"
+rcp45.25.df <- rcp45.25.df[,c(8,1,2,3,4,5,6,7)]
+rcp85.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp85",], Comp ~ Var)
+rcp85.25.df$Scenario <- "High Emmissions"
+rcp85.25.df <- rcp85.25.df[,c(8,1,2,3,4,5,6,7)]
+
+rcp45.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp45",], Comp ~ Var)
+rcp45.50.df$Scenario <- "Low Emmissions"
+rcp45.50.df <- rcp45.50.df[,c(8,1,2,3,4,5,6,7)]
+rcp85.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp85",], Comp ~ Var)
+rcp85.50.df$Scenario <- "High Emmissions"
+rcp85.50.df <- rcp85.50.df[,c(8,1,2,3,4,5,6,7)]
+
+
+
+write.csv(sigmult.df.25, "../data/Post-harvest_structural_multcomp.csv", row.names = F)
 
 #--------------------------------------------------#
 # Looking at Structure after crash
