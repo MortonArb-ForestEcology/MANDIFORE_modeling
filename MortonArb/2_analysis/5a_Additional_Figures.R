@@ -10,6 +10,113 @@
 #------------------------------------------------------------------------#
 # FIGURES SECTION
 #------------------------------------------------------------------------#
+# -----------------------------------------------------------
+# Looking at the effect of harvest on structural variables
+# -----------------------------------------------------------
+runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv"))
+runs.yr$Management <- factor(runs.yr$Management, levels=c("None", "Under", "Shelter", "Gap"))
+runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='Low Emmissions'; 'rcp85'='High Emissions'")
+runs.yr$RCP.name <- factor(runs.yr$RCP.name, levels=c("Low Emmissions", "High Emissions"))
+summary(runs.yr)
+
+
+vars.plot <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")
+
+dat.harvest.pre <- stack(runs.yr[runs.yr$year==2019, vars.plot])
+dat.harvest.pre$time <- "pre-harvest"
+dat.harvest.pre[,c("GCM", "rcp", "RCP.name", "Management", "year")] <- runs.yr[runs.yr$year==2019, c("GCM", "rcp", "RCP.name", "Management", "year")]
+
+dat.harvest.post <- stack(runs.yr[runs.yr$year==2025, vars.plot])
+dat.harvest.post$time <- "post-harvest"
+dat.harvest.post[,c("GCM", "rcp", "RCP.name", "Management", "year")] <- runs.yr[runs.yr$year==2025, c("GCM", "rcp", "RCP.name", "Management", "year")]
+
+dat.harvest.mid <- stack(runs.yr[runs.yr$year==2050, vars.plot])
+dat.harvest.mid$time <- "mid-century"
+dat.harvest.mid[,c("GCM", "rcp", "RCP.name", "Management", "year")] <- runs.yr[runs.yr$year==2050, c("GCM", "rcp", "RCP.name", "Management", "year")]
+
+dat.harvest.end <- stack(runs.yr[runs.yr$year==2099, vars.plot])
+dat.harvest.end$time <- "end-century"
+dat.harvest.end[,c("GCM", "rcp", "RCP.name", "Management", "year")] <- runs.yr[runs.yr$year==2099, c("GCM", "rcp", "RCP.name", "Management", "year")]
+
+dat.harvest <- rbind(dat.harvest.pre, dat.harvest.post, dat.harvest.mid, dat.harvest.end)
+
+theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
+                       axis.title = element_text(size=rel(2), face="bold"),
+                       panel.background = element_rect(fill=NA, color="black"),
+                       panel.grid=element_blank(),
+                       # panel.spacing.x = unit(1, "lines"),
+                       strip.text.x = element_text(size=rel(2), face="bold"),
+                       strip.text.y = element_text(size=rel(1),angle=0, face="bold"),
+                       strip.background = element_rect(fill=NA),
+                       plot.margin = unit(c(1, 1, 1, 1), "lines"),
+                       plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
+                       legend.key = element_rect(fill=NA))
+var.labs <- c("AGB", "Tree density", "Mean DBH", "SD of DBH", "Mean Height", "SD of Height")
+names(var.labs) <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")
+
+png("HarvestStructure_Mid-End.png", width=12, height=8, units="in", res=220)
+ggplot(data=dat.harvest) +
+  facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs)) +
+  geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
+  scale_x_discrete(name="Time", labels=c("pre-harvest", "post-harvest","mid-century", "end-century")) +
+  scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
+  theme.clean+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+dev.off()
+
+
+vars.plot <- c("tair", "precip.total", "VPD")
+
+#runs.yr$tair <- runs.yr$tair-273.15
+dat.weather <- stack(runs.yr[, vars.plot])
+dat.weather[dat.weather$ind=="tair","values"] <- dat.weather[dat.weather$ind=="tair","values"] - 273.15
+dat.weather[,c("GCM", "rcp", "RCP.name", "Management", "year")] <- runs.yr[, c("GCM", "rcp", "RCP.name", "Management", "year")]
+
+dat.wagg <- aggregate(values~ind+GCM+rcp+RCP.name+year, dat.weather, FUN = mean)
+
+dat.means <- aggregate(values~ind+rcp+RCP.name, dat.weather[dat.weather$year<2020,], FUN = mean)
+
+met.labs <- c("Temperature (C)", "Total precip (mm)", "VPD (Pa)")
+names(met.labs) <- c("tair", "precip.total", "VPD")
+
+
+weath.time <- ggplot(data=dat.wagg)+
+  facet_grid(ind~rcp, scales= "free_y", labeller = labeller(ind = met.labs)) +
+  geom_line(aes(x=year, y=values, group=GCM)) +
+  geom_hline(data = dat.means, aes(yintercept=values), color="red2", linetype="dashed", size=1)+
+  labs(x="Year", y="Weather Metrics") +
+  theme(axis.text = element_text(size=rel(1.5), color="black"),
+        axis.title = element_text(size=rel(2), face="bold"),
+        panel.background = element_rect(fill=NA, color="black"),
+        panel.grid=element_blank(),
+        panel.spacing.x = unit(1, "lines"),
+        strip.text.x = element_text(size=rel(2), face="bold"),
+        strip.text.y = element_text(size=rel(1.5), face="bold"),
+        strip.background = element_rect(fill=NA),
+        plot.margin = unit(c(1, 1, 1, 1), "lines"),
+        plot.title = element_text(size=rel(2), face="bold", hjust=0.5))
+
+
+weath.cent <- ggplot(data=dat.wagg[dat.wagg$year == 2050 | dat.wagg$year == 2099,])+
+  facet_grid(ind~., scales= "free_y", labeller = labeller(ind = met.labs)) +
+  geom_boxplot(aes(x=as.character(year), y=values, fill = rcp)) +
+  labs(x="Year", y="Weather Metrics")+
+  scale_x_discrete(name="Period", labels=c("mid-century", "end of century")) +
+  theme(axis.text.y = element_text(size=rel(2), color="black"),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(size=rel(1.5), color="black"),
+        axis.title.x = element_text(size=rel(2), color="black", face="bold"),
+        panel.background = element_rect(fill=NA, color="black"),
+        panel.grid=element_blank(),
+        panel.spacing.x = unit(1, "lines"),
+        strip.text.x = element_text(size=rel(2), face="bold"),
+        strip.text.y = element_text(size=rel(1.5), face="bold"),
+        strip.background = element_rect(fill=NA),
+        plot.margin = unit(c(1, 1, 1, 1), "lines"),
+        plot.title = element_text(size=rel(2), face="bold", hjust=0.5))
+
+cowplot::plot_grid(weath.time, weath.cent, labels = c("A", "B"), label_size = 15 ,rel_widths = c(2,1))
+
 path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Outline Figures"
 
 library(ggplot2)
