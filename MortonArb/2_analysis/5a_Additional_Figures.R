@@ -54,13 +54,29 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
 var.labs <- c("AGB", "Tree density", "Mean DBH", "SD of DBH", "Mean Height", "SD of Height")
 names(var.labs) <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")
 
-png("HarvestStructure_Mid-End.png", width=12, height=8, units="in", res=220)
-ggplot(data=dat.harvest) +
+path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
+
+#Supplemental figure of pre and post harvest
+png(paste0(path.figures, "HarvestStructure_Pre-Post.png"), width=12, height=8, units="in", res=220)
+ggplot(data=dat.harvest[dat.harvest$time == "pre-harvest" | dat.harvest$time == "post-harvest",]) +
   facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs)) +
   geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
-  scale_x_discrete(name="Time", labels=c("pre-harvest", "post-harvest","mid-century", "end-century")) +
+  scale_x_discrete(name="Time", labels=c("pre-harvest", "post-harvest")) +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
+  ggtitle("Pre and Post harvest structure by rcp scenario")+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+dev.off()
+
+#Figure for paper that use mid and end of century
+png(paste0(path.figures, "HarvestStructure_Mid-End.png"), width=12, height=8, units="in", res=220)
+ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == "end-century",]) +
+  facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs)) +
+  geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
+  scale_x_discrete(name="Time", labels=c("mid-century", "end-century")) +
+  scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
+  theme.clean+
+  ggtitle("Mid-century and end-century harvest structure by rcp scenario")+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 dev.off()
 
