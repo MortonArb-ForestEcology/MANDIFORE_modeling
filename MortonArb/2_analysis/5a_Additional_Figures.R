@@ -54,6 +54,145 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
 var.labs <- c("AGB", "Tree density", "Mean DBH", "SD of DBH", "Mean Height", "SD of Height")
 names(var.labs) <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")
 
+
+runs.late <- runs.yr[runs.yr$year >= 2025, ]
+#lme anova analysis of our structural variables and Tukey multiple comparison analysis
+mult.df.25 <- data.frame()
+mult.df.50 <- data.frame()
+mult.df.99 <- data.frame()
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")
+for(RCP in unique(runs.late$rcp)){
+  for(COL in struc.var){
+    lm.test.25 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2025 & runs.late$rcp == RCP,], method = "ML")
+    
+    #Doing a multiple comparison across the different management types
+    mult.list.25 <- list()
+    post.hoc <- glht(lm.test.25, linfct = mcp(Management = 'Tukey'))
+    output <- summary(post.hoc)
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    mult.list.25[[paste(COL)]]$Var <- COL
+    mult.list.25[[paste(COL)]]$rcp <- RCP
+    mult.list.25[[paste(COL)]]$Comp <- names(output$test$coefficients)
+    mult.list.25[[paste(COL)]]$pvalue <- output$test$pvalues
+    dat.mult.25 <- dplyr::bind_rows(mult.list.25)
+    mult.df.25 <- rbind(mult.df.25, dat.mult.25)
+    
+    
+    lm.test.50 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2050 & runs.late$rcp == RCP,], method = "ML")
+    
+    mult.list.50 <- list()
+    #Doing a multiple comparison across the different management types
+    post.hoc <- glht(lm.test.50, linfct = mcp(Management = 'Tukey'))
+    output <- summary(post.hoc)
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    mult.list.50[[paste(COL)]]$Var <- COL
+    mult.list.50[[paste(COL)]]$rcp <- RCP
+    mult.list.50[[paste(COL)]]$Comp <- names(output$test$coefficients)
+    mult.list.50[[paste(COL)]]$pvalue <- output$test$pvalues
+    dat.mult.50 <- dplyr::bind_rows(mult.list.50)
+    mult.df.50 <- rbind(mult.df.50, dat.mult.50)
+    
+    
+    lm.test.99 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.comb[runs.comb$year == 2099 & runs.comb$rcp == RCP,], method = "ML")
+    
+    mult.list.99 <- list()
+    #Doing a multiple comparison across the different management types
+    post.hoc <- glht(lm.test.99, linfct = mcp(Management = 'Tukey'))
+    output <- summary(post.hoc)
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    mult.list.99[[paste(COL)]]$Var <- COL
+    mult.list.99[[paste(COL)]]$rcp <- RCP
+    mult.list.99[[paste(COL)]]$Comp <- names(output$test$coefficients)
+    mult.list.99[[paste(COL)]]$pvalue <- output$test$pvalues
+    dat.mult.99 <- dplyr::bind_rows(mult.list.99)
+    mult.df.99 <- rbind(mult.df.99, dat.mult.99)
+  }
+}
+#Creating different dataframes to look at specific windows. This information should evtually end up captured in a figure
+rcp45.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp45",], Comp ~ Var)
+rcp45.25.df$Scenario <- "Low Emmissions"
+rcp45.25.df$year <- "2025"
+rcp45.25.df <- rcp45.25.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp85.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp85",], Comp ~ Var)
+rcp85.25.df$Scenario <- "High Emmissions"
+rcp85.25.df$year <- "2025"
+rcp85.25.df <- rcp85.25.df[,c(8,9,1,2,3,4,5,6,7)]
+
+rcp45.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp45",], Comp ~ Var)
+rcp45.50.df$Scenario <- "Low Emmissions"
+rcp45.50.df$year <- "2050"
+rcp45.50.df <- rcp45.50.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp85.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp85",], Comp ~ Var)
+rcp85.50.df$Scenario <- "High Emmissions"
+rcp85.50.df$year <- "2050"
+rcp85.50.df <- rcp85.50.df[,c(8,9,1,2,3,4,5,6,7)]
+
+rcp45.99.df <- reshape2::dcast(mult.df.99[mult.df.99$rcp=="rcp45",], Comp ~ Var)
+rcp45.99.df$Scenario <- "Low Emmissions"
+rcp45.99.df$year <- "2099"
+rcp45.99.df <- rcp45.99.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp85.99.df <- reshape2::dcast(mult.df.99[mult.df.99$rcp=="rcp85",], Comp ~ Var)
+rcp85.99.df$Scenario <- "High Emmissions"
+rcp85.99.df$year <- "2099"
+rcp85.99.df <- rcp85.99.df[,c(8,9,1,2,3,4,5,6,7)]
+
+struc.comp <- rbind(rcp45.25.df,rcp45.50.df, rcp45.99.df, rcp85.25.df, rcp85.50.df, rcp85.99.df)
+
+
+plot.struc <- stack(struc.comp[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.struc) <- c("values", "var")
+plot.struc[,c("Scenario", "Comp", "year")] <- struc.comp[,c("Scenario", "Comp", "year")]
+plot.struc$Comparison <- plot.struc$Comp
+plot.struc <- plot.struc %>% tidyr::separate(Comp, c('MNG.1', 'MNG.2'))
+
+
+MANAGE <- c("None", "Gap", "Shelter", "Under")
+Letter <- c("a", "b", "c", "d")
+full <- data.frame()
+for(SCEN in unique(plot.struc$Scenario)){
+  for(YR in unique(plot.struc$year)){
+    for(VAR in unique(plot.struc$var)){
+      start.df <- plot.struc[plot.struc$Scenario == SCEN & plot.struc$year == YR & plot.struc$var == VAR,]
+      mid <- data.frame()
+      for(MNG in unique(start.df$MNG.1)){
+        temp <- start.df[start.df$MNG.1 == MNG | start.df$MNG.2 == MNG,]
+        temp$pair <- ifelse(temp$values >.05, paste0(temp$MNG.1,"-",temp$MNG.2), "sig")
+        mid <- rbind(mid,temp)
+      }
+      
+      mid <- mid[!duplicated(mid$Comparison),]
+      mng.df <- data.frame(MANAGE, Letter)
+      mng.df$Scenario <- SCEN
+      mng.df$year <- YR
+      mng.df$var <- VAR
+      count <- 1
+      
+      for(mng in unique(MANAGE)){
+        for(i in 1:nrow(mid)){
+          if(mid[i, "values"] >.05 & mid[i, "MNG.1"] !=mng){
+            mid[i, "letters"] <- paste0(mid[i, "letters"], mng.df[mng.df$MANAGE == mid[i, "MNG.1"], "Letter"])
+          } else if(mid[i, "values"] >.05 & mid[i, "MNG.2"] !=mng){ #else if to check which column the pair is with
+            mid[i, "letters"] <- paste0(mid[i, "letters"], mng.df[mng.df$MANAGE == mid[i, "MNG.2"], "Letter"])
+          } else{
+            mid[i, "letters"] <- paste0("")
+          }
+        }
+      }
+      #for(i in 1:nrow(mid)){
+        #if(mid[i , "pair"] != "sig"){
+         # mng.df[mng.df$MANAGE == mid[i,"MNG.1"], "letter"] <- paste0( mng.df[mng.df$MANAGE == mid[i,"MNG.1"], "letter"],letters[count])
+         # mng.df[mng.df$MANAGE == mid[i,"MNG.2"], "letter"] <- paste0( mng.df[mng.df$MANAGE == mid[i,"MNG.2"], "letter"],letters[count])
+         # count <- count + 1
+        #} else{
+          
+        #}
+      #}
+      
+      full <- rbind(full, mng.df)
+    }
+  }
+}
+
 path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
 
 #Supplemental figure of pre and post harvest
@@ -79,7 +218,6 @@ ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == 
   ggtitle("Mid-century and end-century harvest structure by rcp scenario")+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 dev.off()
-
 
 vars.plot <- c("tair", "precip.total", "VPD")
 
