@@ -340,17 +340,93 @@ diff.bic
 #-------------------------------------------------#
 #VPD, management, and height sd
 #THIS IS OUR BEST MODEL
-VPD.agb.MNG <- lme(agb.rel.diff.future ~ VPD*Management*agb, random=list(Driver.set=~1), data = runs.late, method = "ML")
+VPD.agb.MNG <- lme(agb.rel.diff.future ~ VPD*Management*agb, random=list(GCM=~1), data = runs.late, method = "ML")
 summary(VPD.agb.MNG)
 anova(VPD.agb.MNG)
 plot(VPD.agb.MNG)
 
-VPD.dbh.sd.MNG <- lme(agb.rel.diff.future ~ VPD*Management*dbh.sd, random=list(Driver.set=~1), data = runs.late, method = "ML")
+VPD.dbh.sd.MNG <- lme(agb.rel.diff.future ~ VPD*Management*dbh.sd, random=list(GCM=~1), data = runs.late, method = "ML")
 summary(VPD.dbh.sd.MNG)
 anova(VPD.dbh.sd.MNG)
 plot(VPD.dbh.sd.MNG)
 
-VPD.density.tree.MNG <- lme(agb.rel.diff.future ~ VPD*Management*density.tree, random=list(Driver.set=~1), data = runs.late, method = "ML")
+VPD.density.tree.MNG <- lme(agb.rel.diff.future ~ VPD*Management*density.tree, random=list(GCM=~1), data = runs.late, method = "ML")
 summary(VPD.density.tree.MNG )
 anova(VPD.density.tree.MNG )
 plot(VPD.density.tree.MNG )
+
+
+
+
+#--------------------------------------------------------------#
+#Working with our binomial crash framework AIC
+#--------------------------------------------------------------#
+library(lme4)
+
+path.read <- "../data/"
+
+runs.comb <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
+
+runs.late <- runs.comb[runs.comb$year >= 2025,]
+
+runs.late <- runs.late[!is.na(runs.late$agb.rel.diff.future),]
+
+runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "Shelter", "Under"))
+
+runs.late$Driver.set <- paste0(runs.late$GCM,"." ,runs.late$rcp)
+
+runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.diff.future <= -.20, 1, 0)
+
+#----------------------------------------------------#
+# Setting up the AIC
+#----------------------------------------------------#
+#Structure on its own and with Management
+#AGB
+agb.test <- glmer(loss.event.20 ~ agb + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+MNG.agb.test <- glmer(loss.event.20 ~ Management*agb + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+#Mean DBH
+dbh.mean.test <- glmer(loss.event.20 ~ tree.dbh.mean + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+MNG.dbh.mean.test <- glmer(loss.event.20 ~ Management*tree.dbh.mean + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+#SD of DBH
+dbh.sd.test <- glmer(loss.event.20 ~ tree.dbh.sd + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+MNG.dbh.sd.test <- glmer(loss.event.20 ~ Management*tree.dbh.sd + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+#Tree density
+density.tree.test <- glmer(loss.event.20 ~ density.tree + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+MNG.density.tree.test <- glmer(loss.event.20 ~ Management*density.tree + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+#Mean height
+height.mean.test <- glmer(loss.event.20 ~ tree.height.mean + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+MNG.height.mean.test <- glmer(loss.event.20 ~ Management*tree.height.mean + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+#SD of height
+height.sd.test <- glmer(loss.event.20 ~ tree.height.sd + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+MNG.height.sd.test <- glmer(loss.event.20 ~ Management*tree.height.sd + (1|GCM), data = runs.late[runs.late$rcp == "rcp45",], family = binomial)
+
+
+
+models <- list(agb.test, dbh.mean.test,  dbh.sd.test, density.tree.test,
+               height.mean.test,  height.sd.test)
+
+model.names <- c('agb', 'dbh,mean', 'dbh.sd.test','density.tree',
+                 'height.mean', 'height.sd') 
+
+
+diff.aic <- aictab(models, model.names)
+
+diff.aic
+
+write.csv(diff.aic, "../data/Full_AIC.csv", row.names=F)
+
+#BIC of all models
+diff.bic <-  bictab(models, model.names)
+
+diff.bic

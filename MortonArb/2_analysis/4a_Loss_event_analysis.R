@@ -107,6 +107,16 @@ crash.stack$TimePeriod <- factor(crash.stack$TimePeriod, levels=c("mid-century",
 # ggplot(data=crash.stack) +
 # facet_grid(.~rcp) +
 # geom_boxplot(aes(x=ind, y=values, fill=Management))
+theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
+                       axis.title = element_text(size=rel(2), face="bold"),
+                       panel.background = element_rect(fill=NA, color="black"),
+                       panel.grid=element_blank(),
+                       # panel.spacing.x = unit(1, "lines"),
+                       strip.text = element_text(size=rel(2), face="bold"),
+                       strip.background = element_rect(fill=NA),
+                       plot.margin = unit(c(1, 1, 1, 1), "lines"),
+                       plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
+                       legend.key = element_rect(fill=NA))
 
 png("../figures/Crashes_Summary.png", width=10, height=8, units="in", res=220)
 ggplot(data=crash.stack) +
@@ -329,6 +339,7 @@ ggboxplot(plot.harv, x = "Management", y = "values",
 #lme anova analysis of our structural variables and Tukey multiple comparison analysis
 mult.df.25 <- data.frame()
 mult.df.50 <- data.frame()
+mult.df.99 <- data.frame()
 struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")
 for(RCP in unique(runs.late$rcp)){
   for(COL in struc.var){
@@ -360,8 +371,24 @@ for(RCP in unique(runs.late$rcp)){
     mult.list.50[[paste(COL)]]$pvalue <- output$test$pvalues
     dat.mult.50 <- dplyr::bind_rows(mult.list.50)
     mult.df.50 <- rbind(mult.df.50, dat.mult.50)
+    
+    
+    lm.test.99 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.comb[runs.comb$year == 2099 & runs.comb$rcp == RCP,], method = "ML")
+    
+    mult.list.99 <- list()
+    #Doing a multiple comparison across the different management types
+    post.hoc <- glht(lm.test.99, linfct = mcp(Management = 'Tukey'))
+    output <- summary(post.hoc)
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    mult.list.99[[paste(COL)]]$Var <- COL
+    mult.list.99[[paste(COL)]]$rcp <- RCP
+    mult.list.99[[paste(COL)]]$Comp <- c("Gap-None", "Shelter-None", "Under-None", "Shelter-Gap", "Under-Gap", "Under-Shelter")
+    mult.list.99[[paste(COL)]]$pvalue <- output$test$pvalues
+    dat.mult.99 <- dplyr::bind_rows(mult.list.99)
+    mult.df.99 <- rbind(mult.df.99, dat.mult.99)
   }
 }
+#Creating different dataframes to look at specific windows. This information should evtually end up captured in a figure
 rcp45.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp45",], Comp ~ Var)
 rcp45.25.df$Scenario <- "Low Emmissions"
 rcp45.25.df <- rcp45.25.df[,c(8,1,2,3,4,5,6,7)]
@@ -376,9 +403,12 @@ rcp85.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp85",], Comp ~ Var)
 rcp85.50.df$Scenario <- "High Emmissions"
 rcp85.50.df <- rcp85.50.df[,c(8,1,2,3,4,5,6,7)]
 
-
-
-write.csv(sigmult.df.25, "../data/Post-harvest_structural_multcomp.csv", row.names = F)
+rcp45.99.df <- reshape2::dcast(mult.df.99[mult.df.99$rcp=="rcp45",], Comp ~ Var)
+rcp45.99.df$Scenario <- "Low Emmissions"
+rcp45.99.df <- rcp45.99.df[,c(8,1,2,3,4,5,6,7)]
+rcp85.99.df <- reshape2::dcast(mult.df.99[mult.df.99$rcp=="rcp85",], Comp ~ Var)
+rcp85.99.df$Scenario <- "High Emmissions"
+rcp85.99.df <- rcp85.99.df[,c(8,1,2,3,4,5,6,7)]
 
 #--------------------------------------------------#
 # Looking at Structure after crash
