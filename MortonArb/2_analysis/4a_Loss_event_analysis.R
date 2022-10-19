@@ -35,7 +35,7 @@ runs.late <- runs.late[!is.na(runs.late$agb.rel.diff.future),]
 #-------------------------------------------------------------#
 #agb.extreme <- as.numeric(quantile(runs.late$agb.rel.diff.future, probs = c(.025)))
 
-runs.comb$loss.event.20 <- ifelse(runs.comb$agb.rel.diff <= -.20, T, F)
+runs.comb$loss.event.20 <- ifelse(runs.comb$agb.rel.diff <= -.20, 1, 0)
 
 #Counting individual instances of a crash beginning
 for(i in 5:nrow(runs.comb)){
@@ -44,7 +44,7 @@ for(i in 5:nrow(runs.comb)){
   YR <- runs.comb[i, "year"]
   if(YR != 2007){
     prev.20 <- runs.comb[runs.comb$Driver.set == DRIVE & runs.comb$Management == MNG & runs.comb$year == YR-1 , "loss.event.20"]
-    runs.comb[i, "nonseq.loss.event.20"] <- ifelse((runs.comb[i, "loss.event.20"] == T & prev.20 ==F), T, F)
+    runs.comb[i, "nonseq.loss.event.20"] <- ifelse((runs.comb[i, "loss.event.20"] == 1 & prev.20 ==F), 1, 0)
   }
 }
 
@@ -104,6 +104,21 @@ crash.stack[,c("Management", "rcp", "GCM", "RCP.name")] <- crash.summary[,c("Man
 crash.stack$TimePeriod <- car::recode(crash.stack$ind, "'crash.mid'='mid-century'; 'crash.end'='end-century'")
 crash.stack$TimePeriod <- factor(crash.stack$TimePeriod, levels=c("mid-century", "end-century"))
 
+crash.prop <- crash.stack
+crash.prop$values <- ifelse(crash.prop$values>=1, 1, 0)
+stat.df <- aggregate(values~TimePeriod+Management+rcp, data = crash.prop, FUN = sum)
+stat.shape <- reshape(stat.df,idvar =c("Management", "TimePeriod"), timevar = "rcp",direction = "wide")
+colnames(stat.shape) <- c("TimePeriod", "Management", "rcp45", "rcp85")
+stat.shape <- reshape(stat.shape,idvar ="Management", timevar = "TimePeriod",direction = "wide")
+for(i in 2:ncol(stat.shape)){
+  stat.shape[,i] <- paste0(stat.shape[,i], "/14")
+}
+
+stat.df <- aggregate(values~TimePeriod+Management+rcp, data = crash.stack, FUN = sum)
+stat.shape <- reshape(stat.df,idvar =c("Management", "TimePeriod"), timevar = "rcp",direction = "wide")
+colnames(stat.shape) <- c("TimePeriod", "Management", "rcp45", "rcp85")
+stat.shape <- reshape(stat.shape,idvar ="Management", timevar = "TimePeriod",direction = "wide")
+
 # ggplot(data=crash.stack) +
 # facet_grid(.~rcp) +
 # geom_boxplot(aes(x=ind, y=values, fill=Management))
@@ -130,6 +145,7 @@ ggplot(data=crash.stack) +
   theme.clean + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))
 dev.off()
 
+runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.diff <= -.20, T, F)
 
 #Counting the duration of the crash events
 runs.count <- data.frame()
@@ -144,7 +160,7 @@ for(MOD in unique(runs.late$GCM)){
         if(temp[i, "loss.event.20"] == T & f.crash == F){
           temp[i, "crash.status"] <- "first.crash"
           count <- count + 1
-          if(i < 92 & temp[i+1, "loss.event.20"] == F){ #Caveat, if first crash is year 2099 we don't flag. Doesn't present a problem with our data
+          if(i < 74 & temp[i+1, "loss.event.20"] == F){ #Caveat, if first crash is year 2099 we don't flag. Doesn't present a problem with our data
             f.crash <- T #Where we label that first crash happened
           }
         } else if(temp[i, "loss.event.20"] == F & f.crash == F){
@@ -241,14 +257,15 @@ stat.shape <- reshape(agg.duration, idvar ="Management", timevar = "rcp",directi
 colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crashes (rcp45)", "Median (rcp45)", "Mode (rcp45)",
                           "Mean # crashes (rcp85)", "SD # of crashes (rcp85)", "Median (rcp45)", "Mode (rcp85)")
 
+
 #Filling in the first year
 runs.late$nonseq.loss.event.20 <- ifelse(is.na(runs.late$nonseq.loss.event.20), F ,runs.late$nonseq.loss.event.20)
 
 crash.df <- data.frame()
-for(MOD in unique(runs.late$GCM)){
-  for(RCP in unique(runs.late$rcp)){
-    for(MNG in unique(runs.late$Management)){
-      count <- nrow((runs.late[runs.late$GCM == MOD & runs.late$rcp == RCP & runs.late$Management == MNG & runs.late$nonseq.loss.event.20,]))
+for(MOD in unique(runs.comb$GCM)){
+  for(RCP in unique(runs.comb$rcp)){
+    for(MNG in unique(runs.comb$Management)){
+      count <- nrow((runs.comb[runs.comb$GCM == MOD & runs.comb$rcp == RCP & runs.comb$Management == MNG & runs.comb$nonseq.loss.event.20,]))
       temp <- data.frame(MOD, RCP, MNG)
       temp$crash.count <- count
       crash.df <- rbind(crash.df, temp)
@@ -257,7 +274,7 @@ for(MOD in unique(runs.late$GCM)){
 }
 
 
-stat.df <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = mean)
+stat.df <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = sum)
 stat.df[,"sd"] <- aggregate(crash.count~RCP+MNG, data = crash.df, FUN = sd)[, "crash.count"]
 
 stat.shape <- reshape(stat.df, idvar ="MNG", timevar = "RCP",direction = "wide")
@@ -328,87 +345,7 @@ ggplot(plot.mid)+
   theme(plot.title = element_text(size = 16, face = "bold"))
 dev.off()
 
-#Test attempt at including p-values in the boxplots
-ggboxplot(plot.harv, x = "Management", y = "values",
-          color = "Management", palette = "jco")+
-  facet_wrap(~var, scales = "free")+
-  ggtitle("Structural variables immediately post-harvest (2025) by Management")+
-  stat_compare_means(label = "p.signif", method = "t.test",
-                     ref.group = "None") 
 
-#lme anova analysis of our structural variables and Tukey multiple comparison analysis
-mult.df.25 <- data.frame()
-mult.df.50 <- data.frame()
-mult.df.99 <- data.frame()
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")
-for(RCP in unique(runs.late$rcp)){
-  for(COL in struc.var){
-    lm.test.25 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(Driver.set =~1), data = runs.late[runs.late$year == 2025 & runs.late$rcp == RCP,], method = "ML")
-    
-    #Doing a multiple comparison across the different management types
-    mult.list.25 <- list()
-    post.hoc <- glht(lm.test.25, linfct = mcp(Management = 'Tukey'))
-    output <- summary(post.hoc)
-    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
-    mult.list.25[[paste(COL)]]$Var <- COL
-    mult.list.25[[paste(COL)]]$rcp <- RCP
-    mult.list.25[[paste(COL)]]$Comp <- c("Gap-None", "Shelter-None", "Under-None", "Shelter-Gap", "Under-Gap", "Under-Shelter")
-    mult.list.25[[paste(COL)]]$pvalue <- output$test$pvalues
-    dat.mult.25 <- dplyr::bind_rows(mult.list.25)
-    mult.df.25 <- rbind(mult.df.25, dat.mult.25)
-    
-    
-    lm.test.50 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2050 & runs.late$rcp == RCP,], method = "ML")
-    
-    mult.list.50 <- list()
-    #Doing a multiple comparison across the different management types
-    post.hoc <- glht(lm.test.50, linfct = mcp(Management = 'Tukey'))
-    output <- summary(post.hoc)
-    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
-    mult.list.50[[paste(COL)]]$Var <- COL
-    mult.list.50[[paste(COL)]]$rcp <- RCP
-    mult.list.50[[paste(COL)]]$Comp <- c("Gap-None", "Shelter-None", "Under-None", "Shelter-Gap", "Under-Gap", "Under-Shelter")
-    mult.list.50[[paste(COL)]]$pvalue <- output$test$pvalues
-    dat.mult.50 <- dplyr::bind_rows(mult.list.50)
-    mult.df.50 <- rbind(mult.df.50, dat.mult.50)
-    
-    
-    lm.test.99 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.comb[runs.comb$year == 2099 & runs.comb$rcp == RCP,], method = "ML")
-    
-    mult.list.99 <- list()
-    #Doing a multiple comparison across the different management types
-    post.hoc <- glht(lm.test.99, linfct = mcp(Management = 'Tukey'))
-    output <- summary(post.hoc)
-    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
-    mult.list.99[[paste(COL)]]$Var <- COL
-    mult.list.99[[paste(COL)]]$rcp <- RCP
-    mult.list.99[[paste(COL)]]$Comp <- c("Gap-None", "Shelter-None", "Under-None", "Shelter-Gap", "Under-Gap", "Under-Shelter")
-    mult.list.99[[paste(COL)]]$pvalue <- output$test$pvalues
-    dat.mult.99 <- dplyr::bind_rows(mult.list.99)
-    mult.df.99 <- rbind(mult.df.99, dat.mult.99)
-  }
-}
-#Creating different dataframes to look at specific windows. This information should evtually end up captured in a figure
-rcp45.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp45",], Comp ~ Var)
-rcp45.25.df$Scenario <- "Low Emmissions"
-rcp45.25.df <- rcp45.25.df[,c(8,1,2,3,4,5,6,7)]
-rcp85.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp85",], Comp ~ Var)
-rcp85.25.df$Scenario <- "High Emmissions"
-rcp85.25.df <- rcp85.25.df[,c(8,1,2,3,4,5,6,7)]
-
-rcp45.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp45",], Comp ~ Var)
-rcp45.50.df$Scenario <- "Low Emmissions"
-rcp45.50.df <- rcp45.50.df[,c(8,1,2,3,4,5,6,7)]
-rcp85.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp85",], Comp ~ Var)
-rcp85.50.df$Scenario <- "High Emmissions"
-rcp85.50.df <- rcp85.50.df[,c(8,1,2,3,4,5,6,7)]
-
-rcp45.99.df <- reshape2::dcast(mult.df.99[mult.df.99$rcp=="rcp45",], Comp ~ Var)
-rcp45.99.df$Scenario <- "Low Emmissions"
-rcp45.99.df <- rcp45.99.df[,c(8,1,2,3,4,5,6,7)]
-rcp85.99.df <- reshape2::dcast(mult.df.99[mult.df.99$rcp=="rcp85",], Comp ~ Var)
-rcp85.99.df$Scenario <- "High Emmissions"
-rcp85.99.df <- rcp85.99.df[,c(8,1,2,3,4,5,6,7)]
 
 #--------------------------------------------------#
 # Looking at Structure after crash
