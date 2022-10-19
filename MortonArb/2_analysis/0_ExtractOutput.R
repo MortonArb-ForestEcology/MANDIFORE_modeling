@@ -172,7 +172,7 @@ for(RUNID in runs.raw){
     ncdf4::nc_close(fnow) # Closing the connection to the netcdf file; this is important otherwise your computer will get confused
 
       # Establishing a new density variable so we can calculate stats for only things that would qualify as a tree as far as FIA is concerned
-    co.list[[lab.now]]$dens.pch.tree <- ifelse(co.list[[lab.now]]$dbh>=12.7 & co.list[[lab.now]]$height>= 1.37, co.list[[lab.now]]$dens.pch, 0) 
+    co.list[[lab.now]]$dens.pch.tree <- ifelse(co.list[[lab.now]]$dbh>=12.7 & co.list[[lab.now]]$height>= 1.37 & co.list[[lab.now]]$pft!=5, co.list[[lab.now]]$dens.pch, 0) 
     
   
     # -----------------
