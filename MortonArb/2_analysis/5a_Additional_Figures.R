@@ -6,7 +6,7 @@
 # Outputs: Figures and Tables
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
-
+library(ggplot2)
 #------------------------------------------------------------------------#
 # FIGURES SECTION
 #------------------------------------------------------------------------#
@@ -256,6 +256,7 @@ weath.cent <- ggplot(data=dat.wagg[dat.wagg$year == 2050 | dat.wagg$year == 2099
   geom_boxplot(aes(x=as.character(year), y=values, fill = rcp)) +
   labs(x="Year", y="Weather Metrics")+
   scale_x_discrete(name="Period", labels=c("mid-century", "end of century")) +
+  ggpubr::stat_compare_means(aes(x=as.character(year), y=values, fill = rcp), method = "t.test")+
   theme(axis.text.y = element_text(size=rel(2), color="black"),
         axis.title.y = element_blank(),
         axis.text.x = element_text(size=rel(1.5), color="black"),
@@ -268,6 +269,7 @@ weath.cent <- ggplot(data=dat.wagg[dat.wagg$year == 2050 | dat.wagg$year == 2099
         strip.background = element_rect(fill=NA),
         plot.margin = unit(c(1, 1, 1, 1), "lines"),
         plot.title = element_text(size=rel(2), face="bold", hjust=0.5))
+
 
 cowplot::plot_grid(weath.time, weath.cent, labels = c("A", "B"), label_size = 15 ,rel_widths = c(2,1))
 
