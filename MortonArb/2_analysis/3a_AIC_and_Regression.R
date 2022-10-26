@@ -345,7 +345,7 @@ summary(VPD.agb.MNG)
 anova(VPD.agb.MNG)
 plot(VPD.agb.MNG)
 
-VPD.dbh.sd.MNG <- lme(agb.rel.diff.future ~ VPD*Management*dbh.sd, random=list(GCM=~1), data = runs.late, method = "ML")
+VPD.dbh.sd.MNG <- lme(agb.rel.diff.future ~ VPD*Management*tree.dbh.sd, random=list(GCM=~1), data = runs.late, method = "ML")
 summary(VPD.dbh.sd.MNG)
 anova(VPD.dbh.sd.MNG)
 plot(VPD.dbh.sd.MNG)
@@ -415,22 +415,23 @@ runs.late$tair.c <- runs.late$tair - 273.15
 #----------------------------------------------------#
 #Structure on its own and with Management
 #AGB
-agb.test <- glmer(nonseq.loss.event.20 ~ agb + (1|rcp:GCM), data = runs.late, family = binomial)
+agb.test <- glmer(nonseq.loss.event.20 ~ agb + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
 
 #Mean DBH
-dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean + (1|rcp:GCM), data = runs.late, family = binomial)
+dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
 
 #SD of DBH
-dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd + (1|rcp:GCM), data = runs.late, family = binomial)
+dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
 
 #Tree density
-density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree + (1|rcp:GCM), data = runs.late, family = binomial)
+density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
 
 #Mean height
-height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean + (1|rcp:GCM), data = runs.late, family = binomial)
+height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
 
 #SD of height
-height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd + (1|rcp:GCM), data = runs.late, family = binomial)
+height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd + (1|rcp:GCM) + (1|time.since.crash), data = runs.late, family = binomial)
+
 
 #----------------------------------------------------#
 # Now we are working with precip (We are doing our relative precip because otherwise the models scale is off)
@@ -542,3 +543,26 @@ write.csv(diff.aic, "../data/Pcrash_Full_AIC.csv", row.names=F)
 diff.bic <-  bictab(models, model.names)
 
 diff.bic
+
+
+#----------------------------------------------------#
+# Now we are working with precip (We are doing our relative precip because otherwise the models scale is off)
+#----------------------------------------------------#
+#AGB
+p.agb.test <- glmer(nonseq.loss.event.20 ~ agb*log(precip.total) + (1|rcp:GCM) + (1|time.since.crash), data = runs.late, family = binomial)
+
+#Mean DBH
+p.dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+
+#SD of DBH
+p.dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+
+#Tree density
+p.density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+
+#Mean height - having issue with this one
+p.height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+
+#SD of height
+p.height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+
