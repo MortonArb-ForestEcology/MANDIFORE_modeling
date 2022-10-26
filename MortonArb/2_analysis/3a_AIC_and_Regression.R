@@ -410,112 +410,88 @@ runs.late <- runs.late[!is.na(runs.late$agb.rel.diff.future),]
 runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "Shelter", "Under"))
 
 runs.late$tair.c <- runs.late$tair - 273.15
+
 #----------------------------------------------------#
 # Setting up the AIC
 #----------------------------------------------------#
 #Structure on its own and with Management
 #AGB
-agb.test <- glmer(nonseq.loss.event.20 ~ agb + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+agb.test <- glmer(nonseq.loss.event.20 ~ agb + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
 #Mean DBH
-dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
 #SD of DBH
-dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
 #Tree density
-density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
 #Mean height
-height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
 #SD of height
-height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd + (1|rcp:GCM) + (1|time.since.crash), data = runs.late, family = binomial)
+height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd + (1|GCM) +(1|rcp)  , data = runs.late, family = binomial)
+
+#AGB * strucural variables
+agb.dbh.sd <- glmer(nonseq.loss.event.20 ~ agb*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+agb.height.sd <- glmer(nonseq.loss.event.20 ~ agb*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#tree density * strucural variables
+tree.density.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+tree.density.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#tree density * dbh.mean
+tree.density.dbh.mean <- glmer(nonseq.loss.event.20 ~ density.tree+tree.dbh.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+tree.density.dbh.mean.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+tree.density.dbh.mean.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#
+models <- list(agb.test, dbh.mean.test,  dbh.sd.test, density.tree.test, height.mean.test,  height.sd.test, 
+               agb.dbh.sd, agb.height.sd, tree.density.dbh.sd, tree.density.height.sd, tree.density.dbh.mean, 
+               tree.density.dbh.mean.dbh.sd, tree.density.dbh.mean.height.sd)
+
+model.names <- c('agb', 'dbh.mean', 'dbh.sd','density.tree',
+                 'height.mean', 'height.sd', 'agb.dbh.sd', 'agb.height.sd', 'tree.density.dbh.sd', 'tree.density.height.sd',
+                 'tree.density.dbh.mean','tree.density.dbh.mean.dbh.sd', 'tree.density.dbh.mean.height.sd') 
 
 
-#----------------------------------------------------#
-# Now we are working with precip (We are doing our relative precip because otherwise the models scale is off)
-#----------------------------------------------------#
-#AGB
-relp.agb.test <- glmer(nonseq.loss.event.20 ~ agb*rel.precip + (1|rcp:GCM) + (1|time.since.crash), data = runs.late, family = binomial)
+diff.aic <- aictab(models, model.names)
 
-#Mean DBH
-relp.dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean*rel.precip + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+diff.aic
 
-#SD of DBH
-relp.dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd*rel.precip + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+#------------------------------------------------------------------------------#
+#Climate variables
+#------------------------------------------------------------------------------#
+#Precipitation
+p.test <- glmer(nonseq.loss.event.20 ~ log(precip.total) + (1|GCM) +(1|rcp)  , data = runs.scale, family = binomial)
 
-#Tree density
-relp.density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree*rel.precip + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+#Relative precip
+relp.test <- glmer(nonseq.loss.event.20 ~ rel.precip + (1|GCM) +(1|rcp)  , data = runs.late, family = binomial)
 
-#Mean height - having issue with this one
-relp.height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean*rel.precip + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+#VPD
+VPD.test <- glmer(nonseq.loss.event.20 ~ VPD + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
-#SD of height
-relp.height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd*rel.precip + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+#Relative VPD
+relVPD.test <- glmer(nonseq.loss.event.20 ~ rel.VPD + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
-#----------------------------------------------------#
-# Now we are working with VPD
-#----------------------------------------------------#
-#AGB
-VPD.agb.test <- glmer(nonseq.loss.event.20 ~ agb*I(VPD/1000) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+#Air temp
+tair.test <- glmer(nonseq.loss.event.20 ~ tair.c + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
-#Mean DBH
-VPD.dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean*I(VPD/1000) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+#Difference in temperature air
+difftair.test <- glmer(nonseq.loss.event.20 ~ diff.tair + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
-#SD of DBH
-VPD.dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd*I(VPD/1000) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+models <- list(p.test, relp.test, VPD.test, relVPD.test, tair.test, difftair.test)
 
-#Tree density
-VPD.density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree*I(VPD/1000) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+model.names <- c('precip', 'relprecip', 'VPD', 'relVPD', 'tair', 'difftair') 
 
-#Mean height - having issue with this one
-VPD.height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean*I(VPD/1000) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+diff.aic <- aictab(models, model.names)
 
-#SD of height
-VPD.height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd*I(VPD/1000) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#----------------------------------------------------#
-# Now we are working with VPD
-#----------------------------------------------------#
-#AGB
-relVPD.agb.test <- glmer(nonseq.loss.event.20 ~ agb*rel.VPD + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#Mean DBH
-relVPD.dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean*rel.VPD  + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#SD of DBH
-relVPD.dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd*rel.VPD  + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#Tree density
-relVPD.density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree*rel.VPD  + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#Mean height - having issue with this one
-relVPD.height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean*rel.VPD  + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#SD of height
-relVPD.height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd*rel.VPD  + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#----------------------------------------------------#
-# Now we are working with temp
-#----------------------------------------------------#
-#AGB
-difftair.agb.test <- glmer(nonseq.loss.event.20 ~ agb*diff.tair + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#Mean DBH - trouble with this one
-difftair.dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean*diff.tair + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#SD of DBH - trouble with this one
-difftair.dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd*diff.tair + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#Tree density
-difftair.density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree*diff.tair + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#Mean height
-difftair.height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean*diff.tair + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
-
-#SD of height
-difftair.height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd*diff.tair + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+diff.aic
 
 
 models <- list(agb.test, dbh.mean.test,  dbh.sd.test, density.tree.test,
@@ -544,25 +520,28 @@ diff.bic <-  bictab(models, model.names)
 
 diff.bic
 
+numcols <- grep("^c\\.",names(runs.late))
+runs.scale <- runs.late
+runs.scale[,numcols] <- scale(runs.late[,numcols])
 
 #----------------------------------------------------#
 # Now we are working with precip (We are doing our relative precip because otherwise the models scale is off)
 #----------------------------------------------------#
 #AGB
-p.agb.test <- glmer(nonseq.loss.event.20 ~ agb*log(precip.total) + (1|rcp:GCM) + (1|time.since.crash), data = runs.late, family = binomial)
+p.agb.test <- glmer(nonseq.loss.event.20 ~ agb*log(precip.total) + (1|GCM) +(1|rcp)  , data = runs.scale, family = binomial)
 
 #Mean DBH
-p.dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+p.dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
 
 #SD of DBH
-p.dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+p.dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
 
 #Tree density
-p.density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+p.density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
 
 #Mean height - having issue with this one
-p.height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+p.height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
 
 #SD of height
-p.height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd*log(precip.total) + (1|rcp:GCM)+ (1|time.since.crash), data = runs.late, family = binomial)
+p.height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
 
