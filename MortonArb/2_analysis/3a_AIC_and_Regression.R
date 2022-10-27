@@ -69,6 +69,11 @@ runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "
 
 runs.late$tair.c <- runs.late$tair - 273.15
 
+X<-runs.late[,c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")]
+library(GGally)
+ggpairs(X)
+library(ppcor)
+pcor(X, method = "pearson")
 #----------------------------------------------------#
 # Setting up the AIC
 #----------------------------------------------------#
@@ -91,15 +96,15 @@ height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean + (1|GCM) +(1|
 #SD of height
 height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd + (1|GCM) +(1|rcp)  , data = runs.late, family = binomial)
 
-#AGB * strucural variables
-agb.dbh.sd <- glmer(nonseq.loss.event.20 ~ agb*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+#AGB + strucural variables
+agb.dbh.sd <- glmer(nonseq.loss.event.20 ~ agb+tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
-agb.height.sd <- glmer(nonseq.loss.event.20 ~ agb*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+agb.height.sd <- glmer(nonseq.loss.event.20 ~ agb+tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
 #tree density * strucural variables
-tree.density.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+tree.density.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree+tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
-tree.density.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+tree.density.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree+tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
 #tree density * dbh.mean
 tree.density.dbh.mean <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
