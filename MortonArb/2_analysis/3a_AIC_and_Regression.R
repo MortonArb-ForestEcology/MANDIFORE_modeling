@@ -18,18 +18,170 @@ if(!dir.exists(paste(path.reg, "agb", sep=""))) dir.create(paste(path.reg, "agb"
 
 path.read <- "../data/"
 
+#--------------------------------------------------------------#
+#Working with our binomial crash framework AIC
+#--------------------------------------------------------------#
+library(lme4)
+
 runs.comb <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
 
-runs.late <- runs.comb[runs.comb$year >= 2025,]
+runs.comb$Driver.set <- paste0(runs.comb$GCM,"." ,runs.comb$rcp)
+
+runs.comb$loss.event.20 <- ifelse(runs.comb$agb.rel.diff.future <= -.20, 1, 0)
+
+#Counting individual instances of a crash beginning
+for(i in 5:nrow(runs.comb)){
+  DRIVE <- runs.comb[i, "Driver.set"]
+  MNG <- runs.comb[i, "Management"]
+  YR <- runs.comb[i, "year"]
+  if(YR != 2007){
+    prev.20 <- runs.comb[runs.comb$Driver.set == DRIVE & runs.comb$Management == MNG & runs.comb$year == YR-1 , "loss.event.20"]
+    runs.comb[i, "nonseq.loss.event.20"] <- ifelse((runs.comb[i, "loss.event.20"] == 1 & prev.20 ==F), 1, 0)
+  }
+}
+
+runs.new <- data.frame()
+for(GCM in unique(runs.comb$GCM)){
+  for(RCP in unique(runs.comb$rcp[runs.comb$GCM==GCM])){
+    for(MGMT in unique(runs.comb$Management[runs.comb$GCM==GCM & runs.comb$rcp==RCP])){
+      temp <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp==RCP & runs.comb$Management == MGMT,]
+      count <- 0
+      for(i in 3:(nrow(temp)-1)){
+        if(temp[i, "nonseq.loss.event.20"]==T){
+          temp[i, "time.since.crash"] <- count
+          count <- 0
+        } else{
+          count <- count + 1
+          temp[i, "time.since.crash"] <- count
+        }
+      }
+      runs.new <- rbind(runs.new, temp)
+    }
+  }
+}
+
+
+runs.late <- runs.new[runs.new$year >= 2025,]
 
 runs.late <- runs.late[!is.na(runs.late$agb.rel.diff.future),]
 
 runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "Shelter", "Under"))
 
-runs.late$Driver.set <- paste0(runs.late$GCM,"." ,runs.late$rcp)
+runs.late$tair.c <- runs.late$tair - 273.15
 
 #----------------------------------------------------#
 # Setting up the AIC
+#----------------------------------------------------#
+#Structure on its own and with Management
+#AGB
+agb.test <- glmer(nonseq.loss.event.20 ~ agb + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#Mean DBH
+dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#SD of DBH
+dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#Tree density
+density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#Mean height
+height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#SD of height
+height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd + (1|GCM) +(1|rcp)  , data = runs.late, family = binomial)
+
+#AGB * strucural variables
+agb.dbh.sd <- glmer(nonseq.loss.event.20 ~ agb*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+agb.height.sd <- glmer(nonseq.loss.event.20 ~ agb*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#tree density * strucural variables
+tree.density.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+tree.density.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#tree density * dbh.mean
+tree.density.dbh.mean <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+tree.density.dbh.mean.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+tree.density.dbh.mean.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#
+models <- list(agb.test, dbh.mean.test,  dbh.sd.test, density.tree.test, height.mean.test,  height.sd.test, 
+               agb.dbh.sd, agb.height.sd, tree.density.dbh.sd, tree.density.height.sd, tree.density.dbh.mean, 
+               tree.density.dbh.mean.dbh.sd, tree.density.dbh.mean.height.sd)
+
+model.names <- c('agb', 'dbh.mean', 'dbh.sd','density.tree',
+                 'height.mean', 'height.sd', 'agb.dbh.sd', 'agb.height.sd', 'tree.density.dbh.sd', 'tree.density.height.sd',
+                 'tree.density.dbh.mean','tree.density.dbh.mean.dbh.sd', 'tree.density.dbh.mean.height.sd') 
+
+
+diff.aic <- aictab(models, model.names)
+
+diff.aic
+
+#------------------------------------------------------------------------------#
+#Climate variables
+#------------------------------------------------------------------------------#
+#Precipitation
+p.test <- glmer(nonseq.loss.event.20 ~ log(precip.total) + (1|GCM) +(1|rcp)  , data = runs.scale, family = binomial)
+
+#Relative precip
+relp.test <- glmer(nonseq.loss.event.20 ~ rel.precip + (1|GCM) +(1|rcp)  , data = runs.late, family = binomial)
+
+#VPD
+VPD.test <- glmer(nonseq.loss.event.20 ~ VPD + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#Relative VPD
+relVPD.test <- glmer(nonseq.loss.event.20 ~ rel.VPD + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#Air temp
+tair.test <- glmer(nonseq.loss.event.20 ~ tair.c + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+#Difference in temperature air
+difftair.test <- glmer(nonseq.loss.event.20 ~ diff.tair + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+
+models <- list(p.test, relp.test, VPD.test, relVPD.test, tair.test, difftair.test)
+
+model.names <- c('precip', 'relprecip', 'VPD', 'relVPD', 'tair', 'difftair') 
+
+diff.aic <- aictab(models, model.names)
+
+diff.aic
+
+
+models <- list(agb.test, dbh.mean.test,  dbh.sd.test, density.tree.test,
+               height.mean.test,  height.sd.test, relp.agb.test, relp.dbh.mean.test, relp.dbh.sd.test, relp.density.tree.test,
+               relp.height.mean.test, relp.height.sd.test, VPD.agb.test, VPD.dbh.mean.test, VPD.dbh.sd.test, VPD.density.tree.test,
+               VPD.height.mean.test, VPD.height.sd.test, relVPD.agb.test, relVPD.dbh.mean.test, relVPD.dbh.sd.test, relVPD.density.tree.test,
+               relVPD.height.mean.test, relVPD.height.sd.test, difftair.agb.test, difftair.dbh.mean.test, difftair.dbh.sd.test, difftair.density.tree.test,
+               difftair.height.mean.test, difftair.height.sd.test)
+
+model.names <- c('agb', 'dbh,mean', 'dbh.sd.test','density.tree',
+                 'height.mean', 'height.sd', 'relp.agb', 'relp.dbh.mean', 'relp.dbh.sd', 'relp.density.tree',
+                 'relp.height.mean', 'relp.height.sd', 'VPD.agb', 'VPD.dbh.mean', 'VPD.dbh.sd', 'VPD.density.tree', 
+                 'VPD.height.mean', 'VPD.height.sd', 'relVPD.agb', 'relVPD.dbh.mean', 'relVPD.dbh.sd', 'relVPD.density.tree', 
+                 'relVPD.height.mean', 'relVPD.height.sd', 'difftair.agb', 'difftair.dbh.mean', 'difftair.dbh.sd', 'difftair.density.tree', 
+                 'difftair.height.mean', 'difftair.height.sd') 
+
+
+diff.aic <- aictab(models, model.names)
+
+diff.aic
+
+write.csv(diff.aic, "../data/Pcrash_Full_AIC.csv", row.names=F)
+
+#BIC of all models
+diff.bic <-  bictab(models, model.names)
+
+diff.bic
+
+
+
+#----------------------------------------------------#
+# Setting up the AIC where our response is the relative change in agb
 #----------------------------------------------------#
 #Structure on its own and with Management
 #AGB
@@ -354,194 +506,4 @@ VPD.density.tree.MNG <- lme(agb.rel.diff.future ~ VPD*Management*density.tree, r
 summary(VPD.density.tree.MNG )
 anova(VPD.density.tree.MNG )
 plot(VPD.density.tree.MNG )
-
-
-
-
-#--------------------------------------------------------------#
-#Working with our binomial crash framework AIC
-#--------------------------------------------------------------#
-library(lme4)
-
-path.read <- "../data/"
-
-runs.comb <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
-
-runs.comb$Driver.set <- paste0(runs.comb$GCM,"." ,runs.comb$rcp)
-
-runs.comb$loss.event.20 <- ifelse(runs.comb$agb.rel.diff.future <= -.20, 1, 0)
-
-#Counting individual instances of a crash beginning
-for(i in 5:nrow(runs.comb)){
-  DRIVE <- runs.comb[i, "Driver.set"]
-  MNG <- runs.comb[i, "Management"]
-  YR <- runs.comb[i, "year"]
-  if(YR != 2007){
-    prev.20 <- runs.comb[runs.comb$Driver.set == DRIVE & runs.comb$Management == MNG & runs.comb$year == YR-1 , "loss.event.20"]
-    runs.comb[i, "nonseq.loss.event.20"] <- ifelse((runs.comb[i, "loss.event.20"] == 1 & prev.20 ==F), 1, 0)
-  }
-}
-
-runs.new <- data.frame()
-for(GCM in unique(runs.comb$GCM)){
-  for(RCP in unique(runs.comb$rcp[runs.comb$GCM==GCM])){
-    for(MGMT in unique(runs.comb$Management[runs.comb$GCM==GCM & runs.comb$rcp==RCP])){
-      temp <- runs.comb[runs.comb$GCM==GCM & runs.comb$rcp==RCP & runs.comb$Management == MGMT,]
-      count <- 0
-      for(i in 3:(nrow(temp)-1)){
-        if(temp[i, "nonseq.loss.event.20"]==T){
-          temp[i, "time.since.crash"] <- count
-          count <- 0
-        } else{
-          count <- count + 1
-          temp[i, "time.since.crash"] <- count
-        }
-      }
-      runs.new <- rbind(runs.new, temp)
-    }
-  }
-}
-
-
-runs.late <- runs.new[runs.new$year >= 2025,]
-
-runs.late <- runs.late[!is.na(runs.late$agb.rel.diff.future),]
-
-runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "Shelter", "Under"))
-
-runs.late$tair.c <- runs.late$tair - 273.15
-
-#----------------------------------------------------#
-# Setting up the AIC
-#----------------------------------------------------#
-#Structure on its own and with Management
-#AGB
-agb.test <- glmer(nonseq.loss.event.20 ~ agb + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#Mean DBH
-dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#SD of DBH
-dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#Tree density
-density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#Mean height
-height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#SD of height
-height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd + (1|GCM) +(1|rcp)  , data = runs.late, family = binomial)
-
-#AGB * strucural variables
-agb.dbh.sd <- glmer(nonseq.loss.event.20 ~ agb*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-agb.height.sd <- glmer(nonseq.loss.event.20 ~ agb*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#tree density * strucural variables
-tree.density.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-tree.density.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#tree density * dbh.mean
-tree.density.dbh.mean <- glmer(nonseq.loss.event.20 ~ density.tree+tree.dbh.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-tree.density.dbh.mean.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-tree.density.dbh.mean.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#
-models <- list(agb.test, dbh.mean.test,  dbh.sd.test, density.tree.test, height.mean.test,  height.sd.test, 
-               agb.dbh.sd, agb.height.sd, tree.density.dbh.sd, tree.density.height.sd, tree.density.dbh.mean, 
-               tree.density.dbh.mean.dbh.sd, tree.density.dbh.mean.height.sd)
-
-model.names <- c('agb', 'dbh.mean', 'dbh.sd','density.tree',
-                 'height.mean', 'height.sd', 'agb.dbh.sd', 'agb.height.sd', 'tree.density.dbh.sd', 'tree.density.height.sd',
-                 'tree.density.dbh.mean','tree.density.dbh.mean.dbh.sd', 'tree.density.dbh.mean.height.sd') 
-
-
-diff.aic <- aictab(models, model.names)
-
-diff.aic
-
-#------------------------------------------------------------------------------#
-#Climate variables
-#------------------------------------------------------------------------------#
-#Precipitation
-p.test <- glmer(nonseq.loss.event.20 ~ log(precip.total) + (1|GCM) +(1|rcp)  , data = runs.scale, family = binomial)
-
-#Relative precip
-relp.test <- glmer(nonseq.loss.event.20 ~ rel.precip + (1|GCM) +(1|rcp)  , data = runs.late, family = binomial)
-
-#VPD
-VPD.test <- glmer(nonseq.loss.event.20 ~ VPD + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#Relative VPD
-relVPD.test <- glmer(nonseq.loss.event.20 ~ rel.VPD + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#Air temp
-tair.test <- glmer(nonseq.loss.event.20 ~ tair.c + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-#Difference in temperature air
-difftair.test <- glmer(nonseq.loss.event.20 ~ diff.tair + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-models <- list(p.test, relp.test, VPD.test, relVPD.test, tair.test, difftair.test)
-
-model.names <- c('precip', 'relprecip', 'VPD', 'relVPD', 'tair', 'difftair') 
-
-diff.aic <- aictab(models, model.names)
-
-diff.aic
-
-
-models <- list(agb.test, dbh.mean.test,  dbh.sd.test, density.tree.test,
-               height.mean.test,  height.sd.test, relp.agb.test, relp.dbh.mean.test, relp.dbh.sd.test, relp.density.tree.test,
-               relp.height.mean.test, relp.height.sd.test, VPD.agb.test, VPD.dbh.mean.test, VPD.dbh.sd.test, VPD.density.tree.test,
-               VPD.height.mean.test, VPD.height.sd.test, relVPD.agb.test, relVPD.dbh.mean.test, relVPD.dbh.sd.test, relVPD.density.tree.test,
-               relVPD.height.mean.test, relVPD.height.sd.test, difftair.agb.test, difftair.dbh.mean.test, difftair.dbh.sd.test, difftair.density.tree.test,
-               difftair.height.mean.test, difftair.height.sd.test)
-
-model.names <- c('agb', 'dbh,mean', 'dbh.sd.test','density.tree',
-                 'height.mean', 'height.sd', 'relp.agb', 'relp.dbh.mean', 'relp.dbh.sd', 'relp.density.tree',
-                 'relp.height.mean', 'relp.height.sd', 'VPD.agb', 'VPD.dbh.mean', 'VPD.dbh.sd', 'VPD.density.tree', 
-                 'VPD.height.mean', 'VPD.height.sd', 'relVPD.agb', 'relVPD.dbh.mean', 'relVPD.dbh.sd', 'relVPD.density.tree', 
-                 'relVPD.height.mean', 'relVPD.height.sd', 'difftair.agb', 'difftair.dbh.mean', 'difftair.dbh.sd', 'difftair.density.tree', 
-                 'difftair.height.mean', 'difftair.height.sd') 
-
-
-diff.aic <- aictab(models, model.names)
-
-diff.aic
-
-write.csv(diff.aic, "../data/Pcrash_Full_AIC.csv", row.names=F)
-
-#BIC of all models
-diff.bic <-  bictab(models, model.names)
-
-diff.bic
-
-numcols <- grep("^c\\.",names(runs.late))
-runs.scale <- runs.late
-runs.scale[,numcols] <- scale(runs.late[,numcols])
-
-#----------------------------------------------------#
-# Now we are working with precip (We are doing our relative precip because otherwise the models scale is off)
-#----------------------------------------------------#
-#AGB
-p.agb.test <- glmer(nonseq.loss.event.20 ~ agb*log(precip.total) + (1|GCM) +(1|rcp)  , data = runs.scale, family = binomial)
-
-#Mean DBH
-p.dbh.mean.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.mean*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
-
-#SD of DBH
-p.dbh.sd.test <- glmer(nonseq.loss.event.20 ~ tree.dbh.sd*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
-
-#Tree density
-p.density.tree.test <- glmer(nonseq.loss.event.20 ~ density.tree*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
-
-#Mean height - having issue with this one
-p.height.mean.test <- glmer(nonseq.loss.event.20 ~ tree.height.mean*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
-
-#SD of height
-p.height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd*log(precip.total) + (1|GCM) +(1|rcp) , data = runs.scale, family = binomial)
 
