@@ -69,11 +69,21 @@ runs.late$Management <- factor(runs.late$Management, levels = c("None", "Gap", "
 
 runs.late$tair.c <- runs.late$tair - 273.15
 
-X<-runs.late[,c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")]
+struc.X<-runs.late[,c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")]
 library(GGally)
-ggpairs(X)
+ggpairs(struc.X)
 library(ppcor)
-pcor(X, method = "pearson")
+pcor(struc.X, method = "pearson")
+
+met.X<-runs.late[,c("precip.total", "rel.precip", "VPD", "rel.VPD", "tair.c", "diff.tair")]
+ggpairs(met.X)
+pcor(met.X, method = "pearson")
+
+comb.X<-runs.late[,c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd", "precip.total", "rel.precip", "VPD", "rel.VPD", "tair.c", "diff.tair")]
+ggpairs(comb.X)
+pcor(comb.X, method = "pearson")
+
+
 #----------------------------------------------------#
 # Setting up the AIC
 #----------------------------------------------------#
@@ -98,20 +108,21 @@ height.sd.test <- glmer(nonseq.loss.event.20 ~ tree.height.sd + (1|GCM) +(1|rcp)
 
 #AGB + strucural variables
 agb.dbh.sd <- glmer(nonseq.loss.event.20 ~ agb+tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+car::vif(agb.dbh.sd)
 
 agb.height.sd <- glmer(nonseq.loss.event.20 ~ agb+tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+car::vif(agb.height.sd )
 
 #tree density * strucural variables
 tree.density.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree+tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+car::vif(tree.density.dbh.sd )
 
 tree.density.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree+tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+car::vif(tree.density.height.sd)
 
 #tree density * dbh.mean
 tree.density.dbh.mean <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-tree.density.dbh.mean.dbh.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.dbh.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
-
-tree.density.dbh.mean.height.sd <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.height.sd + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
+car::vif(tree.density.dbh.mean)
 
 #
 models <- list(agb.test, dbh.mean.test,  dbh.sd.test, density.tree.test, height.mean.test,  height.sd.test, 
