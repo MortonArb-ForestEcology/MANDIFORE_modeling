@@ -18,12 +18,14 @@ if(!dir.exists(paste(path.reg, "agb", sep=""))) dir.create(paste(path.reg, "agb"
 
 path.read <- "../data/"
 
+path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/processed_data/"
+
 #--------------------------------------------------------------#
 #Working with our binomial crash framework AIC
 #--------------------------------------------------------------#
 library(lme4)
 
-runs.comb <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
+runs.comb <- read.csv(paste0(path.google, "All_runs_yearly.csv"))
 
 runs.comb$Driver.set <- paste0(runs.comb$GCM,"." ,runs.comb$rcp)
 
@@ -79,15 +81,15 @@ met.X<-runs.late[,c("precip.total", "rel.precip", "VPD", "rel.VPD", "tair.c", "d
 ggpairs(met.X)
 pcor(met.X, method = "pearson")
 
-comb.X<-runs.late[,c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd", "precip.total", "rel.precip", "VPD", "rel.VPD", "tair.c", "diff.tair")]
-ggpairs(comb.X)
-pcor(comb.X, method = "pearson")
+#comb.X<-runs.late[,c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd", "precip.total", "rel.precip", "VPD", "rel.VPD", "tair.c", "diff.tair")]
+#ggpairs(comb.X)
+#pcor(comb.X, method = "pearson")
 
 
 #----------------------------------------------------#
-# Setting up the AIC
+# Setting up increasingly complex versions of for our probability of crash framework
 #----------------------------------------------------#
-#Structure on its own and with Management
+#Structure on its own 
 #AGB
 agb.test <- glmer(nonseq.loss.event.20 ~ agb + (1|GCM) +(1|rcp) , data = runs.late, family = binomial)
 
@@ -114,6 +116,7 @@ car::vif(tree.density.dbh.mean)
 
 #agb.dens.mean.VPD.precip <- glmer(nonseq.loss.event.20 ~ agb*density.tree*tree.dbh.mean*VPD*precip.total + (1|rcp) + (1|GCM), data = runs.late, family = binomial)
 
+#Scaling the data because I'm unable to run version with non-scaled data
 pvars <- c("agb","density.tree",
            "tree.dbh.mean","VPD", "tree.dbh.sd",
            "precip.total","tair.c", "rel.precip", "rel.VPD")
@@ -130,18 +133,13 @@ agb.dens.mean.sd.VPD.precip <- glmer(nonseq.loss.event.20 ~ agb*density.tree*tre
 dens.mean.sd.VPD.precip <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.dbh.sd*VPD*precip.total + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
 dens.mean.sd.VPD.precip.tair <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.dbh.sd*VPD*precip.total*tair.c + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
 
-#The models that worked (although they are still singular)
-agb.mean.VPD.precip <- glmer(nonseq.loss.event.20 ~ agb*tree.dbh.mean*VPD*precip.total + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
-dens.mean.VPD.precip <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*VPD*precip.total + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
-agb.dens.mean.VPD.precip <- glmer(nonseq.loss.event.20 ~ agb*density.tree*tree.dbh.mean*VPD*precip.total + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
-dens.mean.sd.VPD.precip <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.dbh.sd*VPD*precip.total + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
-
+#The models that worked (although they are still singular) in relative precip format
 agb.mean.relVPD.relprecip <- glmer(nonseq.loss.event.20 ~ agb*tree.dbh.mean*rel.VPD*rel.precip + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
 dens.mean.relVPD.relprecip <- glmer(nonseq.loss.event.20 ~ agb*density.tree*tree.dbh.mean*rel.VPD*rel.precip + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
 agb.dens.mean.relVPD.relprecip <- glmer(nonseq.loss.event.20 ~ agb*density.tree*tree.dbh.mean*rel.VPD*rel.precip + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
 dens.mean.sd.relVPD.relprecip <- glmer(nonseq.loss.event.20 ~ density.tree*tree.dbh.mean*tree.dbh.sd*rel.VPD*rel.precip + (1|rcp) + (1|GCM), data = runs.scale, family = binomial)
 
-#
+#An Aic for all of the model structures that converged even though they are singular
 models <- list(agb.mean.VPD.precip, dens.mean.VPD.precip,  agb.dens.mean.VPD.precip, dens.mean.sd.VPD.precip,
                agb.mean.relVPD.relprecip, dens.mean.relVPD.relprecip, agb.dens.mean.relVPD.relprecip, dens.mean.sd.relVPD.relprecip)
 
@@ -153,6 +151,7 @@ diff.aic <- aictab(models, model.names)
 
 diff.aic
 
+#Our most complex model. Howevere AIC favors agb.mean.VPD.precip
 summary(agb.dens.mean.VPD.precip)
 
 #------------------------------------------------------------------------------#
