@@ -7,19 +7,39 @@
 # Notes: 
 #----------------------------------------------------------------------------------------------------------------------#
 library(ggplot2)
+library(nlme)
+library(multcomp)
 #------------------------------------------------------------------------#
 # FIGURES SECTION
 #------------------------------------------------------------------------#
-# -----------------------------------------------------------
-# Looking at the effect of harvest on structural variables
-# -----------------------------------------------------------
 runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv"))
 runs.yr$Management <- factor(runs.yr$Management, levels=c("None", "Under", "Shelter", "Gap"))
 runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='Low Emmissions'; 'rcp85'='High Emissions'")
 runs.yr$RCP.name <- factor(runs.yr$RCP.name, levels=c("Low Emmissions", "High Emissions"))
 summary(runs.yr)
 
+# Getting summaries of # crashes by scenario by mid & end of century
+runs.yr$crash <- ifelse(runs.yr$agb.rel.diff.future<=-0.2, 1, 0)
 
+crash.summary <- aggregate(crash~ GCM + rcp + RCP.name + Management, data=runs.yr[runs.yr$year>=2025 ,], FUN=sum)
+names(crash.summary)[names(crash.summary)=="crash"] <- "crash.end"
+crash.summary$crash.mid <- aggregate(crash~ GCM + rcp + RCP.name + Management, data=runs.yr[runs.yr$year>=2025 & runs.yr$year<=2050,], FUN=sum)$crash
+summary(crash.summary)
+
+library(MASS)
+library(lme4)
+crash.end <- glm.nb(crash.end~Management*rcp, data = crash.summary)
+summary(crash.end)
+anova(crash.end)
+
+
+crash.mid <- glm.nb(crash.mid~Management*rcp, data = crash.summary)
+summary(crash.mid)
+anova(crash.mid)
+
+# -----------------------------------------------------------
+# Looking at the effect of harvest on structural variables
+# -----------------------------------------------------------
 vars.plot <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")
 
 dat.harvest.pre <- stack(runs.yr[runs.yr$year==2019, vars.plot])
@@ -64,7 +84,8 @@ struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree
 for(RCP in unique(runs.late$rcp)){
   for(COL in struc.var){
     lm.test.25 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2025 & runs.late$rcp == RCP,], method = "ML")
-    
+    print(paste(COL, "25"))
+    print(anova(lm.test.25))
     #Doing a multiple comparison across the different management types
     mult.list.25 <- list()
     post.hoc <- glht(lm.test.25, linfct = mcp(Management = 'Tukey'))
@@ -79,7 +100,8 @@ for(RCP in unique(runs.late$rcp)){
     
     
     lm.test.50 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2050 & runs.late$rcp == RCP,], method = "ML")
-    
+    print(paste(COL, "50"))
+    print(anova(lm.test.50))
     mult.list.50 <- list()
     #Doing a multiple comparison across the different management types
     post.hoc <- glht(lm.test.50, linfct = mcp(Management = 'Tukey'))
@@ -93,8 +115,9 @@ for(RCP in unique(runs.late$rcp)){
     mult.df.50 <- rbind(mult.df.50, dat.mult.50)
     
     
-    lm.test.99 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.comb[runs.comb$year == 2099 & runs.comb$rcp == RCP,], method = "ML")
-    
+    lm.test.99 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2099 & runs.late$rcp == RCP,], method = "ML")
+    print(paste(COL, "99"))
+    print(anova(lm.test.99))
     mult.list.99 <- list()
     #Doing a multiple comparison across the different management types
     post.hoc <- glht(lm.test.99, linfct = mcp(Management = 'Tukey'))
@@ -270,6 +293,13 @@ weath.cent <- ggplot(data=dat.wagg[dat.wagg$year == 2050 | dat.wagg$year == 2099
         plot.margin = unit(c(1, 1, 1, 1), "lines"),
         plot.title = element_text(size=rel(2), face="bold", hjust=0.5))
 
+t.test(dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "tair", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "tair", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "precip.total", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "precip.total", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "VPD", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "VPD", "values"] , paired=T)
+
+t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "tair", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "tair", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "precip.total", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "precip.total", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "VPD", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "VPD", "values"] , paired=T)
 
 cowplot::plot_grid(weath.time, weath.cent, labels = c("A", "B"), label_size = 15 ,rel_widths = c(2,1))
 
