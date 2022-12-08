@@ -1,0 +1,3 @@
+nsite 1 format 1
+sitenum area TCI elev slope aspect soil
+1 1.0 -7 400 0.0 0.0 2

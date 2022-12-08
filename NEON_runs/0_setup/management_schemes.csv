@@ -1,0 +1,5 @@
+region,management,rotation_years,MinDBH_cm,harvest_probability_aboveDBH,harvest_probability_belowDBH,fraction_harvested ,plantation,PFT_harvest,Notes
+southeast,passive,72.5,15,1,1,0.014,N,7-9-10-11,
+southeast,ecological,10,15.24,0.7,0.7,0.100,N,7-9-10-11,This seems weird to me…more intensive than production
+southeast,production,70.75,15.88,87.5,0,0.014,Y,7-9-10-11,"PFT 7 had 50% harvest probability above DBH threshold and 50% below...everything else was 0 below the DBH threshold, so just went with 0 because it was more representative. Also not sure which PFT would be planted for the production forestry plantation catagory...just PFT 7?"
+southeast,preservation,NA,200,0,0,0,N,7-9-10-11,
