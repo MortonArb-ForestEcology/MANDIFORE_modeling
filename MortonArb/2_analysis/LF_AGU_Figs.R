@@ -15,9 +15,9 @@ library(ggplot2)
 library(ggpubr)
 library(multcomp)
 
-path.read <- "../data/"
-path.figures <- "../figures/"
 
+path.figures <- "../figures/"
+path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 path.read <- file.path(path.google, "processed_data/All_runs_yearly.csv")
 
 runs.comb <- read.csv(paste0(path.read))
@@ -70,7 +70,7 @@ names(met.labs) <- c("tair", "precip.total", "VPD")
 
 
 weath.time <- ggplot(data=dat.wagg)+
-  facet_grid(ind~rcp, scales= "free_y", labeller = labeller(ind = met.labs)) +
+  facet_grid(ind~RCP.name, scales= "free_y", labeller = labeller(ind = met.labs), switch = "y") +
   geom_line(aes(x=year, y=values, group=GCM)) +
   geom_hline(data = dat.means, aes(yintercept=values), color="red2", linetype="dashed", size=1)+
   labs(x="Year", y="Weather Metrics") +
@@ -80,10 +80,12 @@ weath.time <- ggplot(data=dat.wagg)+
         panel.grid=element_blank(),
         panel.spacing.x = unit(1, "lines"),
         strip.text.x = element_text(size=rel(2), face="bold"),
-        strip.text.y = element_text(size=rel(1.5), face="bold"),
+        strip.text.y = element_text(size=rel(2), face="bold"),
         strip.background = element_rect(fill=NA),
+        strip.placement = "outside",
         plot.margin = unit(c(1, 1, 1, 1), "lines"),
-        plot.title = element_text(size=rel(2), face="bold", hjust=0.5))
+        plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
+        axis.title.y = element_blank())
 
 png(paste0(path.figures, "Weather_over_time.png"), width=11, height=8, units="in", res=500)
   weath.time
@@ -150,21 +152,24 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
                        panel.grid=element_blank(),
                        # panel.spacing.x = unit(1, "lines"),
                        strip.text.x = element_text(size=rel(2), face="bold"),
-                       strip.text.y = element_text(size=rel(2),angle=0, face="bold"),
+                       strip.text.y = element_text(size=rel(2),angle=230, face="bold"),
                        strip.background = element_rect(fill=NA),
+                       strip.placement = "outside",
                        plot.margin = unit(c(1, 1, 1, 1), "lines"),
-                       plot.title = element_text(size=rel(3), face="bold", hjust=0.1),
+                       plot.title = element_blank(),
                        legend.key = element_rect(fill=NA),
                        legend.text = element_text(size=rel(2)),
-                       legend.title = element_text(size=rel(2)))
-var.labs <- c("AGB", "Tree density", "Mean DBH", "SD of DBH")
+                       legend.title = element_text(size=rel(2)),
+                       legend.position = "top",
+                       axis.title.y = element_blank())
+var.labs <- c("AGB (kgC/m2)", "Tree density (trees/m2)", "Mean DBH (cm)", "SD of DBH (cm)")
 names(var.labs) <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 
 
 #Figure for paper that use mid and end of century
 png(paste0(path.figures, "HarvestStructure_Mid.png"), width=12, height=10, units="in", res=300)
   ggplot(data=dat.harvest[dat.harvest$time == "mid-century",]) +
-    facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs)) +
+    facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
     geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
     scale_x_discrete(name="Mid-century") +
     scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
