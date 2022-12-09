@@ -167,9 +167,9 @@ names(var.labs) <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 
 
 #Figure for paper that use mid and end of century
-png(paste0(path.figures, "HarvestStructure_Mid.png"), width=12, height=10, units="in", res=300)
+png(paste0(path.figures, "HarvestStructure_Mid.png"), width=13, height=11, units="in", res=300)
   ggplot(data=dat.harvest[dat.harvest$time == "mid-century",]) +
-    facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
+    facet_grid(ind~RCP.name, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
     geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
     scale_x_discrete(name="Mid-century") +
     scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
