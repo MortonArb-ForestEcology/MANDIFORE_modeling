@@ -87,36 +87,38 @@ summary(runs.yr)
 struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 met.var <- c("tair", "VPD", "precip.total", "rel.VPD", "rel.precip", "diff.tair")
 
-drought.resp <- data.frame(lag=rep(-5:0),
-                           VAR=rep(unique(met.var), each=length(-5:0)),
-                           #MNG=rep(unique(runs.yr$Management), each = 6),
-                           estimate=NA,
-                           std.err=NA,
-                           t.stat=NA,
-                           p.val=NA)
-
+df.lag.metxmng <- data.frame()
   for(COL in met.var){
     
-      mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+      mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
       
-      mod.sum <- summary(mod.lag)
+      output <- summary(mod.lag)
       # mod.sum$tTable
       
-      drought.resp[drought.resp$VAR==COL,"estimate"] <- mod.sum$tTable[,"Value"]
-      drought.resp[drought.resp$VAR==COL,"std.err"] <- mod.sum$tTable[,"Std.Error"]
-      drought.resp[drought.resp$VAR==COL,"t.stat"] <- mod.sum$tTable[,"t-value"]
-      drought.resp[drought.resp$VAR==COL,"p.val"] <- mod.sum$tTable[,"p-value"]
+      lag.list.metxmng <- list()
+      lag.list.metxmng[[paste(COL)]]$VAR <- COL
+      lag.list.metxmng[[paste(COL)]]$Comp <- rownames(output$tTable)
+      lag.list.metxmng[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+      lag.list.metxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+      lag.list.metxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+      lag.list.metxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+      temp.lag.metxmng <- dplyr::bind_rows(lag.list.metxmng)
+      temp.lag.metxmng$lag <- c(-5,-4,-3,-2,-1,0, NA, NA, NA, rep(unique(-4:0), times = 3))
+      temp.lag.metxmng$MNG <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 5))
+      
+      df.lag.metxmng <- rbind(df.lag.metxmng, temp.lag.metxmng)
+      
       
   }
-summary(drought.resp)
+summary(df.lag.metxmng)
 
-ggplot(data=drought.resp) +
-  facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=drought.resp[!is.na(drought.resp$p.val) & drought.resp$p.val>=0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+ggplot(data=df.lag.metxmng ) +
+  facet_wrap(MNG~VAR, scales = "free_y") +
+  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val>=0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
-  geom_bar(data=drought.resp[!is.na(drought.resp$p.val) & drought.resp$p.val<0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
-  geom_bar(data=drought.resp[!is.na(drought.resp$p.val) & drought.resp$p.val<0.001 & drought.resp$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
-  geom_bar(data=drought.resp[!is.na(drought.resp$p.val) & drought.resp$p.val>=0.001 & drought.resp$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val<0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val<0.001 & df.lag.metxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val>=0.001 & df.lag.metxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
