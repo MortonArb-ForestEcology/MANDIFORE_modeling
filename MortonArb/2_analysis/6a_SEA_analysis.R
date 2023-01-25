@@ -61,6 +61,7 @@ summary(runs.yr)
 
 # Trying to re-center drought event & recovery; 
 # I'm not sure exactly how to convert this for our data.
+
 #----------------------------------------------------------------#
 # Lucien doesn't understand this segment
 #----------------------------------------------------------------#
@@ -87,7 +88,7 @@ struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 met.var <- c("tair", "VPD", "precip.total", "rel.VPD", "rel.precip", "diff.tair")
 
 drought.resp <- data.frame(lag=rep(-5:0),
-                           VAR=rep(unique(met.var), each=length(-5:0)*4),
+                           VAR=rep(unique(met.var), each=length(-5:0)),
                            #MNG=rep(unique(runs.yr$Management), each = 6),
                            estimate=NA,
                            std.err=NA,
@@ -96,7 +97,7 @@ drought.resp <- data.frame(lag=rep(-5:0),
 
   for(COL in met.var){
     
-      mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,])
+      mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
       
       mod.sum <- summary(mod.lag)
       # mod.sum$tTable
@@ -110,7 +111,7 @@ drought.resp <- data.frame(lag=rep(-5:0),
 summary(drought.resp)
 
 ggplot(data=drought.resp) +
-  facet_grid(~VAR) +
+  facet_wrap(~VAR, scales = "free_y") +
   geom_bar(data=drought.resp[!is.na(drought.resp$p.val) & drought.resp$p.val>=0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
   geom_bar(data=drought.resp[!is.na(drought.resp$p.val) & drought.resp$p.val<0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
