@@ -84,6 +84,7 @@ summary(runs.yr)
 # Running the calculation
 # --------------
 #Working with non-relative weather metrics
+# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
 met.var <- c("tair", "VPD", "precip.total")
 df.lag.metxmng <- data.frame()
 for(COL in met.var){
@@ -109,17 +110,18 @@ summary(df.lag.metxmng)
 
 ggplot(data=df.lag.metxmng ) +
   facet_wrap(MNG~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val>=0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
-  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val<0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
-  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val<0.001 & df.lag.metxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
-  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val>=0.001 & df.lag.metxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val<0.05 & df.lag.metxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val>=0.05 & df.lag.metxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 
 
 #Looking at relative weather
+# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
 relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.relxmng <- data.frame()
 for(COL in relmet.var){
@@ -145,11 +147,11 @@ summary(df.lag.relxmng)
 
 ggplot(data=df.lag.relxmng ) +
   facet_wrap(MNG~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.relxmng[!is.na(df.lag.relxmng$p.val) & df.lag.relxmng$p.val>=0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  geom_bar(data=df.lag.relxmng[!is.na(df.lag.relxmng$p.val) & df.lag.relxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
-  geom_bar(data=df.lag.relxmng[!is.na(df.lag.relxmng$p.val) & df.lag.relxmng$p.val<0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
-  geom_bar(data=df.lag.relxmng[!is.na(df.lag.relxmng$p.val) & df.lag.relxmng$p.val<0.001 & df.lag.relxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
-  geom_bar(data=df.lag.relxmng[!is.na(df.lag.relxmng$p.val) & df.lag.relxmng$p.val>=0.001 & df.lag.relxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  geom_bar(data=df.lag.relxmng[!is.na(df.lag.relxmng$p.val) & df.lag.relxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.relxmng[!is.na(df.lag.relxmng$p.val) & df.lag.relxmng$p.val<0.05 & df.lag.relxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.relxmng[!is.na(df.lag.relxmng$p.val) & df.lag.relxmng$p.val>=0.05 & df.lag.relxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
@@ -157,6 +159,7 @@ ggplot(data=df.lag.relxmng ) +
 
 
 #Looking at structural metrics
+# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
 struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 df.lag.strucxmng <- data.frame()
 for(COL in struc.var){
@@ -182,11 +185,11 @@ summary(df.lag.strucxmng)
 
 ggplot(data=df.lag.strucxmng ) +
   facet_wrap(MNG~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
-  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
-  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.001 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
-  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.001 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
