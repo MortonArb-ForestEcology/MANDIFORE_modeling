@@ -169,7 +169,44 @@ ggplot(data=df.lag.relxmng ) +
 
 
 
-#Looking at structural metrics
+#Looking at structural metrics on their own
+# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+df.lag.strucxmng <- data.frame()
+for(COL in struc.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  
+  lag.list.strucxmng <- list()
+  lag.list.strucxmng[[paste(COL)]]$VAR <- COL
+  lag.list.strucxmng[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.strucxmng[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.strucxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.strucxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.strucxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.strucxmng <- dplyr::bind_rows(lag.list.strucxmng)
+  temp.lag.strucxmng$lag <- c(-5,-4,-3,-2,-1, 0)
+
+  df.lag.strucxmng <- rbind(df.lag.strucxmng, temp.lag.strucxmng)
+}
+summary(df.lag.strucxmng)
+
+ggplot(data=df.lag.strucxmng ) +
+  facet_wrap(~VAR, scales = "free_y") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+
+
+#Looking at structural metrics with management
 # Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
 struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 df.lag.strucxmng <- data.frame()
