@@ -78,10 +78,10 @@ full.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tair", "VP
 for(RCP in unique(runs.yr$rcp)){
   for(GCM in unique(runs.yr$GCM)){
     for(MNG in unique(runs.yr$Management)){
-      for(YR in unique(runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$lag.crash==0,"year"])){
+      for(YR in unique(runs.yr[!is.na(runs.yr$one.crash) & runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$one.crash==0,"year"])){
         for(VAR in full.var){
         
-          val.cent <- mean(runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR-1) & runs.yr$lag.crash<0 & !is.na(runs.yr$lag.crash), VAR], na.rm=T)
+          val.cent <- mean(runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR-1) & runs.yr$one.crash<0 & !is.na(runs.yr$one.crash), VAR], na.rm=T)
           
           runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR+0), paste0(VAR,".extreme")] <- runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR+0), VAR] - val.cent
         } 
@@ -109,7 +109,6 @@ for(COL in struc.var){
   
   lag.list.struc <- list()
   lag.list.struc[[paste(COL)]]$VAR <- COL
-  lag.list.struc[[paste(COL)]]$Comp <- rownames(output$tTable)
   lag.list.struc[[paste(COL)]]$estimate <- output$tTable[,"Value"]
   lag.list.struc[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
   lag.list.struc[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
@@ -121,14 +120,30 @@ for(COL in struc.var){
 }
 summary(df.lag.struc)
 
-plot.struc <- ggplot(data=df.lag.struc ) +
-  facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
-  # geom_vline(xintercept=as.factor(0), color="red") +
-  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
-  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
-  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
-  theme(panel.spacing = unit(0, "lines"),
+dat.struc <- runs.yr[!is.na(runs.yr$one.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
+#Just to make "lag" a common name for merging purposes
+colnames(dat.struc) <- c("year", "Management", "GCM", "rcp", struc.var, "lag", "lag.crash")
+summary(dat.struc)
+
+#Making the format wide so that we can facet our different structural variables
+dat.struc <- tidyr::gather(dat.struc, VAR, value, agb.extreme:tree.dbh.sd.extreme, factor_key=TRUE)
+
+#Merging the frames and marking signifigance
+dat.struc <- merge(dat.struc, df.lag.struc, all.x=T)
+dat.struc$sig[!is.na(dat.struc$p.val)] <- ifelse(dat.struc$p.val[!is.na(dat.struc$p.val)]<0.01, "sig", "n.s.")
+dat.struc$sig <- as.factor(dat.struc$sig)
+summary(dat.struc)
+
+plot.struc <- ggplot(data=dat.struc[!is.na(dat.struc$lag),]) +
+  facet_grid(VAR~Management, scales="free_y") +
+  geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
+  geom_hline(yintercept=0, linetype="solid", color="blue") +
+  scale_fill_manual(values=c("gray50", "red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 
