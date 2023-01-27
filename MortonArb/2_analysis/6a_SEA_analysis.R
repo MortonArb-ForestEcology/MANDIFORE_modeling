@@ -225,6 +225,37 @@ plot.met <- ggplot(data=df.lag.met ) +
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 plot.met
+
+dat.met <- runs.yr[!is.na(runs.yr$lag.crash), c("year", "Management", "GCM", "rcp", met.var, "one.crash", "lag.crash")]
+#Just to make "lag" a common name for merging purposes
+colnames(dat.met) <- c("year", "Management", "GCM", "rcp", met.var, "one.crash", "lag")
+summary(dat.met)
+
+#Making the format wide so that we can facet our different weather variables
+dat.met <- tidyr::gather(dat.met, VAR, value, tair.extreme:precip.total.extreme, factor_key=TRUE)
+
+#Merging the frames and marking significance
+dat.met <- merge(dat.met, df.lag.met, all.x=T)
+dat.met$sig[!is.na(dat.met$p.val)] <- ifelse(dat.met$p.val[!is.na(dat.met$p.val)]<0.01, "sig", "n.s.")
+dat.met$sig <- as.factor(dat.met$sig)
+summary(dat.met)
+
+plot.met2 <- ggplot(data=dat.met[!is.na(dat.met$lag),]) +
+  facet_grid(VAR~Management, scales="free_y") +
+  geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
+  geom_hline(yintercept=0, linetype="solid", color="blue") +
+  scale_fill_manual(values=c("gray50", "red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+plot.met2
+
+write.csv(dat.met, file.path(path.google, "processed_data/Weather_before_crashes.csv"))
 #-----------------------------------------------------#
 # Looking at relative weather metrics interacting with management
 # relmet.var ~ one crash-1
@@ -263,6 +294,38 @@ plot.rel <- ggplot(data=df.lag.rel ) +
         panel.background=element_rect(fill=NA, color="black"))
 
 plot.rel
+
+
+dat.rel <- runs.yr[!is.na(runs.yr$lag.crash), c("year", "Management", "GCM", "rcp", relmet.var, "one.crash", "lag.crash")]
+#Just to make "lag" a common name for merging purposes
+colnames(dat.rel) <- c("year", "Management", "GCM", "rcp", relmet.var, "one.crash", "lag")
+summary(dat.rel)
+
+#Making the format wide so that we can facet our different relative weather variables
+dat.rel <- tidyr::gather(dat.rel, VAR, value, rel.precip.extreme:rel.VPD.extreme, factor_key=TRUE)
+
+#Merging the frames and marking significance
+dat.rel <- merge(dat.rel, df.lag.rel, all.x=T)
+dat.rel$sig[!is.na(dat.rel$p.val)] <- ifelse(dat.rel$p.val[!is.na(dat.rel$p.val)]<0.01, "sig", "n.s.")
+dat.rel$sig <- as.factor(dat.rel$sig)
+summary(dat.rel)
+
+plot.rel2 <- ggplot(data=dat.rel[!is.na(dat.rel$lag),]) +
+  facet_grid(VAR~Management, scales="free_y") +
+  geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
+  geom_hline(yintercept=0, linetype="solid", color="blue") +
+  scale_fill_manual(values=c("gray50", "red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+plot.rel2
+
+write.csv(dat.rel, file.path(path.google, "processed_data/Relweather_before_crashes.csv"))
 #-----------------------------------------------------#
 # Starting to look at interaction with Management
 #-----------------------------------------------------#
