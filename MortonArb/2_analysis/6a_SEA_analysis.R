@@ -95,8 +95,10 @@ summary(runs.yr)
 # --------------
 # Running the calculation
 # --------------
-#Looking at structural metrics on their own
-# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
+#-----------------------------------------------------#
+# Looking at structural metrics on their own
+# Struc.var ~ only crashes-1
+#-----------------------------------------------------#
 struc.var <- c("agb.extreme", "density.tree.extreme", "tree.dbh.mean.extreme", "tree.dbh.sd.extreme")
 df.lag.struc <- data.frame()
 for(COL in struc.var){
@@ -119,7 +121,7 @@ for(COL in struc.var){
 }
 summary(df.lag.struc)
 
-ggplot(data=df.lag.struc ) +
+plot.struc <- ggplot(data=df.lag.struc ) +
   facet_wrap(~VAR, scales = "free_y") +
   geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
@@ -130,10 +132,90 @@ ggplot(data=df.lag.struc ) +
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 
+plot.struc
+#-----------------------------------------------------#
+# Looking at weather metrics on their own
+# met.var ~ only crashes-1
+#-----------------------------------------------------#
+met.var <- c("tair.extreme", "VPD.extreme", "precip.total.extreme")
+df.lag.met <- data.frame()
+for(COL in met.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  
+  lag.list.met <- list()
+  lag.list.met[[paste(COL)]]$VAR <- COL
+  lag.list.met[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.met[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.met[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.met[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.met[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.met <- dplyr::bind_rows(lag.list.met)
+  temp.lag.met$lag <- c(-5,-4,-3,-2,-1,0)
 
+  df.lag.met <- rbind(df.lag.met, temp.lag.met)
+}
+summary(df.lag.met)
 
-#Looking at structural metrics with management
-# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
+plot.met <- ggplot(data=df.lag.met ) +
+  facet_wrap(~VAR, scales = "free_y") +
+  geom_bar(data=df.lag.met[!is.na(df.lag.met$p.val) & df.lag.met$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.met[!is.na(df.lag.met$p.val) & df.lag.met$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.met[!is.na(df.lag.met$p.val) & df.lag.met$p.val<0.05 & df.lag.met$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.met[!is.na(df.lag.met$p.val) & df.lag.met$p.val>=0.05 & df.lag.met$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+plot.met
+#-----------------------------------------------------#
+# Looking at relative weather metrics interacting with management
+# relmet.var ~ one crash-1
+#-----------------------------------------------------#
+relmet.var <- c("rel.precip.extreme", "diff.tair.extreme", "rel.VPD.extreme")
+df.lag.rel <- data.frame()
+for(COL in relmet.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  
+  lag.list.rel <- list()
+  lag.list.rel[[paste(COL)]]$VAR <- COL
+  lag.list.rel[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.rel[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.rel[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.rel[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.rel[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.rel <- dplyr::bind_rows(lag.list.rel)
+  temp.lag.rel$lag <- c(-5,-4,-3,-2,-1,0)
+
+  df.lag.rel <- rbind(df.lag.rel, temp.lag.rel)
+}
+summary(df.lag.rel)
+
+plot.rel <- ggplot(data=df.lag.rel ) +
+  facet_wrap(~VAR, scales = "free_y") +
+  geom_bar(data=df.lag.rel[!is.na(df.lag.rel$p.val) & df.lag.rel$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.rel[!is.na(df.lag.rel$p.val) & df.lag.rel$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.rel[!is.na(df.lag.rel$p.val) & df.lag.rel$p.val<0.05 & df.lag.rel$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.rel[!is.na(df.lag.rel$p.val) & df.lag.rel$p.val>=0.05 & df.lag.rel$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+plot.rel
+#-----------------------------------------------------#
+# Starting to look at interaction with Management
+#-----------------------------------------------------#
+
+#-----------------------------------------------------#
+# Looking at structure metrics interacting with management
+# struc.var ~ only crashes*Management-1
+#-----------------------------------------------------#
 df.lag.strucxmng <- data.frame()
 for(COL in struc.var){
   
@@ -167,11 +249,10 @@ ggplot(data=df.lag.strucxmng ) +
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 
-#Working with non-relative weather metrics
-# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
-#I'm not labeling which management experienced a crash here so I think I'm missing something to flesh this out. 
-#Currently this is comparing across periods in time where one management crashed and others didn't but I'm not flagging which crashed and which didn't
-#How can I incorporate? I could add whether a crash occurred as a factor through the lag labeling. But then we are going threeway which is crazy
+#-----------------------------------------------------#
+# Looking at weather metrics interacting with management
+# met.var ~ any crash*Management-1
+#-----------------------------------------------------#
 met.var <- c("tair.extreme", "VPD.extreme", "precip.total.extreme")
 df.lag.metxmng <- data.frame()
 for(COL in met.var){
@@ -207,13 +288,15 @@ ggplot(data=df.lag.metxmng ) +
         panel.background=element_rect(fill=NA, color="black"))
 
 
-#Looking at relative weather
-# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
+#-----------------------------------------------------#
+# Looking at relative weather metrics interacting with management
+# relmet.var ~ any crash*Management-1
+#-----------------------------------------------------#
 relmet.var <- c("rel.precip.extreme", "diff.tair.extreme", "rel.VPD.extreme")
 df.lag.relxmng <- data.frame()
 for(COL in relmet.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
   
   output <- summary(mod.lag)
   
