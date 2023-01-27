@@ -67,30 +67,84 @@ for(RCP in unique(runs.yr$rcp)){
     
 summary(runs.yr)
 
-# Trying to re-center drought event & recovery; 
-# I'm not sure exactly how to convert this for our data.
-
-#----------------------------------------------------------------#
-# Lucien doesn't understand this segment
-#----------------------------------------------------------------#
-for(RCP in unique(runs.yr$rcp)){
-  for(GCM in unique(runs.yr$GCM)){
-    for(YR in unique(runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$lag.crash==0,"year"])){
-      
-      val.cent <- mean(runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR-1) & runs.yr$lag.crash<0 & !is.na(runs.yr$lag.crash),"agb"], na.rm=T)
-      
-      runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR+0),"agb.extreme"] <- runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR+0),"agb"] - val.cent
-    
-      } # end years 
-    
-  } # end cores
-}
-summary(runs.yr)
 
 runs.yr$one.crash.check <- ifelse(is.na(runs.yr$one.crash.check), "N", runs.yr$one.crash.check)
 # --------------
 # Running the calculation
 # --------------
+#Looking at structural metrics on their own
+# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+df.lag.struc <- data.frame()
+for(COL in struc.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  
+  lag.list.struc <- list()
+  lag.list.struc[[paste(COL)]]$VAR <- COL
+  lag.list.struc[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.struc[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.struc[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.struc[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.struc[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.struc <- dplyr::bind_rows(lag.list.struc)
+  temp.lag.struc$lag <- c(-5,-4,-3,-2,-1, 0)
+  
+  df.lag.struc <- rbind(df.lag.struc, temp.lag.struc)
+}
+summary(df.lag.struc)
+
+ggplot(data=df.lag.struc ) +
+  facet_wrap(~VAR, scales = "free_y") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+
+
+#Looking at structural metrics with management
+# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+df.lag.strucxmng <- data.frame()
+for(COL in struc.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  
+  lag.list.strucxmng <- list()
+  lag.list.strucxmng[[paste(COL)]]$VAR <- COL
+  lag.list.strucxmng[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.strucxmng[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.strucxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.strucxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.strucxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.strucxmng <- dplyr::bind_rows(lag.list.strucxmng)
+  temp.lag.strucxmng$lag <- c(-5,-4,-3,-2,-1,0, NA, NA, NA, rep(unique(-4:0), times = 3))
+  temp.lag.strucxmng$MNG <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 5))
+  
+  df.lag.strucxmng <- rbind(df.lag.strucxmng, temp.lag.strucxmng)
+}
+summary(df.lag.strucxmng)
+
+ggplot(data=df.lag.strucxmng ) +
+  facet_wrap(MNG~VAR, scales = "free_y") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
 #Working with non-relative weather metrics
 # Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
 #I'm not labeling which management experienced a crash here so I think I'm missing something to flesh this out. 
@@ -169,76 +223,27 @@ ggplot(data=df.lag.relxmng ) +
 
 
 
-#Looking at structural metrics on their own
-# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
-df.lag.struc <- data.frame()
-for(COL in struc.var){
-  
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
-  
-  output <- summary(mod.lag)
-  
-  lag.list.struc <- list()
-  lag.list.struc[[paste(COL)]]$VAR <- COL
-  lag.list.struc[[paste(COL)]]$Comp <- rownames(output$tTable)
-  lag.list.struc[[paste(COL)]]$estimate <- output$tTable[,"Value"]
-  lag.list.struc[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
-  lag.list.struc[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
-  lag.list.struc[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
-  temp.lag.struc <- dplyr::bind_rows(lag.list.struc)
-  temp.lag.struc$lag <- c(-5,-4,-3,-2,-1, 0)
 
-  df.lag.struc <- rbind(df.lag.struc, temp.lag.struc)
+
+
+
+
+# Trying to re-center drought event & recovery; 
+# I'm not sure exactly how to convert this for our data.
+
+#----------------------------------------------------------------#
+# Lucien doesn't understand this segment
+#----------------------------------------------------------------#
+for(RCP in unique(runs.yr$rcp)){
+  for(GCM in unique(runs.yr$GCM)){
+    for(YR in unique(runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$lag.crash==0,"year"])){
+      
+      val.cent <- mean(runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR-1) & runs.yr$lag.crash<0 & !is.na(runs.yr$lag.crash),"agb"], na.rm=T)
+      
+      runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR+0),"agb.extreme"] <- runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR+0),"agb"] - val.cent
+      
+    } # end years 
+    
+  } # end cores
 }
-summary(df.lag.struc)
-
-ggplot(data=df.lag.struc ) +
-  facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
-  # geom_vline(xintercept=as.factor(0), color="red") +
-  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
-  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
-  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
-  theme(panel.spacing = unit(0, "lines"),
-        panel.grid = element_blank(),
-        panel.background=element_rect(fill=NA, color="black"))
-
-
-
-#Looking at structural metrics with management
-# Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
-df.lag.strucxmng <- data.frame()
-for(COL in struc.var){
-  
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
-  
-  output <- summary(mod.lag)
-  
-  lag.list.strucxmng <- list()
-  lag.list.strucxmng[[paste(COL)]]$VAR <- COL
-  lag.list.strucxmng[[paste(COL)]]$Comp <- rownames(output$tTable)
-  lag.list.strucxmng[[paste(COL)]]$estimate <- output$tTable[,"Value"]
-  lag.list.strucxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
-  lag.list.strucxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
-  lag.list.strucxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
-  temp.lag.strucxmng <- dplyr::bind_rows(lag.list.strucxmng)
-  temp.lag.strucxmng$lag <- c(-5,-4,-3,-2,-1,0, NA, NA, NA, rep(unique(-4:0), times = 3))
-  temp.lag.strucxmng$MNG <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 5))
-  
-  df.lag.strucxmng <- rbind(df.lag.strucxmng, temp.lag.strucxmng)
-}
-summary(df.lag.strucxmng)
-
-ggplot(data=df.lag.strucxmng ) +
-  facet_wrap(MNG~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
-  # geom_vline(xintercept=as.factor(0), color="red") +
-  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
-  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
-  geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05 & df.lag.strucxmng$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
-  theme(panel.spacing = unit(0, "lines"),
-        panel.grid = element_blank(),
-        panel.background=element_rect(fill=NA, color="black"))
-
+summary(runs.yr)
