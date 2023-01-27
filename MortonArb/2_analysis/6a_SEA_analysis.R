@@ -66,15 +66,38 @@ for(RCP in unique(runs.yr$rcp)){
 }
     
 summary(runs.yr)
-
-
 runs.yr$one.crash.check <- ifelse(is.na(runs.yr$one.crash.check), "N", runs.yr$one.crash.check)
+
+# Trying to re-center drought event & recovery; 
+# I'm not sure exactly how to convert this for our data.
+full.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tair", "VPD", "precip.total", "rel.precip", "diff.tair", "rel.VPD")
+
+#----------------------------------------------------------------#
+# Lucien doesn't understand this segment
+#----------------------------------------------------------------#
+for(RCP in unique(runs.yr$rcp)){
+  for(GCM in unique(runs.yr$GCM)){
+    for(MNG in unique(runs.yr$Management)){
+      for(YR in unique(runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$lag.crash==0,"year"])){
+        for(VAR in full.var){
+        
+          val.cent <- mean(runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR-1) & runs.yr$lag.crash<0 & !is.na(runs.yr$lag.crash), VAR], na.rm=T)
+          
+          runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR+0), paste0(VAR,".extreme")] <- runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR+0), VAR] - val.cent
+        } 
+      } 
+    } 
+  } 
+}
+summary(runs.yr)
+
+
 # --------------
 # Running the calculation
 # --------------
 #Looking at structural metrics on their own
 # Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+struc.var <- c("agb.extreme", "density.tree.extreme", "tree.dbh.mean.extreme", "tree.dbh.sd.extreme")
 df.lag.struc <- data.frame()
 for(COL in struc.var){
   
@@ -111,7 +134,6 @@ ggplot(data=df.lag.struc ) +
 
 #Looking at structural metrics with management
 # Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 df.lag.strucxmng <- data.frame()
 for(COL in struc.var){
   
@@ -150,7 +172,7 @@ ggplot(data=df.lag.strucxmng ) +
 #I'm not labeling which management experienced a crash here so I think I'm missing something to flesh this out. 
 #Currently this is comparing across periods in time where one management crashed and others didn't but I'm not flagging which crashed and which didn't
 #How can I incorporate? I could add whether a crash occurred as a factor through the lag labeling. But then we are going threeway which is crazy
-met.var <- c("tair", "VPD", "precip.total")
+met.var <- c("tair.extreme", "VPD.extreme", "precip.total.extreme")
 df.lag.metxmng <- data.frame()
 for(COL in met.var){
     
@@ -187,7 +209,7 @@ ggplot(data=df.lag.metxmng ) +
 
 #Looking at relative weather
 # Calculation is looking at scenarios where one management crashed and is comparing the ones that didn't crash and those that did
-relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
+relmet.var <- c("rel.precip.extreme", "diff.tair.extreme", "rel.VPD.extreme")
 df.lag.relxmng <- data.frame()
 for(COL in relmet.var){
   
@@ -220,30 +242,3 @@ ggplot(data=df.lag.relxmng ) +
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
-
-
-
-
-
-
-
-
-# Trying to re-center drought event & recovery; 
-# I'm not sure exactly how to convert this for our data.
-
-#----------------------------------------------------------------#
-# Lucien doesn't understand this segment
-#----------------------------------------------------------------#
-for(RCP in unique(runs.yr$rcp)){
-  for(GCM in unique(runs.yr$GCM)){
-    for(YR in unique(runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$lag.crash==0,"year"])){
-      
-      val.cent <- mean(runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR-1) & runs.yr$lag.crash<0 & !is.na(runs.yr$lag.crash),"agb"], na.rm=T)
-      
-      runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR+0),"agb.extreme"] <- runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$year %in% (YR-5):(YR+0),"agb"] - val.cent
-      
-    } # end years 
-    
-  } # end cores
-}
-summary(runs.yr)
