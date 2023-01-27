@@ -120,6 +120,19 @@ for(COL in struc.var){
 }
 summary(df.lag.struc)
 
+plot.struc <- ggplot(data=df.lag.struc ) +
+  facet_wrap(~VAR, scales = "free_y") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+plot.struc
+
 dat.struc <- runs.yr[!is.na(runs.yr$one.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
 #Just to make "lag" a common name for merging purposes
 colnames(dat.struc) <- c("year", "Management", "GCM", "rcp", struc.var, "lag", "lag.crash")
@@ -128,13 +141,13 @@ summary(dat.struc)
 #Making the format wide so that we can facet our different structural variables
 dat.struc <- tidyr::gather(dat.struc, VAR, value, agb.extreme:tree.dbh.sd.extreme, factor_key=TRUE)
 
-#Merging the frames and marking signifigance
+#Merging the frames and marking significance
 dat.struc <- merge(dat.struc, df.lag.struc, all.x=T)
 dat.struc$sig[!is.na(dat.struc$p.val)] <- ifelse(dat.struc$p.val[!is.na(dat.struc$p.val)]<0.01, "sig", "n.s.")
 dat.struc$sig <- as.factor(dat.struc$sig)
 summary(dat.struc)
 
-plot.struc <- ggplot(data=dat.struc[!is.na(dat.struc$lag),]) +
+plot.struc2 <- ggplot(data=dat.struc[!is.na(dat.struc$lag),]) +
   facet_grid(VAR~Management, scales="free_y") +
   geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
   geom_hline(yintercept=0, linetype="solid", color="blue") +
@@ -147,7 +160,9 @@ plot.struc <- ggplot(data=dat.struc[!is.na(dat.struc$lag),]) +
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 
-plot.struc
+plot.struc2
+
+write.csv(dat.struc, file.path(path.google, "processed_data/Strucutural_before_crashes.csv"))
 #-----------------------------------------------------#
 # Looking at weather metrics on their own
 # met.var ~ only crashes-1
