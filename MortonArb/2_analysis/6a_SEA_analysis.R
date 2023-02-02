@@ -276,7 +276,7 @@ dev.off()
 write.csv(dat.met, file.path(path.google, "processed_data/Weather_before_crashes.csv"))
 #-----------------------------------------------------#
 # Looking at relative weather metrics interacting with management
-# relmet.var ~ one crash-1
+# relmet.var ~ only crash-1
 #-----------------------------------------------------#
 relmet.var <- c("rel.precip.extreme", "diff.tair.extreme", "rel.VPD.extreme")
 df.lag.rel <- data.frame()
@@ -361,7 +361,7 @@ write.csv(dat.rel, file.path(path.google, "processed_data/Relweather_before_cras
 df.lag.strucxmng <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
   
   output <- summary(mod.lag)
   
