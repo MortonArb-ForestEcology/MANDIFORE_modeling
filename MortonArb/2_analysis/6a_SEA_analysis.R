@@ -98,26 +98,6 @@ runs.yr$one.crash.check <- ifelse(is.na(runs.yr$one.crash.check), "N", runs.yr$o
 # I'm not sure exactly how to convert this for our data.
 full.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tair", "VPD", "precip.total", "rel.precip", "diff.tair", "rel.VPD")
 
-#----------------------------------------------------------------#
-# Lucien doesn't understand this segment
-#----------------------------------------------------------------#
-for(RCP in unique(runs.yr$rcp)){
-  for(GCM in unique(runs.yr$GCM)){
-    for(MNG in unique(runs.yr$Management)){
-      for(YR in unique(runs.yr[!is.na(runs.yr$one.crash) & runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$one.crash==0,"year"])){
-        for(VAR in full.var){
-        
-          val.cent <- mean(runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR-1) & runs.yr$one.crash<0 & !is.na(runs.yr$one.crash), VAR], na.rm=T)
-          
-          runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR+0), paste0(VAR,".extreme")] <- runs.yr[runs.yr$GCM==GCM & runs.yr$rcp==RCP & runs.yr$Management==MNG & runs.yr$year %in% (YR-5):(YR+0), VAR] - val.cent
-        } 
-      } 
-    } 
-  } 
-}
-summary(runs.yr)
-
-
 # --------------
 # Running the calculation
 # --------------
@@ -125,7 +105,7 @@ summary(runs.yr)
 # Looking at structural metrics on their own
 # Struc.var ~ only crashes-1
 #-----------------------------------------------------#
-struc.var <- c("agb.extreme", "density.tree.extreme", "tree.dbh.mean.extreme", "tree.dbh.sd.extreme")
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 df.lag.struc <- data.frame()
 for(COL in struc.var){
   
@@ -168,22 +148,21 @@ colnames(dat.struc) <- c("year", "Management", "GCM", "rcp", struc.var, "one.cra
 summary(dat.struc)
 
 #Making the format wide so that we can facet our different structural variables
-dat.struc <- tidyr::gather(dat.struc, VAR, value, agb.extreme:tree.dbh.sd.extreme, factor_key=TRUE)
+dat.struc <- tidyr::gather(dat.struc, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
 
 #Merging the frames and marking significance
 dat.struc <- merge(dat.struc, df.lag.struc, all.x=T)
 dat.struc$sig[!is.na(dat.struc$p.val)] <- ifelse(dat.struc$p.val[!is.na(dat.struc$p.val)]<0.05, "sig", "n.s.")
 dat.struc$sig <- as.factor(dat.struc$sig)
 summary(dat.struc)
-dat.struc$VAR <- car::recode(dat.struc$VAR, "'agb.extreme'='AGB'; 'density.tree.extreme'='Tree Density'; 
-                             'tree.dbh.mean.extreme'='Mean DBH'; 'tree.dbh.sd.extreme'='SD of DBH'")
+dat.struc$VAR <- car::recode(dat.struc$VAR, "'agb'='AGB'; 'density.tree'='Tree Density'; 
+                             'tree.dbh.mean'='Mean DBH'; 'tree.dbh.sd'='SD of DBH'")
 
 
 plot.struc2 <- ggplot(data=dat.struc[!is.na(dat.struc$lag),]) +
   facet_grid(VAR~., scales="free_y") +
   geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
-  geom_hline(yintercept=0, linetype="solid", color="blue") +
-  scale_fill_manual(values=c("gray50", "red2")) +
+  scale_fill_manual(values=c("red2")) +
   scale_x_discrete(name="Drought Lag") +
   scale_y_continuous(name="Difference") +
   theme(legend.position = "top",
@@ -201,7 +180,7 @@ write.csv(dat.struc, file.path(path.google, "processed_data/Strucutural_before_c
 # Looking at weather metrics on their own
 # met.var ~ only crashes-1
 #-----------------------------------------------------#
-met.var <- c("tair.extreme", "VPD.extreme", "precip.total.extreme")
+met.var <- c("tair", "VPD", "precip.total")
 df.lag.met <- data.frame()
 for(COL in met.var){
   
@@ -246,21 +225,20 @@ colnames(dat.met) <- c("year", "Management", "GCM", "rcp", met.var, "one.crash",
 summary(dat.met)
 
 #Making the format wide so that we can facet our different weather variables
-dat.met <- tidyr::gather(dat.met, VAR, value, tair.extreme:precip.total.extreme, factor_key=TRUE)
+dat.met <- tidyr::gather(dat.met, VAR, value, tair:precip.total, factor_key=TRUE)
 
 #Merging the frames and marking significance
 dat.met <- merge(dat.met, df.lag.met, all.x=T)
 dat.met$sig[!is.na(dat.met$p.val)] <- ifelse(dat.met$p.val[!is.na(dat.met$p.val)]<0.05, "sig", "n.s.")
 dat.met$sig <- as.factor(dat.met$sig)
 summary(dat.met)
-dat.met$VAR <- car::recode(dat.met$VAR, "'tair.extreme'='Air Temp C'; 'VPD.extreme'='VPD (PA)'; 
-                             'precip.total.extreme'='Total Precip (mm)'")
+dat.met$VAR <- car::recode(dat.met$VAR, "'tair'='Air Temp C'; 'VPD'='VPD (PA)'; 
+                             'precip.total'='Total Precip (mm)'")
 
 plot.met2 <- ggplot(data=dat.met[!is.na(dat.met$lag),]) +
   facet_grid(VAR~., scales="free_y") +
   geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
-  geom_hline(yintercept=0, linetype="solid", color="blue") +
-  scale_fill_manual(values=c("gray50", "red2")) +
+  scale_fill_manual(values=c("red2")) +
   scale_x_discrete(name="Drought Lag") +
   scale_y_continuous(name="Difference") +
   theme(legend.position = "top",
@@ -278,7 +256,7 @@ write.csv(dat.met, file.path(path.google, "processed_data/Weather_before_crashes
 # Looking at relative weather metrics interacting with management
 # relmet.var ~ only crash-1
 #-----------------------------------------------------#
-relmet.var <- c("rel.precip.extreme", "diff.tair.extreme", "rel.VPD.extreme")
+relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.rel <- data.frame()
 for(COL in relmet.var){
   
@@ -321,7 +299,7 @@ colnames(dat.rel) <- c("year", "Management", "GCM", "rcp", relmet.var, "one.cras
 summary(dat.rel)
 
 #Making the format wide so that we can facet our different relative weather variables
-dat.rel <- tidyr::gather(dat.rel, VAR, value, rel.precip.extreme:rel.VPD.extreme, factor_key=TRUE)
+dat.rel <- tidyr::gather(dat.rel, VAR, value, rel.precip:rel.VPD, factor_key=TRUE)
 
 #Merging the frames and marking significance
 dat.rel <- merge(dat.rel, df.lag.rel, all.x=T)
@@ -329,13 +307,12 @@ dat.rel$sig[!is.na(dat.rel$p.val)] <- ifelse(dat.rel$p.val[!is.na(dat.rel$p.val)
 dat.rel$sig <- as.factor(dat.rel$sig)
 summary(dat.rel)
 
-dat.rel$VAR <- car::recode(dat.rel$VAR, "'diff.tair.extreme'='Air Temp Difference C'; 'rel.VPD.extreme'='Relative VPD (PA)'; 
-                             'rel.precip.extreme'='Relative Precip (mm)'")
+dat.rel$VAR <- car::recode(dat.rel$VAR, "'diff.tair'='Air Temp Difference C'; 'rel.VPD'='Relative VPD (PA)'; 
+                             'rel.precip'='Relative Precip (mm)'")
 
 plot.rel2 <- ggplot(data=dat.rel[!is.na(dat.rel$lag),]) +
   facet_grid(VAR~., scales="free_y") +
   geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
-  geom_hline(yintercept=0, linetype="solid", color="blue") +
   scale_fill_manual(values=c("gray50", "red2")) +
   scale_x_discrete(name="Drought Lag") +
   scale_y_continuous(name="Difference") +
@@ -380,8 +357,8 @@ for(COL in struc.var){
 }
 summary(df.lag.strucxmng)
 
-df.lag.strucxmng$VAR <- car::recode(df.lag.strucxmng$VAR, "'agb.extreme'='AGB'; 'density.tree.extreme'='Tree Density'; 
-                             'tree.dbh.mean.extreme'='Mean DBH'; 'tree.dbh.sd.extreme'='SD of DBH'")
+df.lag.strucxmng$VAR <- car::recode(df.lag.strucxmng$VAR, "'agb'='AGB'; 'density.tree'='Tree Density'; 
+                             'tree.dbh.mean'='Mean DBH'; 'tree.dbh.sd'='SD of DBH'")
 
 plot.strucxmng <- ggplot(data=df.lag.strucxmng ) +
   facet_grid(VAR~MNG, scales = "free_y") +
@@ -403,7 +380,7 @@ dev.off()
 # Looking at weather metrics interacting with management
 # met.var ~ only crash*Management-1
 #-----------------------------------------------------#
-met.var <- c("tair.extreme", "VPD.extreme", "precip.total.extreme")
+met.var <- c("tair", "VPD", "precip.total")
 df.lag.metxmng <- data.frame()
 for(COL in met.var){
     
@@ -426,8 +403,11 @@ for(COL in met.var){
   }
 summary(df.lag.metxmng)
 
+df.lag.metxmng$VAR <- car::recode(df.lag.metxmng$VAR, "'tair'='Air Temp C'; 'VPD'='VPD (PA)'; 
+                             'precip.total'='Total Precip (mm)'")
+
 ggplot(data=df.lag.metxmng ) +
-  facet_wrap(MNG~VAR, scales = "free_y") +
+  facet_grid(VAR~MNG, scales = "free_y") +
   geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
   geom_bar(data=df.lag.metxmng[!is.na(df.lag.metxmng$p.val) & df.lag.metxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
@@ -442,7 +422,7 @@ ggplot(data=df.lag.metxmng ) +
 # Looking at relative weather metrics interacting with management
 # relmet.var ~ any crash*Management-1
 #-----------------------------------------------------#
-relmet.var <- c("rel.precip.extreme", "diff.tair.extreme", "rel.VPD.extreme")
+relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.relxmng <- data.frame()
 for(COL in relmet.var){
   
