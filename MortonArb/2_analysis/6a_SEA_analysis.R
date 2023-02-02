@@ -162,7 +162,7 @@ png(paste0(path.figures, "Structure_before_crash_hist.png"), width=12, height=8,
   plot.struc
 dev.off()
 
-dat.struc <- runs.yr[!is.na(runs.yr$one.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
+dat.struc <- runs.yr[!is.na(runs.yr$lag.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
 #Just to make "lag" a common name for merging purposes
 colnames(dat.struc) <- c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag")
 summary(dat.struc)
@@ -172,7 +172,7 @@ dat.struc <- tidyr::gather(dat.struc, VAR, value, agb.extreme:tree.dbh.sd.extrem
 
 #Merging the frames and marking significance
 dat.struc <- merge(dat.struc, df.lag.struc, all.x=T)
-dat.struc$sig[!is.na(dat.struc$p.val)] <- ifelse(dat.struc$p.val[!is.na(dat.struc$p.val)]<0.01, "sig", "n.s.")
+dat.struc$sig[!is.na(dat.struc$p.val)] <- ifelse(dat.struc$p.val[!is.na(dat.struc$p.val)]<0.05, "sig", "n.s.")
 dat.struc$sig <- as.factor(dat.struc$sig)
 summary(dat.struc)
 dat.struc$VAR <- car::recode(dat.struc$VAR, "'agb.extreme'='AGB'; 'density.tree.extreme'='Tree Density'; 
@@ -223,6 +223,8 @@ for(COL in met.var){
 }
 summary(df.lag.met)
 
+df.lag.met$lag <- factor(df.lag.met$lag, levels = c("-5", "-4", "-3", "-2", "-1", "0"))
+
 plot.met <- ggplot(data=df.lag.met ) +
   facet_wrap(~VAR, scales = "free_y") +
   geom_bar(data=df.lag.met[!is.na(df.lag.met$p.val) & df.lag.met$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
@@ -233,7 +235,10 @@ plot.met <- ggplot(data=df.lag.met ) +
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
-plot.met
+
+png(paste0(path.figures, "Weather_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+ plot.met
+dev.off()
 
 dat.met <- runs.yr[!is.na(runs.yr$lag.crash), c("year", "Management", "GCM", "rcp", met.var, "one.crash", "lag.crash")]
 #Just to make "lag" a common name for merging purposes
@@ -245,12 +250,14 @@ dat.met <- tidyr::gather(dat.met, VAR, value, tair.extreme:precip.total.extreme,
 
 #Merging the frames and marking significance
 dat.met <- merge(dat.met, df.lag.met, all.x=T)
-dat.met$sig[!is.na(dat.met$p.val)] <- ifelse(dat.met$p.val[!is.na(dat.met$p.val)]<0.01, "sig", "n.s.")
+dat.met$sig[!is.na(dat.met$p.val)] <- ifelse(dat.met$p.val[!is.na(dat.met$p.val)]<0.05, "sig", "n.s.")
 dat.met$sig <- as.factor(dat.met$sig)
 summary(dat.met)
+dat.met$VAR <- car::recode(dat.met$VAR, "'tair.extreme'='Air Temp C'; 'VPD.extreme'='VPD (PA)'; 
+                             'precip.total.extreme'='Total Precip (mm)'")
 
 plot.met2 <- ggplot(data=dat.met[!is.na(dat.met$lag),]) +
-  facet_grid(VAR~Management, scales="free_y") +
+  facet_grid(VAR~., scales="free_y") +
   geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
   geom_hline(yintercept=0, linetype="solid", color="blue") +
   scale_fill_manual(values=c("gray50", "red2")) +
@@ -262,7 +269,9 @@ plot.met2 <- ggplot(data=dat.met[!is.na(dat.met$lag),]) +
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 
-plot.met2
+png(paste0(path.figures, "Weather_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
+  plot.met2
+dev.off()
 
 write.csv(dat.met, file.path(path.google, "processed_data/Weather_before_crashes.csv"))
 #-----------------------------------------------------#
