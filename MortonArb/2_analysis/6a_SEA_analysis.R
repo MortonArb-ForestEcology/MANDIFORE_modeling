@@ -129,7 +129,7 @@ struc.var <- c("agb.extreme", "density.tree.extreme", "tree.dbh.mean.extreme", "
 df.lag.struc <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
@@ -205,7 +205,7 @@ met.var <- c("tair.extreme", "VPD.extreme", "precip.total.extreme")
 df.lag.met <- data.frame()
 for(COL in met.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
@@ -282,7 +282,7 @@ relmet.var <- c("rel.precip.extreme", "diff.tair.extreme", "rel.VPD.extreme")
 df.lag.rel <- data.frame()
 for(COL in relmet.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
@@ -361,7 +361,7 @@ write.csv(dat.rel, file.path(path.google, "processed_data/Relweather_before_cras
 df.lag.strucxmng <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
@@ -401,13 +401,13 @@ dev.off()
 
 #-----------------------------------------------------#
 # Looking at weather metrics interacting with management
-# met.var ~ any crash*Management-1
+# met.var ~ only crash*Management-1
 #-----------------------------------------------------#
 met.var <- c("tair.extreme", "VPD.extreme", "precip.total.extreme")
 df.lag.metxmng <- data.frame()
 for(COL in met.var){
     
-    mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+    mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
       
     output <- summary(mod.lag)
       
@@ -446,7 +446,7 @@ relmet.var <- c("rel.precip.extreme", "diff.tair.extreme", "rel.VPD.extreme")
 df.lag.relxmng <- data.frame()
 for(COL in relmet.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
