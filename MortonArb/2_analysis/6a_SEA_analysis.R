@@ -311,8 +311,9 @@ plot.rel <- ggplot(data=df.lag.rel ) +
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 
-plot.rel
-
+png(paste0(path.figures, "RelWeather_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+  plot.rel
+dev.off()
 
 dat.rel <- runs.yr[!is.na(runs.yr$lag.crash), c("year", "Management", "GCM", "rcp", relmet.var, "one.crash", "lag.crash")]
 #Just to make "lag" a common name for merging purposes
@@ -324,12 +325,15 @@ dat.rel <- tidyr::gather(dat.rel, VAR, value, rel.precip.extreme:rel.VPD.extreme
 
 #Merging the frames and marking significance
 dat.rel <- merge(dat.rel, df.lag.rel, all.x=T)
-dat.rel$sig[!is.na(dat.rel$p.val)] <- ifelse(dat.rel$p.val[!is.na(dat.rel$p.val)]<0.01, "sig", "n.s.")
+dat.rel$sig[!is.na(dat.rel$p.val)] <- ifelse(dat.rel$p.val[!is.na(dat.rel$p.val)]<0.05, "sig", "n.s.")
 dat.rel$sig <- as.factor(dat.rel$sig)
 summary(dat.rel)
 
+dat.rel$VAR <- car::recode(dat.rel$VAR, "'diff.tair.extreme'='Air Temp Difference C'; 'rel.VPD.extreme'='Relative VPD (PA)'; 
+                             'rel.precip.extreme'='Relative Precip (mm)'")
+
 plot.rel2 <- ggplot(data=dat.rel[!is.na(dat.rel$lag),]) +
-  facet_grid(VAR~Management, scales="free_y") +
+  facet_grid(VAR~., scales="free_y") +
   geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
   geom_hline(yintercept=0, linetype="solid", color="blue") +
   scale_fill_manual(values=c("gray50", "red2")) +
@@ -341,8 +345,10 @@ plot.rel2 <- ggplot(data=dat.rel[!is.na(dat.rel$lag),]) +
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 
-plot.rel2
-
+png(paste0(path.figures, "RelWeather_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
+  plot.rel2
+dev.off()
+  
 write.csv(dat.rel, file.path(path.google, "processed_data/Relweather_before_crashes.csv"))
 #-----------------------------------------------------#
 # Starting to look at interaction with Management
@@ -355,7 +361,7 @@ write.csv(dat.rel, file.path(path.google, "processed_data/Relweather_before_cras
 df.lag.strucxmng <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash.check)*as.factor(one.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash) & runs.yr$rcp == RCP,], na.action = na.omit)
   
   output <- summary(mod.lag)
   
@@ -367,15 +373,18 @@ for(COL in struc.var){
   lag.list.strucxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
   lag.list.strucxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
   temp.lag.strucxmng <- dplyr::bind_rows(lag.list.strucxmng)
-  temp.lag.strucxmng$lag <- c(-5,-4,-3,-2,-1,0, NA, rep(unique(-4:0), times = 1))
-  temp.lag.strucxmng$check <- c(NA, NA, NA, NA, NA, NA, "Y", rep(c("Y"), each = 5))
+  temp.lag.strucxmng$lag <- c(-5,-4,-3,-2,-1,0, NA, NA, NA, rep(unique(-4:0), times = 3))
+  temp.lag.strucxmng$MNG <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 5))
   
   df.lag.strucxmng <- rbind(df.lag.strucxmng, temp.lag.strucxmng)
 }
 summary(df.lag.strucxmng)
 
-ggplot(data=df.lag.strucxmng ) +
-  facet_wrap(check~VAR, scales = "free_y") +
+df.lag.strucxmng$VAR <- car::recode(df.lag.strucxmng$VAR, "'agb.extreme'='AGB'; 'density.tree.extreme'='Tree Density'; 
+                             'tree.dbh.mean.extreme'='Mean DBH'; 'tree.dbh.sd.extreme'='SD of DBH'")
+
+plot.strucxmng <- ggplot(data=df.lag.strucxmng ) +
+  facet_grid(VAR~MNG, scales = "free_y") +
   geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
   geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
@@ -384,6 +393,11 @@ ggplot(data=df.lag.strucxmng ) +
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
+
+#This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
+png(paste0(path.figures, "Struc_X_MNG_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+  plot.strucxmng
+dev.off()
 
 #-----------------------------------------------------#
 # Looking at weather metrics interacting with management
