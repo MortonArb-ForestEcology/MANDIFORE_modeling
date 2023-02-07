@@ -129,11 +129,7 @@ for(RCP in unique(runs.yr$rcp)){
           runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR), "crash.year"] <- YR
           runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR), "one.crash.check"] <- "Y"
         }
-        
-        
-        
-        
-        
+
         dups.df <- rbind(dups.df, temp.df)
       }
     }
@@ -143,6 +139,7 @@ runs.yr <- runs.yr[runs.yr$year>=2025,]
 
 runs.yr <- rbind(runs.yr, dups.df)
 
+runs.fill <- data.frame()
 for(RCP in unique(runs.yr$rcp)){
   for(GCM in unique(runs.yr$GCM)){
     runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "one.crash"] <- NA
@@ -150,20 +147,22 @@ for(RCP in unique(runs.yr$rcp)){
       crash.event <- unique(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$crash==1, "year"])
       crash.event <- sort(crash.event)
       for(YR in crash.event){
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-5), "one.crash"] <- -5
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-4), "one.crash"] <- -4
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-3), "one.crash"] <- -3
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-2), "one.crash"] <- -2
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-1), "one.crash"] <- -1
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == YR, "one.crash"] <- 0
+        temp.df <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year >= (YR-5) & runs.yr$year <= (YR),]
+        temp.df$crash.year <- YR
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-5), "one.crash"] <- -5
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-4), "one.crash"] <- -4
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-3), "one.crash"] <- -3
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-2), "one.crash"] <- -2
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-1), "one.crash"] <- -1
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == YR, "one.crash"] <- 0
+        runs.fill <- rbind(runs.fill, temp.df)
         
       }
     }
   }
 }
 
-summary(runs.yr)
-runs.yr$one.crash.check <- ifelse(is.na(runs.yr$one.crash.check), "N", runs.yr$one.crash.check)
+summary(runs.fill)
 
 # Trying to re-center drought event & recovery; 
 # I'm not sure exactly how to convert this for our data.
