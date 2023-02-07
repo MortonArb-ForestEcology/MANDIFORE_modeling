@@ -406,6 +406,27 @@ write.csv(dat.rel, file.path(path.google, "processed_data/Relweather_before_cras
 #-----------------------------------------------------#
 
 #-----------------------------------------------------#
+# struc.var ~ as.factor(lag.crash)*Management
+#-----------------------------------------------------#
+df.ano.strucxmngsimple <- data.frame()
+for(COL in struc.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  df.ano <- anova(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  df.ano.strucxmngsimple <- rbind(df.ano.strucxmngsimple, df.ano)
+  
+}
+
+summary(df.ano.strucxmngsimple)
+
+write.csv(df.ano.strucxmngsimple, file.path(path.google, "processed_data/strucxmngtest_simple_anova.csv"), row.names = F)
+
+
+#-----------------------------------------------------#
 # struc.var ~ as.factor(lag.crash)*Management-1-as.factor(lag.crash)-Management
 #-----------------------------------------------------#
 df.lag.strucxmng <- data.frame()
@@ -842,10 +863,5 @@ write.csv(dat.relxmng, file.path(path.google, "processed_data/relxmng_before_cra
 
 write.csv(df.ano.relxmng, file.path(path.google, "processed_data/relxmng_anova.csv"), row.names = F)
 
-
-
-#-----------------------------------------------------#
-# Looking at Scenarios that crashed versus scenarios that didn't
-#-----------------------------------------------------#
 
 
