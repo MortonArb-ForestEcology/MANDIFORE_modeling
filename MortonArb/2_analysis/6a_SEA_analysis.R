@@ -471,7 +471,7 @@ plot.strucxmng <- ggplot(data=df.lag.strucxmng ) +
         panel.background=element_rect(fill=NA, color="black"))
 
 #This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
-png(paste0(path.figures, "Struc_X_MNG_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+png(paste0(path.figures, "StrucxMNG_before_crash_hist.png"), width=12, height=8, units="in", res=220)
   plot.strucxmng
 dev.off()
 
@@ -558,7 +558,7 @@ plot.strucxmngtest <- ggplot(data=(df.lag.strucxmngtest)) +
         panel.background=element_rect(fill=NA, color="black"))
 
 #This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
-png(paste0(path.figures, "Struc_X_MNG_test_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+png(paste0(path.figures, "StrucxMNG_test_before_crash_hist.png"), width=12, height=8, units="in", res=220)
   plot.strucxmngtest
 dev.off()
 
@@ -645,7 +645,7 @@ plot.strucxmngtest2 <- ggplot(data=(df.lag.strucxmngtest2)) +
         panel.background=element_rect(fill=NA, color="black"))
 
 #This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
-png(paste0(path.figures, "Struc_X_MNG_test2_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+png(paste0(path.figures, "StrucxMNG_test2_before_crash_hist.png"), width=12, height=8, units="in", res=220)
   plot.strucxmngtest2
 dev.off()
 
@@ -736,7 +736,7 @@ plot.metxmng <- ggplot(data=df.lag.metxmng ) +
         panel.background=element_rect(fill=NA, color="black"))
 
 #This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
-png(paste0(path.figures, "Met_X_MNG_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+png(paste0(path.figures, "MetxMNG_before_crash_hist.png"), width=12, height=8, units="in", res=220)
   plot.metxmng
 dev.off()
 
@@ -822,7 +822,7 @@ plot.relxmng <- ggplot(data=df.lag.relxmng ) +
         panel.background=element_rect(fill=NA, color="black"))
 
 #This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
-png(paste0(path.figures, "Met_X_MNG_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+png(paste0(path.figures, "relmetxMNG_before_crash_hist.png"), width=12, height=8, units="in", res=220)
   plot.relxmng
 dev.off()
 
@@ -864,4 +864,274 @@ write.csv(dat.relxmng, file.path(path.google, "processed_data/relxmng_before_cra
 write.csv(df.ano.relxmng, file.path(path.google, "processed_data/relxmng_anova.csv"), row.names = F)
 
 
+
+#-----------------------------------------------------#
+# Looking at Scenarios that crashed versus scenarios that didn't
+#-----------------------------------------------------#
+
+#-----------------------------------------------------#
+# Looking at structure metrics interacting with management
+#-----------------------------------------------------#
+
+#-----------------------------------------------------#
+# struc.var ~ as.factor(one.crash)*as.factor(one.crash.check)-1-as.factor(one.crash)-as.factor(one.crash.check)
+#-----------------------------------------------------#
+df.lag.strucxcrash <- data.frame()
+df.ano.strucxcrash <- data.frame()
+for(COL in struc.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(one.crash.check)-1-as.factor(one.crash)-as.factor(one.crash.check), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$one.crash),], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  df.ano <- anova(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  
+  lag.list.strucxcrash <- list()
+  lag.list.strucxcrash[[paste(COL)]]$VAR <- COL
+  lag.list.strucxcrash[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.strucxcrash[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.strucxcrash[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.strucxcrash[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.strucxcrash[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.strucxcrash <- dplyr::bind_rows(lag.list.strucxcrash)
+  temp.lag.strucxcrash$lag <- c(rep(unique(-5:0), times = 2))
+  temp.lag.strucxcrash$crash <- c(rep(c("Y", "N"), each = 6))
+  
+  df.lag.strucxcrash <- rbind(df.lag.strucxcrash, temp.lag.strucxcrash)
+  df.ano.strucxcrash <- rbind(df.ano.strucxcrash, df.ano)
+  
+}
+summary(df.lag.strucxcrash)
+summary(df.ano.strucxcrash)
+
+
+plot.strucxcrash <- ggplot(data=df.lag.strucxcrash ) +
+  facet_grid(VAR~crash, scales = "free_y") +
+  geom_bar(data=df.lag.strucxcrash[!is.na(df.lag.strucxcrash$p.val) & df.lag.strucxcrash$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.strucxcrash[!is.na(df.lag.strucxcrash$p.val) & df.lag.strucxcrash$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.strucxcrash[!is.na(df.lag.strucxcrash$p.val) & df.lag.strucxcrash$p.val<0.05 & df.lag.strucxcrash$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.strucxcrash[!is.na(df.lag.strucxcrash$p.val) & df.lag.strucxcrash$p.val>=0.05 & df.lag.strucxcrash$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+#This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
+png(paste0(path.figures, "StrucxCrash_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+  plot.strucxcrash
+dev.off()
+
+dat.strucxcrash <- runs.fill[!is.na(runs.fill$one.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
+#Just to make "lag" a common name for merging purposes
+colnames(dat.strucxcrash) <- c("year", "Management", "GCM", "rcp", struc.var, "lag", "lag.crash")
+summary(dat.strucxcrash)
+
+#Making the format wide so that we can facet our different relative weather variables
+dat.strucxcrash <- tidyr::gather(dat.strucxcrash, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
+
+#Merging the frames and marking significance
+dat.strucxcrash <- merge(dat.strucxcrash, df.lag.strucxcrash, all.x=T,)
+dat.strucxcrash$sig[!is.na(dat.strucxcrash$p.val)] <- ifelse(dat.strucxcrash$p.val[!is.na(dat.strucxcrash$p.val)]<0.05, "sig", "n.s.")
+dat.strucxcrash$sig <- as.factor(dat.strucxcrash$sig)
+summary(dat.strucxcrash)
+
+dat.strucxcrash$VAR <- car::recode(dat.strucxcrash$VAR, "'agb'='AGB'; 'density.tree'='Tree Density'; 
+                             'tree.dbh.mean'='Mean DBH'; 'tree.dbh.sd'='SD of DBH'")
+
+plot.rel2 <- ggplot(data=dat.strucxcrash[!is.na(dat.strucxcrash$lag),]) +
+  facet_grid(VAR~crash, scales="free_y") +
+  geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
+  scale_fill_manual(values=c("red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+png(paste0(path.figures, "Strucxcrash_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
+  plot.rel2
+dev.off()
+
+write.csv(dat.strucxcrash, file.path(path.google, "processed_data/Strucxcrash_before_crashes.csv"))
+
+write.csv(df.ano.strucxcrash, file.path(path.google, "processed_data/Strucxcrash_anova.csv"), row.names = F)
+
+
+#-----------------------------------------------------#
+# Looking at weather metrics interacting with management
+#-----------------------------------------------------#
+
+#-----------------------------------------------------#
+# met.var ~ as.factor(one.crash)*as.factor(one.crash.check)-1-as.factor(one.crash)-as.factor(one.crash.check)
+#-----------------------------------------------------#
+df.lag.metxcrash <- data.frame()
+df.ano.metxcrash <- data.frame()
+for(COL in met.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(one.crash.check)-1-as.factor(one.crash)-as.factor(one.crash.check), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$one.crash),], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  df.ano <- anova(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  
+  lag.list.metxcrash <- list()
+  lag.list.metxcrash[[paste(COL)]]$VAR <- COL
+  lag.list.metxcrash[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.metxcrash[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.metxcrash[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.metxcrash[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.metxcrash[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.metxcrash <- dplyr::bind_rows(lag.list.metxcrash)
+  temp.lag.metxcrash$lag <- c(rep(unique(-5:0), times = 2))
+  temp.lag.metxcrash$crash <- c(rep(c("Y", "N"), each = 6))
+  
+  df.lag.metxcrash <- rbind(df.lag.metxcrash, temp.lag.metxcrash)
+  df.ano.metxcrash <- rbind(df.ano.metxcrash, df.ano)
+  
+}
+summary(df.lag.metxcrash)
+summary(df.ano.metxcrash)
+
+plot.metxcrash <- ggplot(data=df.lag.metxcrash ) +
+  facet_grid(VAR~crash, scales = "free_y") +
+  geom_bar(data=df.lag.metxcrash[!is.na(df.lag.metxcrash$p.val) & df.lag.metxcrash$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.metxcrash[!is.na(df.lag.metxcrash$p.val) & df.lag.metxcrash$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.metxcrash[!is.na(df.lag.metxcrash$p.val) & df.lag.metxcrash$p.val<0.05 & df.lag.metxcrash$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.metxcrash[!is.na(df.lag.metxcrash$p.val) & df.lag.metxcrash$p.val>=0.05 & df.lag.metxcrash$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+#This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
+png(paste0(path.figures, "Metxcrash_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+  plot.metxcrash
+dev.off()
+
+dat.metxcrash <- runs.fill[!is.na(runs.fill$one.crash), c("year", "Management", "GCM", "rcp", met.var, "one.crash", "lag.crash")]
+#Just to make "lag" a common name for merging purposes
+colnames(dat.metxcrash) <- c("year", "Management", "GCM", "rcp", met.var, "lag", "lag.crash")
+summary(dat.metxcrash)
+
+#Making the format wide so that we can facet our different relative weather variables
+dat.metxcrash <- tidyr::gather(dat.metxcrash, VAR, value, tair:precip.total, factor_key=TRUE)
+
+#Merging the frames and marking significance
+dat.metxcrash <- merge(dat.metxcrash, df.lag.metxcrash, all.x=T,)
+dat.metxcrash$sig[!is.na(dat.metxcrash$p.val)] <- ifelse(dat.metxcrash$p.val[!is.na(dat.metxcrash$p.val)]<0.05, "sig", "n.s.")
+dat.metxcrash$sig <- as.factor(dat.metxcrash$sig)
+summary(dat.metxcrash)
+
+dat.metxcrash$VAR <- car::recode(dat.metxcrash$VAR, "'tair'='Air Temp C'; 'VPD'='VPD (PA)'; 
+                             'precip.total'='Total Precip (mm)'")
+
+plot.met2 <- ggplot(data=dat.metxcrash[!is.na(dat.metxcrash$lag),]) +
+  facet_grid(VAR~crash, scales="free_y") +
+  geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
+  scale_fill_manual(values=c("red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+png(paste0(path.figures, "metxcrash_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
+  plot.met2
+dev.off()
+
+write.csv(dat.metxcrash, file.path(path.google, "processed_data/metxcrash_before_crashes.csv"))
+
+write.csv(df.ano.metxcrash, file.path(path.google, "processed_data/metxcrash_anova.csv"), row.names = F)
+
+
+#-----------------------------------------------------#
+# relmet.var ~ as.factor(one.crash)*as.factor(one.crash.check)-1-as.factor(one.crash)-as.factor(one.crash.check)
+#-----------------------------------------------------#
+df.lag.relxcrash <- data.frame()
+df.ano.relxcrash <- data.frame()
+for(COL in relmet.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(one.crash.check)-1-as.factor(one.crash)-as.factor(one.crash.check), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$one.crash),], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  df.ano <- anova(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  
+  lag.list.relxcrash <- list()
+  lag.list.relxcrash[[paste(COL)]]$VAR <- COL
+  lag.list.relxcrash[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.relxcrash[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.relxcrash[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.relxcrash[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.relxcrash[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.relxcrash <- dplyr::bind_rows(lag.list.relxcrash)
+  temp.lag.relxcrash$lag <- c(rep(unique(-5:0), times = 2))
+  temp.lag.relxcrash$crash <- c(rep(c("Y", "N"), each = 6))
+  
+  df.lag.relxcrash <- rbind(df.lag.relxcrash, temp.lag.relxcrash)
+  df.ano.relxcrash <- rbind(df.ano.relxcrash, df.ano)
+  
+}
+summary(df.lag.relxcrash)
+summary(df.ano.relxcrash)
+
+plot.relxcrash <- ggplot(data=df.lag.relxcrash ) +
+  facet_grid(VAR~crash, scales = "free_y") +
+  geom_bar(data=df.lag.relxcrash[!is.na(df.lag.relxcrash$p.val) & df.lag.relxcrash$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.relxcrash[!is.na(df.lag.relxcrash$p.val) & df.lag.relxcrash$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.relxcrash[!is.na(df.lag.relxcrash$p.val) & df.lag.relxcrash$p.val<0.05 & df.lag.relxcrash$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.relxcrash[!is.na(df.lag.relxcrash$p.val) & df.lag.relxcrash$p.val>=0.05 & df.lag.relxcrash$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+#This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
+png(paste0(path.figures, "Relmetxcrash_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+  plot.relxcrash
+dev.off()
+
+dat.relxcrash <- runs.fill[!is.na(runs.fill$one.crash), c("year", "Management", "GCM", "rcp", relmet.var, "one.crash", "lag.crash")]
+#Just to make "lag" a common name for merging purposes
+colnames(dat.relxcrash) <- c("year", "Management", "GCM", "rcp", relmet.var, "lag", "lag.crash")
+summary(dat.relxcrash)
+
+#Making the format wide so that we can facet our different relative weather variables
+dat.relxcrash <- tidyr::gather(dat.relxcrash, VAR, value, rel.precip:rel.VPD, factor_key=TRUE)
+
+#Merging the frames and marking significance
+dat.relxcrash <- merge(dat.relxcrash, df.lag.relxcrash, all.x=T,)
+dat.relxcrash$sig[!is.na(dat.relxcrash$p.val)] <- ifelse(dat.relxcrash$p.val[!is.na(dat.relxcrash$p.val)]<0.05, "sig", "n.s.")
+dat.relxcrash$sig <- as.factor(dat.relxcrash$sig)
+summary(dat.relxcrash)
+
+dat.relxcrash$VAR <- car::recode(dat.relxcrash$VAR, "'diff.tair'='Air Temp Difference C'; 'rel.VPD'='Relative VPD (PA)'; 
+                             'rel.precip'='Relative Precip (mm)'")
+
+plot.met2 <- ggplot(data=dat.relxcrash[!is.na(dat.relxcrash$lag),]) +
+  facet_grid(VAR~crash, scales="free_y") +
+  geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
+  scale_fill_manual(values=c("gray50", "red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+png(paste0(path.figures, "relxcrash_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
+  plot.met2
+dev.off()
+
+write.csv(dat.relxcrash, file.path(path.google, "processed_data/relxcrash_before_crashes.csv"))
+
+write.csv(df.ano.relxcrash, file.path(path.google, "processed_data/relxcrash_anova.csv"), row.names = F)
 
