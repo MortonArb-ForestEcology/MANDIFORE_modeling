@@ -179,7 +179,7 @@ struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 df.lag.struc <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
@@ -212,7 +212,7 @@ png(paste0(path.figures, "Structure_before_crash_hist.png"), width=12, height=8,
   plot.struc
 dev.off()
 
-dat.struc <- runs.yr[!is.na(runs.yr$lag.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
+dat.struc <- runs.fill[!is.na(runs.fill$lag.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
 #Just to make "lag" a common name for merging purposes
 colnames(dat.struc) <- c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag")
 summary(dat.struc)
@@ -254,7 +254,7 @@ met.var <- c("tair", "VPD", "precip.total")
 df.lag.met <- data.frame()
 for(COL in met.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
@@ -289,7 +289,7 @@ png(paste0(path.figures, "Weather_before_crash_hist.png"), width=12, height=8, u
  plot.met
 dev.off()
 
-dat.met <- runs.yr[!is.na(runs.yr$lag.crash), c("year", "Management", "GCM", "rcp", met.var, "one.crash", "lag.crash")]
+dat.met <- runs.fill[!is.na(runs.fill$lag.crash), c("year", "Management", "GCM", "rcp", met.var, "one.crash", "lag.crash")]
 #Just to make "lag" a common name for merging purposes
 colnames(dat.met) <- c("year", "Management", "GCM", "rcp", met.var, "one.crash", "lag")
 summary(dat.met)
@@ -330,7 +330,7 @@ relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.rel <- data.frame()
 for(COL in relmet.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
@@ -363,7 +363,7 @@ png(paste0(path.figures, "RelWeather_before_crash_hist.png"), width=12, height=8
   plot.rel
 dev.off()
 
-dat.rel <- runs.yr[!is.na(runs.yr$lag.crash), c("year", "Management", "GCM", "rcp", relmet.var, "one.crash", "lag.crash")]
+dat.rel <- runs.fill[!is.na(runs.fill$lag.crash), c("year", "Management", "GCM", "rcp", relmet.var, "one.crash", "lag.crash")]
 #Just to make "lag" a common name for merging purposes
 colnames(dat.rel) <- c("year", "Management", "GCM", "rcp", relmet.var, "one.crash", "lag")
 summary(dat.rel)
@@ -403,14 +403,21 @@ write.csv(dat.rel, file.path(path.google, "processed_data/Relweather_before_cras
 
 #-----------------------------------------------------#
 # Looking at structure metrics interacting with management
-# struc.var ~ only crashes*Management-1
+#-----------------------------------------------------#
+
+#-----------------------------------------------------#
+# struc.var ~ as.factor(lag.crash)*Management-1-as.factor(lag.crash)-Management
 #-----------------------------------------------------#
 df.lag.strucxmng <- data.frame()
+df.ano.strucxmng <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1-as.factor(lag.crash)-Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
+  df.ano <- anova(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  rownames(df.ano) <- COL
   
   lag.list.strucxmng <- list()
   lag.list.strucxmng[[paste(COL)]]$VAR <- COL
@@ -420,18 +427,19 @@ for(COL in struc.var){
   lag.list.strucxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
   lag.list.strucxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
   temp.lag.strucxmng <- dplyr::bind_rows(lag.list.strucxmng)
-  temp.lag.strucxmng$lag <- c(-5,-4,-3,-2,-1,0, NA, NA, NA, rep(unique(-4:0), times = 3))
-  temp.lag.strucxmng$MNG <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 5))
+  temp.lag.strucxmng$lag <- c(rep(unique(-5:0), times = 4))
+  temp.lag.strucxmng$Management <- c(rep(c("None", "Under", "Shelter", "Gap"), each = 6))
   
   df.lag.strucxmng <- rbind(df.lag.strucxmng, temp.lag.strucxmng)
+  df.ano.strucxmng <- rbind(df.ano.strucxmng, df.ano)
+  
 }
 summary(df.lag.strucxmng)
+summary(df.ano.strucxmng)
 
-df.lag.strucxmng$VAR <- car::recode(df.lag.strucxmng$VAR, "'agb'='AGB'; 'density.tree'='Tree Density'; 
-                             'tree.dbh.mean'='Mean DBH'; 'tree.dbh.sd'='SD of DBH'")
 
 plot.strucxmng <- ggplot(data=df.lag.strucxmng ) +
-  facet_grid(VAR~MNG, scales = "free_y") +
+  facet_grid(VAR~Management, scales = "free_y") +
   geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
   geom_bar(data=df.lag.strucxmng[!is.na(df.lag.strucxmng$p.val) & df.lag.strucxmng$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
@@ -446,6 +454,44 @@ png(paste0(path.figures, "Struc_X_MNG_before_crash_hist.png"), width=12, height=
   plot.strucxmng
 dev.off()
 
+dat.strucxmng <- runs.fill[!is.na(runs.fill$lag.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
+#Just to make "lag" a common name for merging purposes
+colnames(dat.strucxmng) <- c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag")
+summary(dat.strucxmng)
+
+#Making the format wide so that we can facet our different relative weather variables
+dat.strucxmng <- tidyr::gather(dat.strucxmng, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
+
+#Merging the frames and marking significance
+dat.strucxmng <- merge(dat.strucxmng, df.lag.strucxmng, all.x=T,)
+dat.strucxmng$sig[!is.na(dat.strucxmng$p.val)] <- ifelse(dat.strucxmng$p.val[!is.na(dat.strucxmng$p.val)]<0.05, "sig", "n.s.")
+dat.strucxmng$sig <- as.factor(dat.strucxmng$sig)
+summary(dat.strucxmng)
+
+dat.strucxmng$VAR <- car::recode(dat.strucxmng$VAR, "'agb'='AGB'; 'density.tree'='Tree Density'; 
+                             'tree.dbh.mean'='Mean DBH'; 'tree.dbh.sd'='SD of DBH'")
+
+plot.rel2 <- ggplot(data=dat.strucxmng[!is.na(dat.strucxmng$lag),]) +
+  facet_grid(VAR~Management, scales="free_y") +
+  geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
+  scale_fill_manual(values=c("red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+png(paste0(path.figures, "StrucxMNG_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
+  plot.rel2
+dev.off()
+
+write.csv(dat.strucxmng, file.path(path.google, "processed_data/StrucxMNG_before_crashes.csv"))
+
+write.csv(df.ano.strucxmng, file.path(path.google, "processed_data/StrucxMNG_anova.csv"))
+
+
 #-----------------------------------------------------#
 # Looking at weather metrics interacting with management
 # met.var ~ only crash*Management-1
@@ -454,7 +500,7 @@ met.var <- c("tair", "VPD", "precip.total")
 df.lag.metxmng <- data.frame()
 for(COL in met.var){
     
-    mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$lag.crash),], na.action = na.omit)
+    mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
       
     output <- summary(mod.lag)
       
@@ -496,7 +542,7 @@ relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.relxmng <- data.frame()
 for(COL in relmet.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.yr[!is.na(runs.yr$one.crash),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*as.factor(Management)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$one.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   
