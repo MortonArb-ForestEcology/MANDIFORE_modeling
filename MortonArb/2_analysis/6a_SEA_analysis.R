@@ -28,39 +28,128 @@ for(i in 5:nrow(runs.yr)){
   RCP <- runs.yr[i, "rcp"]
   MNG <- runs.yr[i, "Management"]
   YR <- runs.yr[i, "year"]
-  if(YR != 2007){
+  if(YR >= 2025){
     prev.20 <- runs.yr[runs.yr$GCM == GCM & runs.yr$rcp == RCP & runs.yr$Management == MNG & runs.yr$year == YR-1 , "loss.event.20"]
     runs.yr[i, "nonseq.loss.event.20"] <- ifelse((runs.yr[i, "loss.event.20"] == 1 & prev.20 ==F), 1, 0)
   }
 }
 
 runs.yr$crash <- ifelse(runs.yr$nonseq.loss.event.20==T, 1, 0)
-runs.yr <- runs.yr[runs.yr$year>=2025,]
+#runs.yr <- runs.yr[runs.yr$year>=2025,]
 
 #---------------------------------------------------#
 # Here is why I start converting some of Christy's old script for our purposes
 #---------------------------------------------------#
 # Extreme crash years
-runs.fill <- data.frame()
+dups.df <- data.frame()
 for(RCP in unique(runs.yr$rcp)){
   for(GCM in unique(runs.yr$GCM)){
     runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "one.crash"] <- NA
     runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "one.crash.check"] <- "N"
-    runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "year.crash"] <- NA
     for(MNG in unique(runs.yr$Management)){
       runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG, "lag.crash"] <- NA
       crash.event <- unique(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$crash==1, "year"])
       crash.event <- sort(crash.event)
       for(YR in crash.event){
-        #Flagging when only one of the management scenarios has a crash
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-5), "lag.crash"] <- -5
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-4), "lag.crash"] <- -4
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-3), "lag.crash"] <- -3
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-2), "lag.crash"] <- -2
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-1), "lag.crash"] <- -1
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == YR, "lag.crash"] <- 0
         
-        #Flagging a group of management scenarios if only one of this has a crash
+        temp.df <- data.frame()
+        #Flagging when only one of the management scenarios has a crash
+        if(!is.na(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-5), "lag.crash"])){
+          temp.store <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-5),]
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-5), "lag.crash"] <- -5
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-5), "crash.year"] <- YR
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-5), "one.crash.check"] <- "Y"
+          temp.df <- rbind(temp.df, temp.store)
+        } else{
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-5), "lag.crash"] <- -5
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-5), "crash.year"] <- YR
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-5), "one.crash.check"] <- "Y"
+        }
+        
+        if(!is.na(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-4), "lag.crash"])){
+          temp.store <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-4),]
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-4), "lag.crash"] <- -4
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-4), "crash.year"] <- YR
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-4), "one.crash.check"] <- "Y"
+          
+          temp.df <- rbind(temp.df, temp.store)
+        } else{
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-4), "lag.crash"] <- -4
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-4), "crash.year"] <- YR
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-4), "one.crash.check"] <- "Y"
+        }
+        
+        if(!is.na(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-3), "lag.crash"])){
+          temp.store <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-3),]
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-3), "lag.crash"] <- -3
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-3), "crash.year"] <- YR
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-3), "one.crash.check"] <- "Y"
+          
+          temp.df <- rbind(temp.df, temp.store)
+        } else{
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-3), "lag.crash"] <- -3
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-3), "crash.year"] <- YR
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-3), "one.crash.check"] <- "Y"
+        }
+        
+        if(!is.na(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-2), "lag.crash"])){
+          temp.store <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-2),]
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-2), "lag.crash"] <- -2
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-2), "crash.year"] <- YR
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-2), "one.crash.check"] <- "Y"
+          
+          temp.df <- rbind(temp.df, temp.store)
+        } else{
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-2), "lag.crash"] <- -2
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-2), "crash.year"] <- YR
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-2), "one.crash.check"] <- "Y"
+        }
+        
+        if(!is.na(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-1), "lag.crash"])){
+          temp.store <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-1),]
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-1), "lag.crash"] <- -1
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-1), "crash.year"] <- YR
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR-1), "one.crash.check"] <- "Y"
+          
+          temp.df <- rbind(temp.df, temp.store)
+        } else{
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-1), "lag.crash"] <- -1
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-1), "crash.year"] <- YR
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-1), "one.crash.check"] <- "Y"
+        }
+        
+        if(!is.na(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR), "lag.crash"])){
+          temp.store <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR),]
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR), "lag.crash"] <- 0
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR), "crash.year"] <- YR
+          temp.store[temp.store$rcp == RCP & temp.store$GCM == GCM & temp.store$Management == MNG & temp.store$year == (YR), "one.crash.check"] <- "Y"
+          temp.df <- rbind(temp.df, temp.store)
+        } else{
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR), "lag.crash"] <- 0
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR), "crash.year"] <- YR
+          runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR), "one.crash.check"] <- "Y"
+        }
+        
+        
+        
+        
+        
+        dups.df <- rbind(dups.df, temp.df)
+      }
+    }
+  }
+}
+runs.yr <- runs.yr[runs.yr$year>=2025,]
+
+runs.yr <- rbind(runs.yr, dups.df)
+
+for(RCP in unique(runs.yr$rcp)){
+  for(GCM in unique(runs.yr$GCM)){
+    runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "one.crash"] <- NA
+    for(MNG in unique(runs.yr$Management)){
+      crash.event <- unique(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$crash==1, "year"])
+      crash.event <- sort(crash.event)
+      for(YR in crash.event){
         runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-5), "one.crash"] <- -5
         runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-4), "one.crash"] <- -4
         runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-3), "one.crash"] <- -3
@@ -68,13 +157,6 @@ for(RCP in unique(runs.yr$rcp)){
         runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-1), "one.crash"] <- -1
         runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == YR, "one.crash"] <- 0
         
-        #Marking which management crashed in a group where at least one crashed
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-5), "one.crash.check"] <- "Y"
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-4), "one.crash.check"] <- "Y"
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-3), "one.crash.check"] <- "Y"
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-2), "one.crash.check"] <- "Y"
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == (YR-1), "one.crash.check"] <- "Y"
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$year == YR, "one.crash.check"] <- "Y"
       }
     }
   }
