@@ -417,7 +417,7 @@ for(COL in struc.var){
   output <- summary(mod.lag)
   df.ano <- anova(mod.lag)
   df.ano$comp <- rownames(df.ano)
-  rownames(df.ano) <- COL
+  df.ano$VAR <- COL
   
   lag.list.strucxmng <- list()
   lag.list.strucxmng[[paste(COL)]]$VAR <- COL
@@ -489,8 +489,115 @@ dev.off()
 
 write.csv(dat.strucxmng, file.path(path.google, "processed_data/StrucxMNG_before_crashes.csv"))
 
-write.csv(df.ano.strucxmng, file.path(path.google, "processed_data/StrucxMNG_anova.csv"))
+write.csv(df.ano.strucxmng, file.path(path.google, "processed_data/StrucxMNG_anova.csv"), row.names = F)
 
+
+#-----------------------------------------------------#
+# struc.var ~ as.factor(lag.crash)*Management-1-as.factor(lag.crash)
+#-----------------------------------------------------#
+df.lag.strucxmngtest <- data.frame()
+df.ano.strucxmngtest <- data.frame()
+for(COL in struc.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1-as.factor(lag.crash), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  df.ano <- anova(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  
+  lag.list.strucxmngtest <- list()
+  lag.list.strucxmngtest[[paste(COL)]]$VAR <- COL
+  lag.list.strucxmngtest[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.strucxmngtest[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.strucxmngtest[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.strucxmngtest[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.strucxmngtest[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.strucxmngtest <- dplyr::bind_rows(lag.list.strucxmngtest)
+  temp.lag.strucxmngtest$lag <- c(NA,NA,NA,NA,rep(unique(-4:0), times = 4))
+  temp.lag.strucxmngtest$Management <- c("None", "Under", "Shelter", "Gap" ,rep(c("None", "Under", "Shelter", "Gap"), each = 5))
+  
+  df.lag.strucxmngtest <- rbind(df.lag.strucxmngtest, temp.lag.strucxmngtest)
+  df.ano.strucxmngtest <- rbind(df.ano.strucxmngtest, df.ano)
+  
+}
+summary(df.lag.strucxmngtest)
+summary(df.ano.strucxmngtest)
+
+
+plot.strucxmngtest <- ggplot(data=(df.lag.strucxmngtest)) +
+  facet_grid(VAR~Management, scales = "free_y") +
+  geom_bar(data=df.lag.strucxmngtest[!is.na(df.lag.strucxmngtest$p.val) & df.lag.strucxmngtest$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.strucxmngtest[!is.na(df.lag.strucxmngtest$p.val) & df.lag.strucxmngtest$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.strucxmngtest[!is.na(df.lag.strucxmngtest$p.val) & df.lag.strucxmngtest$p.val<0.05 & df.lag.strucxmngtest$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.strucxmngtest[!is.na(df.lag.strucxmngtest$p.val) & df.lag.strucxmngtest$p.val>=0.05 & df.lag.strucxmngtest$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+#This figure has multiple issues resulting from the model output. I'm not sure how to deal with them but I want the figure to show the issue
+png(paste0(path.figures, "Struc_X_MNG_test_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+  plot.strucxmngtest
+dev.off()
+
+dat.strucxmngtest <- runs.fill[!is.na(runs.fill$lag.crash), c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag.crash")]
+#Just to make "lag" a common name for merging purposes
+colnames(dat.strucxmngtest) <- c("year", "Management", "GCM", "rcp", struc.var, "one.crash", "lag")
+summary(dat.strucxmngtest)
+
+#Making the format wide so that we can facet our different relative weather variables
+dat.strucxmngtest <- tidyr::gather(dat.strucxmngtest, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
+
+#Merging the frames and marking significance
+dat.strucxmngtest <- merge(dat.strucxmngtest, df.lag.strucxmngtest, all.x=T,)
+dat.strucxmngtest$sig[!is.na(dat.strucxmngtest$p.val)] <- ifelse(dat.strucxmngtest$p.val[!is.na(dat.strucxmngtest$p.val)]<0.05, "sig", "n.s.")
+dat.strucxmngtest$sig <- as.factor(dat.strucxmngtest$sig)
+summary(dat.strucxmngtest)
+
+dat.strucxmngtest$VAR <- car::recode(dat.strucxmngtest$VAR, "'agb'='AGB'; 'density.tree'='Tree Density'; 
+                             'tree.dbh.mean'='Mean DBH'; 'tree.dbh.sd'='SD of DBH'")
+
+plot.rel2 <- ggplot(data=dat.strucxmngtest[!is.na(dat.strucxmngtest$lag),]) +
+  facet_grid(VAR~Management, scales="free_y") +
+  geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
+  scale_fill_manual(values=c("gray50","red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+
+png(paste0(path.figures, "strucxmngtest_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
+  plot.rel2
+dev.off()
+
+write.csv(dat.strucxmngtest, file.path(path.google, "processed_data/strucxmngtest_before_crashes.csv"))
+
+write.csv(df.ano.strucxmngtest, file.path(path.google, "processed_data/strucxmngtest_anova.csv"), row.names = F)
+
+
+#-----------------------------------------------------#
+# struc.var ~ as.factor(lag.crash)*Management-1-as.factor(lag.crash)
+#-----------------------------------------------------#
+df.lag.strucxmngtest2 <- data.frame()
+df.ano.strucxmngtest2 <- data.frame()
+for(COL in struc.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
+
+  df.ano <- anova(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  df.ano.strucxmngtest2 <- rbind(df.ano.strucxmngtest2, df.ano)
+  
+}
+
+summary(df.ano.strucxmngtest2)
+
+write.csv(df.ano.strucxmngtest2, file.path(path.google, "processed_data/strucxmngtest2_anova.csv"), row.names = F)
 
 #-----------------------------------------------------#
 # Looking at weather metrics interacting with management
