@@ -11,9 +11,11 @@ library(nlme)
 library(multcomp)
 #------------------------------------------------------------------------#
 
-path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "~/Library/CloudStorage/GoogleDrive-crollinson@mortonarb.org/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
-path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/SEA figures/"
+# path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+
+path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
 
 runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv"))
 runs.yr$Management <- factor(runs.yr$Management, levels=c("None", "Under", "Shelter", "Gap"))
@@ -433,9 +435,30 @@ df.lag.strucxmng <- data.frame()
 df.ano.strucxmng <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1-as.factor(lag.crash)-Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(lag.crash), "0")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
+  anova(mod.lag)
+  #summary(mod.lag) # <- this is SUPER messy & complicated; don't try interpreting the intercepts!!
   
+  # Removing the 0 year because that includes crash-induced structural changes --> not the structure that led to the crash
+  mod.lagB <- nlme::lme(eval(substitute(j ~ relevel(as.factor(lag.crash), "-1")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash) & runs.fill$lag.crash!=0,], na.action = na.omit)
+  anova(mod.lagB)
+  
+  # Looking at trends through time alone
+  mod.lag.time <- nlme::lme(eval(substitute(j ~ relevel(as.factor(lag.crash), "-1"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash) & runs.fill$lag.crash!=0,], na.action = na.omit)
+  anova(mod.lag.time)
+  summary(mod.lag.time)
+  
+  ggplot(data=runs.fill[!is.na(runs.fill$lag.crash),]) +
+    geom_boxplot(aes(x=as.factor(lag.crash), y=density.tree))
+  
+  # Looking at management alone
+  mod.lag.mgmt <- nlme::lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(lag.crash=~1, rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash) & runs.fill$lag.crash!=0,], na.action = na.omit)
+  anova(mod.lag.mgmt)
+  # summary(mod.lag.mgmt)
+  summary(glht(mod.lag.mgmt, linfct = mcp(Management = 'Tukey')))
+      
   output <- summary(mod.lag)
+  # output$tTable[[1]]
   df.ano <- anova(mod.lag)
   df.ano$comp <- rownames(df.ano)
   df.ano$VAR <- COL
@@ -874,19 +897,52 @@ write.csv(df.ano.relxmng, file.path(path.google, "processed_data/relxmng_anova.c
 #-----------------------------------------------------#
 
 #-----------------------------------------------------#
+# One crash = time lag for GROUP of conditions with at least ONE RUN crashing
+# One.crash.check --> Y/N indicating which set actually crashed
 # struc.var ~ as.factor(one.crash)*as.factor(one.crash.check)-1-as.factor(one.crash)-as.factor(one.crash.check)
 #-----------------------------------------------------#
 df.lag.strucxcrash <- data.frame()
 df.ano.strucxcrash <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(one.crash.check)-1-as.factor(one.crash)-as.factor(one.crash.check), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$one.crash),], na.action = na.omit)
+  # Changes made: exclude structure in year of crash; get rid of all the minuses based on our discussion (that only works well if we're comparing to 0) with MGMT as a random
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(one.crash.check), list(j = as.name(COL)))), random=list(Management=~1, rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$one.crash) & runs.fill$one.crash!=0,], na.action = na.omit)
   
-  output <- summary(mod.lag)
   df.ano <- anova(mod.lag)
+  output <- summary(mod.lag)
   df.ano$comp <- rownames(df.ano)
   df.ano$VAR <- COL
+
+  ggplot(runs.fill[!is.na(runs.fill$one.crash) & runs.fill$one.crash!=0,]) +
+    # facet_wrap(~rcp) +
+    geom_boxplot(aes(y=density.tree, x=as.factor(one.crash), fill=one.crash.check))
   
+  ggplot(runs.fill[!is.na(runs.fill$one.crash) & runs.fill$one.crash!=0,]) +
+    facet_wrap(~rcp) +
+    geom_boxplot(aes(y=density.tree, x=as.factor(one.crash), fill=one.crash.check))
+  
+  ggplot(runs.fill[!is.na(runs.fill$one.crash) & runs.fill$one.crash!=0,]) +
+    facet_wrap(~Management) +
+    geom_boxplot(aes(y=density.tree, x=as.factor(one.crash), fill=one.crash.check))
+  
+  
+  # Checkign to see if there's anything if we move MGMT to FIXED
+  mod.lagB <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(one.crash.check)*Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$one.crash) & runs.fill$one.crash!=0,], na.action = na.omit)
+  anova(mod.lagB)
+
+  mod.lagMET <- nlme::lme(eval(substitute(j ~ as.factor(one.crash)*as.factor(one.crash.check)*rel.VPD, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$one.crash) & runs.fill$one.crash!=0,], na.action = na.omit)
+  anova(mod.lagB)
+  
+    
+  # Look for this pattern in the data  
+  ggplot(runs.fill[!is.na(runs.fill$one.crash) & runs.fill$one.crash!=0,]) +
+    geom_boxplot(aes(y=density.tree, x=as.factor(one.crash.check), fill=Management))
+  
+  ggplot(runs.fill[!is.na(runs.fill$one.crash) & runs.fill$one.crash!=0,]) +
+    facet_wrap(~rcp) +
+    geom_boxplot(aes(y=density.tree, x=as.factor(one.crash.check), fill=Management))
+  
+    
   lag.list.strucxcrash <- list()
   lag.list.strucxcrash[[paste(COL)]]$VAR <- COL
   lag.list.strucxcrash[[paste(COL)]]$Comp <- rownames(output$tTable)
