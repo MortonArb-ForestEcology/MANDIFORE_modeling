@@ -9,11 +9,12 @@
 library(ggplot2)
 library(nlme)
 library(multcomp)
+library(dplyr)
 #------------------------------------------------------------------------#
 
-path.google <- "~/Library/CloudStorage/GoogleDrive-crollinson@mortonarb.org/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+#path.google <- "~/Library/CloudStorage/GoogleDrive-crollinson@mortonarb.org/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
-# path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
 path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
 
@@ -39,12 +40,35 @@ for(i in 5:nrow(runs.yr)){
 runs.yr$crash <- ifelse(runs.yr$nonseq.loss.event.20==T, 1, 0)
 #runs.yr <- runs.yr[runs.yr$year>=2025,]
 
+#-----------------------------------------------------------#
+# Creating a summary table on the frequency of crashes by RCP, GCM, and Management
+#-----------------------------------------------------------#
+
+rcp.freq.df <- runs.yr[runs.yr$nonseq.loss.event.20 == T & !is.na(runs.yr$nonseq.loss.event.20) & runs.yr$year>=2025,] %>%
+  group_by(rcp, nonseq.loss.event.20) %>%
+  summarize(Freq=n())
+
+rcp.freq.df
+
+GCM.freq.df <- runs.yr[runs.yr$nonseq.loss.event.20 == T & !is.na(runs.yr$nonseq.loss.event.20) & runs.yr$year>=2025,] %>%
+  group_by(GCM, nonseq.loss.event.20) %>%
+  summarize(Freq=n())
+
+GCM.freq.df
+
+MNG.freq.df <- runs.yr[runs.yr$nonseq.loss.event.20 == T & !is.na(runs.yr$nonseq.loss.event.20) & runs.yr$year>=2025,] %>%
+  group_by(Management, nonseq.loss.event.20) %>%
+  summarize(Freq=n())
+
+MNG.freq.df
+
+
 #---------------------------------------------------#
 # Here is why I start converting some of Christy's old script for our purposes
 # This script pulls out duplicate situations into a different data.frame and adds them back at thend
 # Duplicates refer to when one year can be a -1 year lag for one drought and a -5 for another
-# group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing (This was previously one.crash)
-# group.crash.lag.check --> Y/N indicating which set actually crashed (This was previously one.crash.check)
+# group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing (This was previously group.crash.lag)
+# group.crash.lag.check --> Y/N indicating which set actually crashed (This was previously group.crash.lag.check)
 # ind.crash.lag = time lag for individual management condition which crashed
 #---------------------------------------------------#
 # Extreme crash years
@@ -171,6 +195,4 @@ for(RCP in unique(runs.yr$rcp)){
 }
 
 summary(runs.fill)
-
-
 
