@@ -196,3 +196,54 @@ for(RCP in unique(runs.yr$rcp)){
 
 summary(runs.fill)
 
+
+#-----------------------------------------------------#
+# Looking for structural differences between the conditions that crashed and those that didn't
+# Looking is those differences vary by Management
+# group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing
+# group.crash.lag.check --> Y/N indicating which set actually crashed
+#-----------------------------------------------------#
+df.lag.strucxcrash <- data.frame()
+df.ano.strucxcrash <- data.frame()
+for(COL in struc.var){
+  
+  # Checkign to see if there's anything if we move MGMT to FIXED
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(group.crash.lag)*as.factor(group.crash.lag.check)*Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!=0,], na.action = na.omit)
+  anova(mod.lag)
+  
+  df.ano <- anova(mod.lag)
+  output <- summary(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  rownames(df.ano) <- NULL
+  
+  lag.list.strucxcrash <- list()
+  lag.list.strucxcrash[[paste(COL)]]$VAR <- COL
+  lag.list.strucxcrash[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.strucxcrash[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.strucxcrash[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.strucxcrash[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.strucxcrash[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.strucxcrash <- dplyr::bind_rows(lag.list.strucxcrash)
+  temp.lag.strucxcrash$lag <- c(NA, -4,-3,-2,-1, NA, NA, NA, NA, rep(unique(-4:-1), times = 4), NA, NA, NA, rep(unique(-4:-1), times = 3))
+  temp.lag.strucxcrash$crash <- c(NA, NA, NA, NA, NA, "Y", NA, NA, NA, "Y", "Y", "Y", "Y", rep(c(NA), each = 12), rep(c("Y"), each = 15))
+  temp.lag.strucxcrash$Management <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", NA, NA, NA, NA, rep(c("Under", "Shelter", "Gap"), each = 4), "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 4))
+  
+  df.lag.strucxcrash <- rbind(df.lag.strucxcrash, temp.lag.strucxcrash)
+  df.ano.strucxcrash <- rbind(df.ano.strucxcrash, df.ano)
+  
+}
+summary(df.lag.strucxcrash)
+summary(df.ano.strucxcrash)
+
+#Making the format wide so that we can facet our different relative weather variables
+dat.strucxcrash <- runs.fill[!is.na(runs.fill$group.crash.lag), c("year", "Management", "GCM", "rcp", struc.var, "group.crash.lag", "ind.crash.lag", "group.crash.lag.check")]
+dat.strucxcrash <- tidyr::gather(dat.strucxcrash, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
+
+#write.csv(df.ano.strucxcrash, file.path(path.google, "processed_data/Strucxcrash_anova.csv"), row.names = F)
+ggplot(dat.strucxcrash[!is.na(dat.strucxcrash$group.crash.lag) & dat.strucxcrash$group.crash.lag!=0,]) +
+  facet_grid(VAR~Management + rcp, scales = "free") +
+  geom_boxplot(aes(y=value, x=as.factor(group.crash.lag), fill=group.crash.lag.check))
+
+
+
