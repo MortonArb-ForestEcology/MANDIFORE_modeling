@@ -201,11 +201,11 @@ summary(runs.fill)
 # group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing
 # group.crash.lag.check --> Y/N indicating which set actually crashed
 #-----------------------------------------------------#
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 df.lag.strucxcrash <- data.frame()
 df.ano.strucxcrash <- data.frame()
 for(COL in struc.var){
   
-  # Checkign to see if there's anything if we move MGMT to FIXED
   mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(group.crash.lag)*as.factor(group.crash.lag.check), list(j = as.name(COL)))), random=list(Management =~1, rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!=0,], na.action = na.omit)
   anova(mod.lag)
   
@@ -269,6 +269,83 @@ dat.strucxcrashxmng <- tidyr::gather(dat.strucxcrashxmng, VAR, value, agb:tree.d
 
 ggplot(dat.strucxcrashxmng[!is.na(dat.strucxcrashxmng$lag) & dat.strucxcrashxmng$lag!=0,]) +
   facet_grid(VAR~Management + rcp, scales = "free") +
+  geom_boxplot(aes(y=value, x=as.factor(lag), fill=group.crash.lag.check))
+
+
+
+#-----------------------------------------------------#
+# Looking for relative weather differences between the conditions that crashed and those that didn't
+# group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing
+# group.crash.lag.check --> Y/N indicating which set actually crashed
+#-----------------------------------------------------#
+relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
+df.lag.relmetxcrash <- data.frame()
+df.ano.relmetxcrash <- data.frame()
+for(COL in relmet.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(group.crash.lag)*as.factor(group.crash.lag.check), list(j = as.name(COL)))), random=list(Management =~1, rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!=0,], na.action = na.omit)
+  anova(mod.lag)
+  
+  df.ano <- anova(mod.lag)
+  output <- summary(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  rownames(df.ano) <- NULL
+  
+  df.ano.relmetxcrash <- rbind(df.ano.relmetxcrash, df.ano)
+  
+}
+
+summary(df.ano.relmetxcrash)
+
+#-----------------------------------------------------#
+# Looking for weather differences between the conditions that crashed and those that didn't by Management
+# Looking if those differences vary by Management
+# group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing
+# group.crash.lag.check --> Y/N indicating which set actually crashed
+#-----------------------------------------------------#
+df.lag.relmetxcrashxmng <- data.frame()
+df.ano.relmetxcrashxmng <- data.frame()
+for(COL in relmet.var){
+  
+  # Checkign to see if there's anything if we move MGMT to FIXED
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(group.crash.lag)*as.factor(group.crash.lag.check)*Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!=0,], na.action = na.omit)
+  anova(mod.lag)
+  
+  df.ano <- anova(mod.lag)
+  output <- summary(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  rownames(df.ano) <- NULL
+  
+  lag.list.relmetxcrashxmng <- list()
+  lag.list.relmetxcrashxmng[[paste(COL)]]$VAR <- COL
+  lag.list.relmetxcrashxmng[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.relmetxcrashxmng[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.relmetxcrashxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.relmetxcrashxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.relmetxcrashxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.relmetxcrashxmng <- dplyr::bind_rows(lag.list.relmetxcrashxmng)
+  temp.lag.relmetxcrashxmng$lag <- c(NA, -4,-3,-2,-1, NA, NA, NA, NA, rep(unique(-4:-1), times = 4), NA, NA, NA, rep(unique(-4:-1), times = 3))
+  temp.lag.relmetxcrashxmng$crash <- c(NA, NA, NA, NA, NA, "Y", NA, NA, NA, "Y", "Y", "Y", "Y", rep(c(NA), each = 12), rep(c("Y"), each = 15))
+  temp.lag.relmetxcrashxmng$Management <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", NA, NA, NA, NA, rep(c("Under", "Shelter", "Gap"), each = 4), "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 4))
+  
+  df.lag.relmetxcrashxmng <- rbind(df.lag.relmetxcrashxmng, temp.lag.relmetxcrashxmng)
+  df.ano.relmetxcrashxmng <- rbind(df.ano.relmetxcrashxmng, df.ano)
+  
+}
+summary(df.lag.relmetxcrashxmng)
+summary(df.ano.relmetxcrashxmng)
+
+#Making the format wide so that we can facet our different relative weather variables
+dat.relmetxcrashxmng <- runs.fill[!is.na(runs.fill$group.crash.lag), c("year", "Management", "GCM", "rcp", relmet.var, "group.crash.lag", "ind.crash.lag", "group.crash.lag.check")]
+colnames(dat.relmetxcrashxmng) <- c("year", "Management", "GCM", "rcp", relmet.var, "lag", "lag.crash", "group.crash.lag.check")
+dat.relmetxcrashxmng <- tidyr::gather(dat.relmetxcrashxmng, VAR, value, rel.precip:rel.VPD, factor_key=TRUE)
+
+#write.csv(df.ano.relmetxcrashxmng, file.path(path.google, "processed_data/relmetxcrashxmng_anova.csv"), row.names = F)
+
+ggplot(dat.relmetxcrashxmng[!is.na(dat.relmetxcrashxmng$lag) & dat.relmetxcrashxmng$lag!=0,]) +
+  facet_grid(VAR~Management, scales = "free") +
   geom_boxplot(aes(y=value, x=as.factor(lag), fill=group.crash.lag.check))
 
 
