@@ -21,7 +21,7 @@ runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv")
 runs.yr$Management <- factor(runs.yr$Management, levels=c("None", "Under", "Shelter", "Gap"))
 runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='Low Emmissions'; 'rcp85'='High Emissions'")
 runs.yr$RCP.name <- factor(runs.yr$RCP.name, levels=c("Low Emmissions", "High Emissions"))
-runs.yr$loss.event.20 <- ifelse(runs.yr$agb.rel.diff.future<=-0.2, 1, 0)
+runs.yr$loss.event.20 <- ifelse(runs.yr$agb.rel.diff<=-0.2, 1, 0)
 summary(runs.yr)
 
 #Counting individual instances of a crash beginning
