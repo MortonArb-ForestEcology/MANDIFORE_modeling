@@ -227,8 +227,8 @@ summary(df.ano.strucxcrash)
 # group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing
 # group.crash.lag.check --> Y/N indicating which set actually crashed
 #-----------------------------------------------------#
-df.lag.strucxcrash <- data.frame()
-df.ano.strucxcrash <- data.frame()
+df.lag.strucxcrashxmng <- data.frame()
+df.ano.strucxcrashxmng <- data.frame()
 for(COL in struc.var){
   
   # Checkign to see if there's anything if we move MGMT to FIXED
@@ -241,33 +241,33 @@ for(COL in struc.var){
   df.ano$VAR <- COL
   rownames(df.ano) <- NULL
   
-  lag.list.strucxcrash <- list()
-  lag.list.strucxcrash[[paste(COL)]]$VAR <- COL
-  lag.list.strucxcrash[[paste(COL)]]$Comp <- rownames(output$tTable)
-  lag.list.strucxcrash[[paste(COL)]]$estimate <- output$tTable[,"Value"]
-  lag.list.strucxcrash[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
-  lag.list.strucxcrash[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
-  lag.list.strucxcrash[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
-  temp.lag.strucxcrash <- dplyr::bind_rows(lag.list.strucxcrash)
-  temp.lag.strucxcrash$lag <- c(NA, -4,-3,-2,-1, NA, NA, NA, NA, rep(unique(-4:-1), times = 4), NA, NA, NA, rep(unique(-4:-1), times = 3))
-  temp.lag.strucxcrash$crash <- c(NA, NA, NA, NA, NA, "Y", NA, NA, NA, "Y", "Y", "Y", "Y", rep(c(NA), each = 12), rep(c("Y"), each = 15))
-  temp.lag.strucxcrash$Management <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", NA, NA, NA, NA, rep(c("Under", "Shelter", "Gap"), each = 4), "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 4))
+  lag.list.strucxcrashxmng <- list()
+  lag.list.strucxcrashxmng[[paste(COL)]]$VAR <- COL
+  lag.list.strucxcrashxmng[[paste(COL)]]$Comp <- rownames(output$tTable)
+  lag.list.strucxcrashxmng[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.strucxcrashxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.strucxcrashxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.strucxcrashxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.strucxcrashxmng <- dplyr::bind_rows(lag.list.strucxcrashxmng)
+  temp.lag.strucxcrashxmng$lag <- c(NA, -4,-3,-2,-1, NA, NA, NA, NA, rep(unique(-4:-1), times = 4), NA, NA, NA, rep(unique(-4:-1), times = 3))
+  temp.lag.strucxcrashxmng$crash <- c(NA, NA, NA, NA, NA, "Y", NA, NA, NA, "Y", "Y", "Y", "Y", rep(c(NA), each = 12), rep(c("Y"), each = 15))
+  temp.lag.strucxcrashxmng$Management <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", NA, NA, NA, NA, rep(c("Under", "Shelter", "Gap"), each = 4), "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 4))
   
-  df.lag.strucxcrash <- rbind(df.lag.strucxcrash, temp.lag.strucxcrash)
-  df.ano.strucxcrash <- rbind(df.ano.strucxcrash, df.ano)
+  df.lag.strucxcrashxmng <- rbind(df.lag.strucxcrashxmng, temp.lag.strucxcrashxmng)
+  df.ano.strucxcrashxmng <- rbind(df.ano.strucxcrashxmng, df.ano)
   
 }
-summary(df.lag.strucxcrash)
-summary(df.ano.strucxcrash)
+summary(df.lag.strucxcrashxmng)
+summary(df.ano.strucxcrashxmng)
 
 #Making the format wide so that we can facet our different relative weather variables
-dat.strucxcrash <- runs.fill[!is.na(runs.fill$group.crash.lag), c("year", "Management", "GCM", "rcp", struc.var, "group.crash.lag", "ind.crash.lag", "group.crash.lag.check")]
-colnames(dat.strucxcrash) <- c("year", "Management", "GCM", "rcp", struc.var, "lag", "lag.crash", "group.crash.lag.check")
-dat.strucxcrash <- tidyr::gather(dat.strucxcrash, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
+dat.strucxcrashxmng <- runs.fill[!is.na(runs.fill$group.crash.lag), c("year", "Management", "GCM", "rcp", struc.var, "group.crash.lag", "ind.crash.lag", "group.crash.lag.check")]
+colnames(dat.strucxcrashxmng) <- c("year", "Management", "GCM", "rcp", struc.var, "lag", "lag.crash", "group.crash.lag.check")
+dat.strucxcrashxmng <- tidyr::gather(dat.strucxcrashxmng, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
 
-#write.csv(df.ano.strucxcrash, file.path(path.google, "processed_data/Strucxcrash_anova.csv"), row.names = F)
+#write.csv(df.ano.strucxcrashxmng, file.path(path.google, "processed_data/strucxcrashxmng_anova.csv"), row.names = F)
 
-ggplot(dat.strucxcrash[!is.na(dat.strucxcrash$lag) & dat.strucxcrash$lag!=0,]) +
+ggplot(dat.strucxcrashxmng[!is.na(dat.strucxcrashxmng$lag) & dat.strucxcrashxmng$lag!=0,]) +
   facet_grid(VAR~Management + rcp, scales = "free") +
   geom_boxplot(aes(y=value, x=as.factor(lag), fill=group.crash.lag.check))
 
