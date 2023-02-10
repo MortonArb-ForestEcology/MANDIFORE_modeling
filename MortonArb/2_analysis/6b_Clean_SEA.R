@@ -271,6 +271,9 @@ ggplot(dat.strucxcrashxmng[!is.na(dat.strucxcrashxmng$lag) & dat.strucxcrashxmng
   facet_grid(VAR~Management + rcp, scales = "free") +
   geom_boxplot(aes(y=value, x=as.factor(lag), fill=group.crash.lag.check))
 
+ggplot(runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!=0,]) +
+  facet_grid(Management ~ rcp, scales = "free") +
+  geom_boxplot(aes(y=density.tree, x=as.factor(group.crash.lag), fill=group.crash.lag.check))
 
 
 #-----------------------------------------------------#
@@ -349,5 +352,45 @@ ggplot(dat.relmetxcrashxmng[!is.na(dat.relmetxcrashxmng$lag) & dat.relmetxcrashx
   geom_boxplot(aes(y=value, x=as.factor(lag), fill=group.crash.lag.check))
 
 
+#-----------------------------------------------------#
+# Looking for weather differences between the conditions that crashed and those that didn't by Management
+# Looking if those differences vary by Management
+# ind.crash.lag = time lag for one management that crashed
+#-----------------------------------------------------#
 
+mix.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "diff.tair", "rel.VPD", "rel.precip")
+runs.fill$ind.crash.lag <- factor(runs.fill$ind.crash.lag, levels = c(-5, -4, -3, -2, -1, 0))
+df.lag.struc <- data.frame()
+for(COL in mix.var){
+  
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(ind.crash.lag)-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  
+  output <- summary(mod.lag)
+  
+  lag.list.struc <- list()
+  lag.list.struc[[paste(COL)]]$VAR <- COL
+  lag.list.struc[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+  lag.list.struc[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+  lag.list.struc[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+  lag.list.struc[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+  temp.lag.struc <- dplyr::bind_rows(lag.list.struc)
+  temp.lag.struc$lag <- c(-5,-4,-3,-2,-1, 0)
+  
+  df.lag.struc <- rbind(df.lag.struc, temp.lag.struc)
+}
+summary(df.lag.struc)
 
+plot.struc <- ggplot(data=df.lag.struc ) +
+  facet_wrap(~VAR, scales = "free_y") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
+  # geom_vline(xintercept=as.factor(0), color="red") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val<0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red") +
+  geom_bar(data=df.lag.struc[!is.na(df.lag.struc$p.val) & df.lag.struc$p.val>=0.05 & df.lag.struc$lag==0,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
+  theme(panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))+
+  ggtitle("Variables in the years before a crash")+
+  scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1, 0)))
+
+plot.struc 
