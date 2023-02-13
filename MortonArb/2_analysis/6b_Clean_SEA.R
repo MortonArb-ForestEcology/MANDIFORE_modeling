@@ -206,7 +206,7 @@ df.lag.relmetxind <- data.frame()
 df.ano.relmetxind <- data.frame()
 for(COL in relmet.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(ind.crash.lag)*Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "crash")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
   anova(mod.lag)
   
   df.ano <- anova(mod.lag)
@@ -237,7 +237,7 @@ df.lag.strucxind <- data.frame()
 df.ano.strucxind <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(ind.crash.lag)*Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag!="crash",], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-1")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag!="crash",], na.action = na.omit)
   anova(mod.lag)
   
   df.ano <- anova(mod.lag)
