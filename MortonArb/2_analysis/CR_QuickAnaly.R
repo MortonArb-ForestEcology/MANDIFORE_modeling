@@ -2,14 +2,27 @@ library(ggplot2)
 
 
 # Doing some quick analysis to 
-out.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/output/"
+google.user <- dir("~/Library/CloudStorage/")
+out.google <- file.path("~/Library/CloudStorage/", google.user, "My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/output/")
 runs.all <- readbulk::read_bulk(directory = out.google, extension = "Site.csv", header = TRUE)
 runs.all$Management <- car::recode(runs.all$Management, "'MgmtNone'='None'; 'MgmtGap'='Gap'; 'MgmtShelter'='Shelter'; 'MgmtUnder'='Under'")
 runs.all$RunID <- paste(runs.all$GCM, runs.all$rcp, runs.all$co2, runs.all$Management, sep="_" )
 head(runs.all)
 
-runs.yr <- aggregate( cbind(tair,precipf, basal.area.tree, density.tree, agb, soil.moist.surf, soil.moist.deep, lai, height.mean, height.sd, dbh.mean, dbh.sd) ~ year + GCM + rcp + Management + RunID, data=runs.all, FUN=mean)
+runs.yr <- aggregate( cbind(tair,precipf, basal.area.tree, density.tree, agb, soil.moist.surf, soil.moist.deep, lai,  tree.height.mean, tree.height.sd, tree.dbh.mean, tree.dbh.sd) ~ year + GCM + rcp + Management + RunID, data=runs.all, FUN=mean)
 summary(runs.yr)
+
+runs.mgmt.rcp <- aggregate( cbind(tair,precipf, basal.area.tree, density.tree, agb, soil.moist.surf, soil.moist.deep, lai, tree.height.mean, tree.height.sd, tree.dbh.mean, tree.dbh.sd) ~ year + rcp + Management, data=runs.yr, FUN=mean)
+summary(runs.mgmt.rcp)
+
+ggplot(data=runs.mgmt.rcp[runs.mgmt.rcp$year>=2016,]) +
+  facet_wrap(~rcp) +
+  geom_line(aes(x=year, y=basal.area.tree, color=Management))
+
+ggplot(data=runs.mgmt.rcp[runs.mgmt.rcp$year>=2016,]) +
+  facet_wrap(~rcp) +
+  geom_line(aes(x=year, y=tree.dbh.mean, color=Management))
+
 
 for(GCM in unique(runs.yr$GCM)){
   for(RCP in unique(runs.yr$rcp[runs.yr$GCM==GCM])){
@@ -27,6 +40,12 @@ for(GCM in unique(runs.yr$GCM)){
 ggplot(data=runs.yr[runs.yr$year>=2016 & runs.yr$rcp=="rcp45",]) +
   facet_wrap(~GCM) +
   geom_line(aes(x=year, y=agb, group=RunID, color=Management))
+
+
+ggplot(data=runs.yr[runs.yr$year>=2016 & runs.yr$rcp=="rcp45",]) +
+  facet_wrap(~GCM) +
+  geom_line(aes(x=year, y=basal.area.tree, group=RunID, color=Management))
+
 
 ggplot(data=runs.yr[runs.yr$year>=2016 & runs.yr$rcp=="rcp45",]) +
   # facet_wrap(~GCM) +

@@ -1,8 +1,9 @@
 # Comparing size distributions between understory and overstory thin attempts
 library(ggplot2)
 
-path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
-path.out <- "extract.v3"
+# path.google <- "/Volumes/GoogleDrive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb"
+path.google <- "~/Library/CloudStorage/GoogleDrive-crollinson@mortonarb.org/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.out <- "extract.v3.1"
 pfts.grass <- 5
 pfts.trees <- 6:11
 
@@ -295,7 +296,7 @@ for(RUNID in runs.raw){
   co.df <- dplyr::bind_rows(co.list)
   rm(site.list, pch.list, co.list)
   
-  write.csv(site.df, file.path(path.google, "output", paste(RUNID, "Site.csv", sep="_")), row.names=F) # Just save the site-level data on Google Too
+  write.csv(site.df, file.path(path.google, "output_v3.1", paste(RUNID, "Site.csv", sep="_")), row.names=F) # Just save the site-level data on Google Too
   
   # Save locally (smallest file to biggest file)
   write.csv(site.df, file.path(path.out, paste(RUNID, "Site.csv", sep="_")), row.names=F)
