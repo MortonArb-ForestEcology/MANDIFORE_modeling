@@ -223,6 +223,7 @@ summary(df.ano.relmetxind)
 
 df.ano.relmetxind <- df.ano.relmetxind[,c(6,5,1,2,3,4)]
 df.ano.relmetxind$comp <- gsub("ind.crash.lag", "Time", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub("relevel", "", df.ano.relmetxind$comp)
 #IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
 df.ano.relmetxind$`p-value` <- round(df.ano.relmetxind$`p-value`, 5)
 View(df.ano.relmetxind)
@@ -251,8 +252,15 @@ for(COL in struc.var){
 }
 
 summary(df.ano.strucxind)
-df.ano.strucxind$comp <- df.ano.strucxind[,c(6,5,1,2,3,4)]
+df.ano.strucxind <- df.ano.strucxind[,c(6,5,1,2,3,4)]
 df.ano.strucxind$comp <- gsub("ind.crash.lag", "Time", df.ano.strucxind$comp)
+df.ano.strucxind$comp <- gsub("-1", "", df.ano.strucxind$comp)
+df.ano.strucxind$comp <- gsub("None", "", df.ano.strucxind$comp)
+df.ano.strucxind$comp <- gsub("relevel", "", df.ano.strucxind$comp)
+#IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
+df.ano.strucxind$`p-value` <- round(df.ano.strucxind$`p-value`, 5)
+
+#df.ano.strucx <- df.ano.strucxind[df.ano.strucxind$VAR== "tree.dbh.sd",]
 
 #-----------------------------------------------------#
 # Looking for structural differences between the conditions that crashed and those that didn't by Management
@@ -265,7 +273,7 @@ df.ano.strucxcrashxmng <- data.frame()
 for(COL in struc.var){
   
   # Checkign to see if there's anything if we move MGMT to FIXED
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(group.crash.lag)*as.factor(group.crash.lag.check)*Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!="crash",], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(group.crash.lag), "-1")*relevel(as.factor(group.crash.lag.check), "N")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!="crash",], na.action = na.omit)
   anova(mod.lag)
   
   df.ano <- anova(mod.lag)
@@ -291,11 +299,18 @@ for(COL in struc.var){
   
 }
 summary(df.ano.strucxcrashxmng)
-df.ano.strucxcrashxmng <- df.ano.strucxcrashxmng[,c(5,6,1,2,3,4)]
+df.ano.strucxcrashxmng <- df.ano.strucxcrashxmng[,c(6,5,1,2,3,4)]
 
 df.ano.strucxcrashxmng$comp <- gsub("(group.crash.lag)", "Time", df.ano.strucxcrashxmng$comp)
 df.ano.strucxcrashxmng$comp <- gsub("Time.check", "CrashY/N", df.ano.strucxcrashxmng$comp)
+df.ano.strucxcrashxmng$comp <- gsub("-1", "", df.ano.strucxcrashxmng$comp)
+df.ano.strucxcrashxmng$comp <- gsub("None", "", df.ano.strucxcrashxmng$comp)
+df.ano.strucxcrashxmng$comp <- gsub("relevel", "", df.ano.strucxcrashxmng$comp)
 
+#IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
+df.ano.strucxcrashxmng$`p-value` <- round(df.ano.strucxcrashxmng$`p-value`, 5)
+
+#df.ano.strucx <- df.ano.strucxcrashxmng[df.ano.strucxcrashxmng$VAR== "density.tree",]
 
 write.csv(df.ano.strucxcrashxmng, file.path(path.google, "processed_data/strucxcrashxmng_anova.csv"), row.names = F)
 
@@ -311,7 +326,7 @@ df.ano.relmetxcrashxmng <- data.frame()
 for(COL in relmet.var){
   
   # Checkign to see if there's anything if we move MGMT to FIXED
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(group.crash.lag)*as.factor(group.crash.lag.check)*Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!="crash",], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(group.crash.lag), "crash")*relevel(as.factor(group.crash.lag.check), "N")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag),], na.action = na.omit)
   anova(mod.lag)
   
   df.ano <- anova(mod.lag)
@@ -327,13 +342,27 @@ for(COL in relmet.var){
   lag.list.relmetxcrashxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
   lag.list.relmetxcrashxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
   lag.list.relmetxcrashxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
-  temp.lag.relmetxcrashxmng <- dplyr::bind_rows(lag.list.relmetxcrashxmng)
-  temp.lag.relmetxcrashxmng$lag <- c(NA, -4,-3,-2,-1, NA, NA, NA, NA, rep(unique(-4:-1), times = 4), NA, NA, NA, rep(unique(-4:-1), times = 3))
-  temp.lag.relmetxcrashxmng$crash <- c(NA, NA, NA, NA, NA, "Y", NA, NA, NA, "Y", "Y", "Y", "Y", rep(c(NA), each = 12), rep(c("Y"), each = 15))
-  temp.lag.relmetxcrashxmng$Management <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", NA, NA, NA, NA, rep(c("Under", "Shelter", "Gap"), each = 4), "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 4))
+  #temp.lag.relmetxcrashxmng <- dplyr::bind_rows(lag.list.relmetxcrashxmng)
+  #temp.lag.relmetxcrashxmng$lag <- c(NA, -4,-3,-2,-1, NA, NA, NA, NA, rep(unique(-4:-1), times = 4), NA, NA, NA, rep(unique(-4:-1), times = 3))
+  #temp.lag.relmetxcrashxmng$crash <- c(NA, NA, NA, NA, NA, "Y", NA, NA, NA, "Y", "Y", "Y", "Y", rep(c(NA), each = 12), rep(c("Y"), each = 15))
+  #temp.lag.relmetxcrashxmng$Management <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", NA, NA, NA, NA, rep(c("Under", "Shelter", "Gap"), each = 4), "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 4))
   
-  df.lag.relmetxcrashxmng <- rbind(df.lag.relmetxcrashxmng, temp.lag.relmetxcrashxmng)
+  #df.lag.relmetxcrashxmng <- rbind(df.lag.relmetxcrashxmng, temp.lag.relmetxcrashxmng)
   df.ano.relmetxcrashxmng <- rbind(df.ano.relmetxcrashxmng, df.ano)
   
 }
 summary(df.ano.relmetxcrashxmng)
+
+df.ano.relmetxcrashxmng <- df.ano.relmetxcrashxmng[,c(6,5,1,2,3,4)]
+
+df.ano.relmetxcrashxmng$comp <- gsub("(group.crash.lag)", "Time", df.ano.relmetxcrashxmng$comp)
+df.ano.relmetxcrashxmng$comp <- gsub("Time.check", "CrashY/N", df.ano.relmetxcrashxmng$comp)
+df.ano.relmetxcrashxmng$comp <- gsub("-1", "", df.ano.relmetxcrashxmng$comp)
+df.ano.relmetxcrashxmng$comp <- gsub("None", "", df.ano.relmetxcrashxmng$comp)
+df.ano.relmetxcrashxmng$comp <- gsub("relevel", "", df.ano.relmetxcrashxmng$comp)
+
+#IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
+df.ano.relmetxcrashxmng$`p-value` <- round(df.ano.relmetxcrashxmng$`p-value`, 5)
+
+#df.ano.strucx <- df.ano.relmetxcrashxmng[df.ano.relmetxcrashxmng$VAR== "rel.VPD",]
+View(df.ano.relmetxcrashxmng)
