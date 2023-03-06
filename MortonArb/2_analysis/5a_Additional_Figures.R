@@ -12,6 +12,8 @@ library(multcomp)
 #------------------------------------------------------------------------#
 # FIGURES SECTION
 #------------------------------------------------------------------------#
+path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+
 runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv"))
 runs.yr$Management <- factor(runs.yr$Management, levels=c("None", "Under", "Shelter", "Gap"))
 runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='Low Emmissions'; 'rcp85'='High Emissions'")
@@ -21,7 +23,7 @@ summary(runs.yr)
 # Getting summaries of # crashes by scenario by mid & end of century
 runs.yr$crash <- ifelse(runs.yr$agb.rel.diff.future<=-0.2, 1, 0)
 
-crash.summary <- aggregate(crash~ GCM + rcp + RCP.name + Management, data=runs.yr[runs.yr$year>=2025 ,], FUN=sum)
+crash.summary <- aggregate(crash~ GCM + rcp + RCP.name + Management + year, data=runs.yr[runs.yr$year>=2025 ,], FUN=sum)
 names(crash.summary)[names(crash.summary)=="crash"] <- "crash.end"
 crash.summary$crash.mid <- aggregate(crash~ GCM + rcp + RCP.name + Management, data=runs.yr[runs.yr$year>=2025 & runs.yr$year<=2050,], FUN=sum)$crash
 summary(crash.summary)
@@ -37,10 +39,52 @@ crash.mid <- glm.nb(crash.mid~Management*rcp, data = crash.summary)
 summary(crash.mid)
 anova(crash.mid)
 
+crash.first <- aggregate(crash~ GCM + rcp + RCP.name + Management + year, data=runs.yr[runs.yr$year>=2025 ,], FUN=sum)
+names(crash.first)[names(crash.first)=="crash"] <- "crash.end"
+crash.first <- crash.first[crash.first$crash.end == 1,]
+
+dat.first <- data.frame()
+for(MOD in unique(crash.first$GCM)){
+  for(RCP in unique(crash.first$rcp)){
+    for(MNG in unique(crash.first$Management)){
+      temp <- crash.first[crash.first$GCM == MOD & crash.first$rcp == RCP & crash.first$Management == MNG,] 
+      temp.1 <- temp[1,]
+      dat.first <- rbind(dat.first,temp.1)
+    }
+  }
+}
+dat.first <- dat.first[!is.na(dat.first$crash.end),]
+
+mng.first.agg <- aggregate(cbind(year)~Management, data = dat.first, FUN = mean, na.action = NULL)
+mng.first.agg[, "sd"] <- aggregate(cbind(year)~Management, data = dat.first, FUN = sd, na.action = NULL)[, "year"]
+
+
+#We see that at the mid-century point, Shelter () management was the most resistant to AGB loss events compared to other prescriptions...
+mng.crash.agg <- aggregate(cbind(crash.mid)~Management, data = crash.summary, FUN = mean, na.action = NULL)
+mng.crash.agg[, "sd"] <- aggregate(cbind(crash.mid)~Management, data = crash.summary, FUN = sd, na.action = NULL)[, "crash.mid"]
+
+#RCP 8.5 experienced more loss events than RCP 4.5 demonstrating the increasing importance of climate and...
+rcp.crash.agg <- aggregate(cbind(crash.end)~rcp, data = crash.summary, FUN = mean, na.action = NULL)
+rcp.crash.agg[, "sd"] <- aggregate(cbind(crash.end)~rcp, data = crash.summary, FUN = sd, na.action = NULL)[, "crash.end"]
+
+#But by the end of the century air temperature and VPD were both higher in rcp 8.5 than in rcp 4.5 
+rcp.temp.agg <- aggregate(cbind(tair)~rcp, data = runs.yr[runs.yr$year==2099,], FUN = mean, na.action = NULL)
+rcp.temp.agg[, "sd"] <- aggregate(cbind(tair)~rcp, data = runs.yr[runs.yr$year==2099,], FUN = sd, na.action = NULL)[, "tair"]
+rcp.VPD.agg <- aggregate(cbind(VPD)~rcp, data = runs.yr[runs.yr$year==2099,], FUN = mean, na.action = NULL)
+rcp.VPD.agg[, "sd"] <- aggregate(cbind(VPD)~rcp, data = runs.yr[runs.yr$year==2099,], FUN = sd, na.action = NULL)[, "VPD"]
+
+# Distinct structures were caused by management (p<0.05, df=) for all four different styles immediately post harvest (S4).
+mng.struc.agg.postharv <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.dbh.sd)~Management, data = runs.yr[runs.yr$year==2025,], FUN = mean, na.action = NULL)
+mng.struc.agg.postharv[, c("agb.sd", "density.tree.sd", "dbh.mean.sd", "dbh.sd.sd")] <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.dbh.sd)~Management, data = runs.yr[runs.yr$year==2025,], FUN = sd, na.action = NULL)[, c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")]
+
+# Mid-century AGB was similar across all prescriptions while the structural changes of tree density, mean tree dbh, and tree dbh sd persisted.
+mng.struc.agg.mid <- aggregate(cbind(density.tree, tree.dbh.mean, tree.dbh.sd)~Management, data = runs.yr[runs.yr$year==2050,], FUN = mean, na.action = NULL)
+mng.struc.agg.mid[, c("density.tree.sd", "dbh.mean.sd", "dbh.sd.sd")] <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.dbh.sd)~Management, data = runs.yr[runs.yr$year==2050,], FUN = sd, na.action = NULL)[, c("density.tree", "tree.dbh.mean", "tree.dbh.sd")]
+
 # -----------------------------------------------------------
 # Looking at the effect of harvest on structural variables
 # -----------------------------------------------------------
-vars.plot <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")
+vars.plot <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 
 dat.harvest.pre <- stack(runs.yr[runs.yr$year==2019, vars.plot])
 dat.harvest.pre$time <- "pre-harvest"
@@ -71,8 +115,8 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
                        plot.margin = unit(c(1, 1, 1, 1), "lines"),
                        plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
                        legend.key = element_rect(fill=NA))
-var.labs <- c("AGB", "Tree density", "Mean DBH", "SD of DBH", "Mean Height", "SD of Height")
-names(var.labs) <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd", "tree.height.mean", "tree.height.sd")
+var.labs <- c("AGB (kgC/m2)", "Tree density (trees/m2)", "Mean DBH (cm)", "SD of DBH (cm)")
+names(var.labs) <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 
 
 runs.late <- runs.yr[runs.yr$year >= 2025, ]
@@ -162,7 +206,7 @@ rcp85.99.df <- rcp85.99.df[,c(8,9,1,2,3,4,5,6,7)]
 struc.comp <- rbind(rcp45.25.df,rcp45.50.df, rcp45.99.df, rcp85.25.df, rcp85.50.df, rcp85.99.df)
 
 
-plot.struc <- stack(struc.comp[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+plot.struc <- stack(struc.comp[,c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")])
 names(plot.struc) <- c("values", "var")
 plot.struc[,c("Scenario", "Comp", "year")] <- struc.comp[,c("Scenario", "Comp", "year")]
 plot.struc$Comparison <- plot.struc$Comp
@@ -216,7 +260,21 @@ for(SCEN in unique(plot.struc$Scenario)){
   }
 }
 
-path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
+path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/"
+
+theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
+                       axis.title = element_text(size=rel(2), face="bold"),
+                       panel.background = element_rect(fill=NA, color="black"),
+                       panel.grid=element_blank(),
+                       # panel.spacing.x = unit(1, "lines"),
+                       strip.text.x = element_text(size=rel(1), face="bold"),
+                       strip.text.y = element_text(size=rel(1),angle=0, face="bold"),
+                       strip.background = element_rect(fill=NA),
+                       strip.placement = "outside",
+                       plot.margin = unit(c(1, 1, 1, 1), "lines"),
+                       plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
+                       axis.title.y = element_blank())
+
 
 #Supplemental figure of pre and post harvest
 png(paste0(path.figures, "HarvestStructure_Pre-Post.png"), width=12, height=8, units="in", res=220)
@@ -233,13 +291,14 @@ dev.off()
 #Figure for paper that use mid and end of century
 png(paste0(path.figures, "HarvestStructure_Mid-End.png"), width=12, height=8, units="in", res=220)
 ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == "end-century",]) +
-  facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs)) +
+  facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
   geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
   scale_x_discrete(name="Time", labels=c("mid-century", "end-century")) +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
-  ggtitle("Mid-century and end-century harvest structure by rcp scenario")+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  ggtitle("Mid-century and end-century forest structure by management and rcp scenario")+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  theme(strip.text.y.left = element_text(angle = 60))
 dev.off()
 
 vars.plot <- c("tair", "precip.total", "VPD")
@@ -279,7 +338,7 @@ weath.cent <- ggplot(data=dat.wagg[dat.wagg$year == 2050 | dat.wagg$year == 2099
   geom_boxplot(aes(x=as.character(year), y=values, fill = rcp)) +
   labs(x="Year", y="Weather Metrics")+
   scale_x_discrete(name="Period", labels=c("mid-century", "end of century")) +
-  ggpubr::stat_compare_means(aes(x=as.character(year), y=values, fill = rcp), method = "t.test")+
+  #ggpubr::stat_compare_means(aes(x=as.character(year), y=values, fill = rcp), method = "t.test")+
   theme(axis.text.y = element_text(size=rel(2), color="black"),
         axis.title.y = element_blank(),
         axis.text.x = element_text(size=rel(1.5), color="black"),
@@ -301,7 +360,31 @@ t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "t
 t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "precip.total", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "precip.total", "values"] , paired=T)
 t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "VPD", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "VPD", "values"] , paired=T)
 
-cowplot::plot_grid(weath.time, weath.cent, labels = c("A", "B"), label_size = 15 ,rel_widths = c(2,1))
+plot_row <- cowplot::plot_grid(weath.time, weath.cent, labels = c("A", "B"), label_size = 15 ,rel_widths = c(2,1))
+
+title <- cowplot::ggdraw() + 
+  cowplot::draw_label(
+    "Climate Change Over Time by RCP Scenario",
+    fontface = 'bold',
+    x = 0,
+    hjust = 0,
+    size = 32
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 150)
+  )
+weath.plot <- cowplot::plot_grid(
+  title, plot_row,
+  ncol = 1,
+  # rel_heights values control vertical title margins
+  rel_heights = c(0.1, 1)
+)
+
+png(width= 1000, filename= file.path(path.figures, paste0('Climate_Change_Over_Time.png')))
+  weath.plot
+dev.off()
 
 path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Outline Figures"
 
