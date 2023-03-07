@@ -279,13 +279,14 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
 #Supplemental figure of pre and post harvest
 png(paste0(path.figures, "HarvestStructure_Pre-Post.png"), width=12, height=8, units="in", res=220)
 ggplot(data=dat.harvest[dat.harvest$time == "pre-harvest" | dat.harvest$time == "post-harvest",]) +
-  facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs)) +
+  facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
   geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
   scale_x_discrete(name="Time", labels=c("pre-harvest", "post-harvest")) +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
   ggtitle("Pre and Post harvest structure by rcp scenario")+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  theme(strip.text.y.left = element_text(angle = 60))
 dev.off()
 
 #Figure for paper that use mid and end of century
