@@ -206,59 +206,66 @@ rcp85.99.df <- rcp85.99.df[,c(8,9,1,2,3,4,5,6,7)]
 struc.comp <- rbind(rcp45.25.df,rcp45.50.df, rcp45.99.df, rcp85.25.df, rcp85.50.df, rcp85.99.df)
 
 
-plot.struc <- stack(struc.comp[,c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")])
-names(plot.struc) <- c("values", "var")
-plot.struc[,c("Scenario", "Comp", "year")] <- struc.comp[,c("Scenario", "Comp", "year")]
-plot.struc$Comparison <- plot.struc$Comp
-plot.struc <- plot.struc %>% tidyr::separate(Comp, c('MNG.1', 'MNG.2'))
-
-
-MANAGE <- c("None", "Gap", "Shelter", "Under")
-Letter <- c("a", "b", "c", "d")
-full <- data.frame()
-for(SCEN in unique(plot.struc$Scenario)){
-  for(YR in unique(plot.struc$year)){
-    for(VAR in unique(plot.struc$var)){
-      start.df <- plot.struc[plot.struc$Scenario == SCEN & plot.struc$year == YR & plot.struc$var == VAR,]
-      mid <- data.frame()
-      for(MNG in unique(start.df$MNG.1)){
-        temp <- start.df[start.df$MNG.1 == MNG | start.df$MNG.2 == MNG,]
-        temp$pair <- ifelse(temp$values >.05, paste0(temp$MNG.1,"-",temp$MNG.2), "sig")
-        mid <- rbind(mid,temp)
-      }
-      
-      mid <- mid[!duplicated(mid$Comparison),]
-      mng.df <- data.frame(MANAGE, Letter)
-      mng.df$Scenario <- SCEN
-      mng.df$year <- YR
-      mng.df$var <- VAR
-      count <- 1
-      
-      for(mng in unique(MANAGE)){
-        for(i in 1:nrow(mid)){
-          if(mid[i, "values"] >.05 & mid[i, "MNG.1"] !=mng){
-            mid[i, "letters"] <- paste0(mid[i, "letters"], mng.df[mng.df$MANAGE == mid[i, "MNG.1"], "Letter"])
-          } else if(mid[i, "values"] >.05 & mid[i, "MNG.2"] !=mng){ #else if to check which column the pair is with
-            mid[i, "letters"] <- paste0(mid[i, "letters"], mng.df[mng.df$MANAGE == mid[i, "MNG.2"], "Letter"])
-          } else{
-            mid[i, "letters"] <- paste0("")
-          }
-        }
-      }
-      #for(i in 1:nrow(mid)){
-        #if(mid[i , "pair"] != "sig"){
-         # mng.df[mng.df$MANAGE == mid[i,"MNG.1"], "letter"] <- paste0( mng.df[mng.df$MANAGE == mid[i,"MNG.1"], "letter"],letters[count])
-         # mng.df[mng.df$MANAGE == mid[i,"MNG.2"], "letter"] <- paste0( mng.df[mng.df$MANAGE == mid[i,"MNG.2"], "letter"],letters[count])
-         # count <- count + 1
-        #} else{
-          
-        #}
-      #}
-      
-      full <- rbind(full, mng.df)
-    }
-  }
+runs.late <- runs.yr[runs.yr$year >= 2025, ]
+#lme anova analysis of our structural variables
+mult.df.25 <- data.frame()
+mult.df.50 <- data.frame()
+mult.df.99 <- data.frame()
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+for(COL in struc.var){
+  lm.test.25 <- lme(eval(substitute(j ~ Management*rcp, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2025,], method = "ML")
+  print(paste(COL, "25"))
+  output <- anova(lm.test.25)
+  mult.list.25 <- list()
+  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,5), "*"), round(output$`p-value` ,5))
+  mult.list.25[[paste(COL)]]$Var <- COL
+  mult.list.25[[paste(COL)]]$Comp <- rownames(output)
+  mult.list.25[[paste(COL)]]$pvalue <- output$`p-value` 
+  dat.mult.25 <- dplyr::bind_rows(mult.list.25)
+  mult.df.25 <- rbind(mult.df.25, dat.mult.25)
+  
+  lm.test.50 <- lme(eval(substitute(j ~ Management*rcp, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2050,], method = "ML")
+  print(paste(COL, "50"))
+  output <- anova(lm.test.50)
+  mult.list.50 <- list()
+  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,5), "*"), round(output$`p-value` ,5))
+  mult.list.50[[paste(COL)]]$Var <- COL
+  mult.list.50[[paste(COL)]]$Comp <- rownames(output)
+  mult.list.50[[paste(COL)]]$pvalue <- output$`p-value` 
+  dat.mult.50 <- dplyr::bind_rows(mult.list.50)
+  mult.df.50 <- rbind(mult.df.50, dat.mult.50)
+  
+  lm.test.99 <- lme(eval(substitute(j ~ Management*rcp, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2099,], method = "ML")
+  print(paste(COL, "99"))
+  output <- anova(lm.test.99)
+  mult.list.99 <- list()
+  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,5), "*"), round(output$`p-value` ,5))
+  mult.list.99[[paste(COL)]]$Var <- COL
+  mult.list.99[[paste(COL)]]$Comp <- rownames(output)
+  mult.list.99[[paste(COL)]]$pvalue <- output$`p-value` 
+  dat.mult.99 <- dplyr::bind_rows(mult.list.99)
+  mult.df.99 <- rbind(mult.df.99, dat.mult.99)
+  
 }
+
+mult.df.25$Time <- "Post-harvest"
+
+mult.df.50$Time <- "Mid-century"
+
+mult.df.99$Time <- "End of century"
+
+
+#Creating different dataframes to look at specific windows. This information should evtually end up captured in a figure
+struc.comp <- rbind(mult.df.25, mult.df.50, mult.df.99)
+
+struc.comp$pvalue <- ifelse(grepl("*", struc.comp$pvalue, fixed = TRUE), "sig", "N.S.")
+
+struc.comp$Time <- factor(struc.comp$Time, levels=c("Post-harvest", "Mid-century", "End of century"))
+
+struc.sig <- reshape2::dcast(struc.comp, Time + Var ~ Comp, value.var = "pvalue")
+
+struc.sig <- struc.sig[,c("Time", "Var", "Management", "rcp", "Management:rcp")]
+
 
 path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/"
 
