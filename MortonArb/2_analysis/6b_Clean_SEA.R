@@ -63,7 +63,7 @@ mng.df <- dplyr::bind_rows(mng.list)
 mng.wide <- tidyr::spread(mng.df, VAR, value)
 
 colnames(mng.wide) <- c("Management", "Year", "AGB Mean(SD)", "Tree Density Mean(SD)", "Mean DBH Mean(SD)", "SD of DBH Mean(SD)")
-
+write.csv(mng.wide, "../data/MNG_struc_values.csv")
 
 #Emissions scenario table
 checks <- c("2050", "2099")
@@ -86,7 +86,7 @@ rcp.df <- dplyr::bind_rows(rcp.list)
 rcp.wide <- tidyr::spread(rcp.df, VAR, value)
 
 colnames(rcp.wide) <- c("Emmisions Scenario", "Year", "AGB Mean(SD)", "Tree Density Mean(SD)", "Mean DBH Mean(SD)", "SD of DBH Mean(SD)")
-
+write.csv(rcp.wide, "../data/RCP_struc_values.csv")
 
 #-----------------------------------------------------------#
 # Creating a summary table on the frequency of crashes by RCP, GCM, and Management
@@ -249,12 +249,16 @@ time.weath.agg <- aggregate(cbind(diff.tair, rel.precip, rel.VPD)~ind.crash.lag,
 time.weath.agg[, c("diff.tair.sd", "rel.precip.sd", "rel.VPD.sd")] <- aggregate(cbind(diff.tair, rel.precip, rel.VPD)~ind.crash.lag, data = runs.fill[!is.na(runs.fill$ind.crash.lag),], FUN = sd, na.action = NULL)[, c("diff.tair", "rel.precip", "rel.VPD")]
 
 write.csv(time.weath.agg, file.path(path.google, "processed_data/Time_by_relweather.csv"), row.names = F)
+
+#-----------------------------------------------------#
+# Here is where we start running the analysis to make figures
+#-----------------------------------------------------#
 #-----------------------------------------------------#
 # Looking at relative weather before a crash
 # ind.crash.lag = time lag for individual management which crashed
 # We include the crash year for this evaluation because we are working with temperature
 #-----------------------------------------------------#
-relmet.var <- c("rel.precip", "diff.tair", "rel.VPD", "soil.moist.surf", "soil.moist.deep")
+relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.relmetxind <- data.frame()
 df.ano.relmetxind <- data.frame()
 for(COL in relmet.var){
