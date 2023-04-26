@@ -23,6 +23,79 @@ summary(runs.yr)
 # Getting summaries of # crashes by scenario by mid & end of century
 runs.yr$crash <- ifelse(runs.yr$agb.rel.diff.future<=-0.2, 1, 0)
 
+
+#-----------------------------------------------------------#
+# Creating summary tables for structural values
+#-----------------------------------------------------------#
+#Management table
+checks <- c("2050", "2099")
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+mng.list <- list()
+for(MNG in unique(runs.yr$Management)){
+  for(YR in checks){
+    for(VAR in struc.var){
+      value.m <- round(mean(runs.yr[runs.yr$Management == MNG & runs.yr$year == YR, VAR]), 4)
+      value.sd <- round(sd(runs.yr[runs.yr$Management == MNG & runs.yr$year == YR, VAR]), 4)
+      value.char <- paste0(value.m, " (", value.sd, ")")
+      mng.list[[paste(MNG, YR, VAR, sep="-")]]$MNG <- as.factor(MNG)
+      mng.list[[paste(MNG, YR, VAR, sep="-")]]$YEAR <- as.factor(YR)
+      mng.list[[paste(MNG, YR, VAR, sep="-")]]$VAR <- as.factor(VAR)
+      mng.list[[paste(MNG, YR, VAR, sep="-")]]$value <- value.char
+    }
+  }
+}
+mng.df <- dplyr::bind_rows(mng.list)
+mng.wide <- tidyr::spread(mng.df, VAR, value)
+
+colnames(mng.wide) <- c("Management", "Year", "AGB Mean(SD)", "Tree Density Mean(SD)", "Mean DBH Mean(SD)", "SD of DBH Mean(SD)")
+write.csv(mng.wide, "../data/MNG_struc_values.csv")
+
+#Emissions scenario table
+checks <- c("2050", "2099")
+struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+rcp.list <- list()
+for(RCP in unique(runs.yr$rcp)){
+  for(YR in checks){
+    for(VAR in struc.var){
+      value.m <- round(mean(runs.yr[runs.yr$rcp == RCP & runs.yr$year == YR, VAR]), 4)
+      value.sd <- round(sd(runs.yr[runs.yr$rcp == RCP & runs.yr$year == YR, VAR]), 4)
+      value.char <- paste0(value.m, " (", value.sd, ")")
+      rcp.list[[paste(RCP, YR, VAR, sep="-")]]$RCP <- as.factor(RCP)
+      rcp.list[[paste(RCP, YR, VAR, sep="-")]]$YEAR <- as.factor(YR)
+      rcp.list[[paste(RCP, YR, VAR, sep="-")]]$VAR <- as.factor(VAR)
+      rcp.list[[paste(RCP, YR, VAR, sep="-")]]$value <- value.char
+    }
+  }
+}
+rcp.df <- dplyr::bind_rows(rcp.list)
+rcp.wide <- tidyr::spread(rcp.df, VAR, value)
+
+colnames(rcp.wide) <- c("Emmisions Scenario", "Year", "AGB Mean(SD)", "Tree Density Mean(SD)", "Mean DBH Mean(SD)", "SD of DBH Mean(SD)")
+write.csv(rcp.wide, "../data/RCP_struc_values.csv")
+
+#-----------------------------------------------------------#
+# Creating a summary table on the frequency of crashes by RCP, GCM, and Management
+#-----------------------------------------------------------#
+
+rcp.freq.df <- runs.yr[runs.yr$nonseq.loss.event.20 == T & !is.na(runs.yr$nonseq.loss.event.20) & runs.yr$year>=2025,] %>%
+  group_by(rcp, nonseq.loss.event.20) %>%
+  summarize(Freq=n())
+
+rcp.freq.df
+
+GCM.freq.df <- runs.yr[runs.yr$nonseq.loss.event.20 == T & !is.na(runs.yr$nonseq.loss.event.20) & runs.yr$year>=2025,] %>%
+  group_by(GCM, nonseq.loss.event.20) %>%
+  summarize(Freq=n())
+
+GCM.freq.df
+
+MNG.freq.df <- runs.yr[runs.yr$nonseq.loss.event.20 == T & !is.na(runs.yr$nonseq.loss.event.20) & runs.yr$year>=2025,] %>%
+  group_by(Management, nonseq.loss.event.20) %>%
+  summarize(Freq=n())
+
+MNG.freq.df
+
+
 crash.summary <- aggregate(crash~ GCM + rcp + RCP.name + Management, data=runs.yr[runs.yr$year>=2025 ,], FUN=sum)
 names(crash.summary)[names(crash.summary)=="crash"] <- "crash.end"
 crash.summary$crash.mid <- aggregate(crash~ GCM + rcp + RCP.name + Management, data=runs.yr[runs.yr$year>=2025 & runs.yr$year<=2050,], FUN=sum)$crash
@@ -312,12 +385,12 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
 
 
 #Supplemental figure of pre and post harvest
-dat.harvest$time <-factor(dat.harvest$time, c("pre-harvest", "post-harvest", "mid-centruy", "end-century"))
+dat.harvest$time <-factor(dat.harvest$time, c("pre-harvest", "post-harvest", "mid-century", "end-century"))
 png(paste0(path.figures, "HarvestStructure_Pre-Post.png"), width=12, height=8, units="in", res=220)
 ggplot(data=dat.harvest[dat.harvest$time == "pre-harvest" | dat.harvest$time == "post-harvest",]) +
   facet_grid(ind~time, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
   geom_boxplot(aes(x=as.factor(rcp), y=values, fill=Management)) +
-  #scale_x_discrete(name="", labels=c("pre-harvest", "post-harvest")) +
+  scale_x_discrete(name="") +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))+
@@ -327,9 +400,9 @@ dev.off()
 #Figure for paper that use mid and end of century
 png(paste0(path.figures, "HarvestStructure_Mid-End.png"), width=12, height=8, units="in", res=220)
 ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == "end-century",]) +
-  facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
-  geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
-  scale_x_discrete(name="Time", labels=c("mid-century", "end-century")) +
+  facet_grid(ind~time, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
+  geom_boxplot(aes(x=as.factor(rcp), y=values, fill=Management)) +
+  scale_x_discrete(name="") +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))+
