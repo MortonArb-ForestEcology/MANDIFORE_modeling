@@ -23,21 +23,45 @@ summary(runs.yr)
 # Getting summaries of # crashes by scenario by mid & end of century
 runs.yr$crash <- ifelse(runs.yr$agb.rel.diff.future<=-0.2, 1, 0)
 
-crash.summary <- aggregate(crash~ GCM + rcp + RCP.name + Management + year, data=runs.yr[runs.yr$year>=2025 ,], FUN=sum)
+crash.summary <- aggregate(crash~ GCM + rcp + RCP.name + Management, data=runs.yr[runs.yr$year>=2025 ,], FUN=sum)
 names(crash.summary)[names(crash.summary)=="crash"] <- "crash.end"
 crash.summary$crash.mid <- aggregate(crash~ GCM + rcp + RCP.name + Management, data=runs.yr[runs.yr$year>=2025 & runs.yr$year<=2050,], FUN=sum)$crash
 summary(crash.summary)
 
+
 library(MASS)
 library(lme4)
-crash.end <- glm.nb(crash.end~Management*rcp, data = crash.summary)
-summary(crash.end)
-anova(crash.end)
-
-
+#Table S4
 crash.mid <- glm.nb(crash.mid~Management*rcp, data = crash.summary)
 summary(crash.mid)
-anova(crash.mid)
+mid.output <- anova(crash.mid)
+dat.mid <- data.frame(rownames(mid.output))
+colnames(dat.mid) <- "Comp"
+dat.mid$Time <- "Mid-century"
+dat.mid$pvalue <- mid.output$`Pr(>Chi)` 
+
+
+
+#Table S5
+crash.end <- glm.nb(crash.end~Management*rcp, data = crash.summary)
+summary(crash.end)
+end.output <- anova(crash.end)
+dat.end <- data.frame(rownames(end.output))
+colnames(dat.end) <- "Comp"
+dat.end$Time <- "End of century"
+dat.end$pvalue <- end.output$`Pr(>Chi)` 
+
+
+crash.comp <- rbind(dat.mid, dat.end)
+
+crash.comp$pvalue <- ifelse(crash.comp$pvalue<=.05,"*"," ")
+
+crash.sig <- reshape2::dcast(crash.comp, Time~Comp, value.var = "pvalue")
+
+crash.sig <- crash.sig[,c("Time", "Management", "rcp", "Management:rcp")]
+
+write.csv(crash.sig, "../data/crash_fvalues.csv")
+
 
 crash.first <- aggregate(crash~ GCM + rcp + RCP.name + Management + year, data=runs.yr[runs.yr$year>=2025 ,], FUN=sum)
 names(crash.first)[names(crash.first)=="crash"] <- "crash.end"
@@ -204,7 +228,7 @@ rcp85.99.df$year <- "2099"
 rcp85.99.df <- rcp85.99.df[,c(8,9,1,2,3,4,5,6,7)]
 
 struc.comp <- rbind(rcp45.25.df,rcp45.50.df, rcp45.99.df, rcp85.25.df, rcp85.50.df, rcp85.99.df)
-
+write.csv(struc.comp, "../data/Struc_val_comp.csv")
 
 runs.late <- runs.yr[runs.yr$year >= 2025, ]
 #lme anova analysis of our structural variables
@@ -221,6 +245,7 @@ for(COL in struc.var){
   mult.list.25[[paste(COL)]]$Var <- COL
   mult.list.25[[paste(COL)]]$Comp <- rownames(output)
   mult.list.25[[paste(COL)]]$pvalue <- output$`p-value` 
+  mult.list.25[[paste(COL)]]$fvalue <- output$`F-value`
   dat.mult.25 <- dplyr::bind_rows(mult.list.25)
   mult.df.25 <- rbind(mult.df.25, dat.mult.25)
   
@@ -232,10 +257,11 @@ for(COL in struc.var){
   mult.list.50[[paste(COL)]]$Var <- COL
   mult.list.50[[paste(COL)]]$Comp <- rownames(output)
   mult.list.50[[paste(COL)]]$pvalue <- output$`p-value` 
+  mult.list.50[[paste(COL)]]$fvalue <- output$`F-value`
   dat.mult.50 <- dplyr::bind_rows(mult.list.50)
   mult.df.50 <- rbind(mult.df.50, dat.mult.50)
   
-  lm.test.99 <- lme(eval(substitute(j ~ Management*rcp, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2099,], method = "ML")
+  lm.test.99 <- lme(eval(substitute(j ~ Management*rcp-1, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2099,], method = "ML")
   print(paste(COL, "99"))
   output <- anova(lm.test.99)
   mult.list.99 <- list()
@@ -243,6 +269,7 @@ for(COL in struc.var){
   mult.list.99[[paste(COL)]]$Var <- COL
   mult.list.99[[paste(COL)]]$Comp <- rownames(output)
   mult.list.99[[paste(COL)]]$pvalue <- output$`p-value` 
+  mult.list.99[[paste(COL)]]$fvalue <- output$`F-value`
   dat.mult.99 <- dplyr::bind_rows(mult.list.99)
   mult.df.99 <- rbind(mult.df.99, dat.mult.99)
   
@@ -262,10 +289,11 @@ struc.comp$pvalue <- ifelse(grepl("*", struc.comp$pvalue, fixed = TRUE), "sig", 
 
 struc.comp$Time <- factor(struc.comp$Time, levels=c("Post-harvest", "Mid-century", "End of century"))
 
-struc.sig <- reshape2::dcast(struc.comp, Time + Var ~ Comp, value.var = "pvalue")
+struc.sig <- reshape2::dcast(struc.comp, Time + Var ~ Comp, value.var = "fvalue")
 
 struc.sig <- struc.sig[,c("Time", "Var", "Management", "rcp", "Management:rcp")]
 
+write.csv(struc.sig, "../data/Struc_fvalues.csv")
 
 path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/"
 
@@ -284,14 +312,14 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
 
 
 #Supplemental figure of pre and post harvest
+dat.harvest$time <-factor(dat.harvest$time, c("pre-harvest", "post-harvest", "mid-centruy", "end-century"))
 png(paste0(path.figures, "HarvestStructure_Pre-Post.png"), width=12, height=8, units="in", res=220)
 ggplot(data=dat.harvest[dat.harvest$time == "pre-harvest" | dat.harvest$time == "post-harvest",]) +
-  facet_grid(ind~rcp, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
-  geom_boxplot(aes(x=as.factor(year), y=values, fill=Management)) +
-  scale_x_discrete(name="Time", labels=c("pre-harvest", "post-harvest")) +
+  facet_grid(ind~time, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
+  geom_boxplot(aes(x=as.factor(rcp), y=values, fill=Management)) +
+  #scale_x_discrete(name="", labels=c("pre-harvest", "post-harvest")) +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
-  ggtitle("Pre and Post harvest structure by rcp scenario")+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))+
   theme(strip.text.y.left = element_text(angle = 60))
 dev.off()
@@ -304,7 +332,6 @@ ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == 
   scale_x_discrete(name="Time", labels=c("mid-century", "end-century")) +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
-  ggtitle("Mid-century and end-century forest structure by management and rcp scenario")+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))+
   theme(strip.text.y.left = element_text(angle = 60))
 dev.off()
