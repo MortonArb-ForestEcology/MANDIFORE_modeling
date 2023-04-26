@@ -257,7 +257,7 @@ stat.shape <- reshape(agg.duration, idvar ="Management", timevar = "rcp",directi
 colnames(stat.shape) <- c("Management", "Mean # crashes (rcp45)", "SD # of crashes (rcp45)", "Median (rcp45)", "Mode (rcp45)",
                           "Mean # crashes (rcp85)", "SD # of crashes (rcp85)", "Median (rcp45)", "Mode (rcp85)")
 
-
+write.csv(stat.shape, "../data/crash_duration.csv")
 #Filling in the first year
 runs.late$nonseq.loss.event.20 <- ifelse(is.na(runs.late$nonseq.loss.event.20), F ,runs.late$nonseq.loss.event.20)
 
