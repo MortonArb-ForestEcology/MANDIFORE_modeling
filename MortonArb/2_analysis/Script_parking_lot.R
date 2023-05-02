@@ -1,19 +1,19 @@
 #----------------------------------------------------------------------------------------------------------------------#
 # Script by : Lucien Fitzpatrick
 # Project: Mandifore/AGU 2022
-# Purpose: This script performs our Superimposed epoch analysis
+# Purpose: This script contains vestigial parts of code from the numbered scripts. Mostly figures
 # Inputs: Yearly ED2 output csv from script 2a_Yearly_ED2_sum.R
-# Outputs: Figures and Tables
-# Notes: Parts of this are taking from the Drought_04_Analyses_DroughtResponse.R Script by Christy Rollinson
+# Outputs: 
+# Notes: THis includes mostly old SEA scripts and figures.
 #----------------------------------------------------------------------------------------------------------------------#
 library(ggplot2)
 library(nlme)
 library(multcomp)
 #------------------------------------------------------------------------#
 
-path.google <- "~/Library/CloudStorage/GoogleDrive-crollinson@mortonarb.org/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+#path.google <- "~/Library/CloudStorage/GoogleDrive-crollinson@mortonarb.org/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
-# path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
 path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
 
@@ -413,7 +413,7 @@ write.csv(dat.rel, file.path(path.google, "processed_data/Relweather_before_cras
 df.ano.strucxmngsimple <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ as.factor(lag.crash)*Management, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$lag.crash),], na.action = na.omit)
   
   output <- summary(mod.lag)
   df.ano <- anova(mod.lag)
@@ -518,7 +518,7 @@ dat.strucxmng$VAR <- car::recode(dat.strucxmng$VAR, "'agb'='AGB'; 'density.tree'
 plot.rel2 <- ggplot(data=dat.strucxmng[!is.na(dat.strucxmng$lag),]) +
   facet_grid(VAR~Management, scales="free_y") +
   geom_boxplot(aes(x=as.factor(lag), y=value, fill=sig)) +
-  scale_fill_manual(values=c("red2")) +
+  scale_fill_manual(values=c("grey", "red2")) +
   scale_x_discrete(name="Drought Lag") +
   scale_y_continuous(name="Difference") +
   theme(legend.position = "top",
