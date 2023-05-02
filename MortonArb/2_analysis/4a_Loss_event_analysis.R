@@ -49,6 +49,9 @@ for(i in 5:nrow(runs.comb)){
 }
 
 #Modified so that red dots are now looking at unique occurences of a crash instead of the total number of years crashing
+#--------------------------------------#
+# Figure 3
+#--------------------------------------#
 png("AGB_static_crashes.png", width=16, height=8, units="in", res=220)
 ggplot(data=runs.comb)+
   facet_grid(Management ~ RCP.name) +
@@ -132,7 +135,9 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
                        plot.margin = unit(c(1, 1, 1, 1), "lines"),
                        plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
                        legend.key = element_rect(fill=NA))
-
+#--------------------------------------#
+# Figure 4
+#--------------------------------------#
 png("../figures/Crashes_Summary.png", width=10, height=8, units="in", res=220)
 ggplot(data=crash.stack) +
   facet_grid(TimePeriod~.) +
@@ -195,36 +200,6 @@ for(i in 5:nrow(runs.count)){
     
   }
 }
-
-# -----------------------------------------------------------
-
-#Organizing data into long form for easier graphing.
-agg.status <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management+crash.status, data = runs.comb, FUN = mean, na.action = NULL)
-
-plot.status <- stack(agg.status[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
-names(plot.status) <- c("values", "var")
-plot.status[,c("GCM", "rcp", "Driver.set", "Management", "crash.status")] <- agg.status[,c("GCM", "rcp", "Driver.set", "Management", "crash.status")]
-
-plot.status$crash.status <- factor(plot.status$crash.status, levels = c("pre-crash", "first.crash", "recovery", "subsequent.crash"))
-
-#Making a box plot of the variables by crash status
-png(width= 750, filename= file.path(path.figures, paste0('Structure_by_crash_status_boxplot.png')))
-ggplot(plot.status)+
-  facet_wrap(~var, scales = "free")+
-  geom_boxplot(aes(x=crash.status, y=values, color = crash.status))+
-  ggtitle("Structural variables by crash status")+
-  theme(plot.title = element_text(size = 16, face = "bold"))
-dev.off()
-
-#Making a histogram of the variables by crash status
-png(width= 750, filename= file.path(path.figures, paste0('Structure_by_crash_status_histogram.png')))
-ggplot(plot.status)+
-  facet_wrap(~var, scales = "free")+
-  geom_histogram(aes(x=values, color = crash.status, fill = crash.status))+
-  ggtitle("Structural variables by crash status")+
-  theme(plot.title = element_text(size = 16, face = "bold"))
-dev.off()
-
 
 #----------------------------------------------------------#
 #Getting stats for the duration of major crashes
