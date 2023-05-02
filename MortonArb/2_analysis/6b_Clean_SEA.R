@@ -177,6 +177,7 @@ time.weath.agg[, c("diff.tair.sd", "rel.precip.sd", "rel.VPD.sd")] <- aggregate(
 
 write.csv(time.weath.agg, file.path(path.google, "processed_data/Time_by_relweather.csv"), row.names = F)
 
+
 #-----------------------------------------------------#
 # Here is where we start running the analysis to make figures
 #-----------------------------------------------------#
@@ -220,7 +221,6 @@ View(df.ano.relmetxind)
 # We include the crash year for this evaluation because we are working with temperature
 # This is just to create a figure so we can investigate the directionality of our variables
 #-----------------------------------------------------#
-relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.rel <- data.frame()
 for(COL in relmet.var){
   
@@ -298,7 +298,6 @@ df.ano.strucxind$`p-value` <- round(df.ano.strucxind$`p-value`, 5)
 # We include the crash year for this evaluation because we are working with temperature
 # This is just to create a figure so we can investigate the directionality of our variables
 #-----------------------------------------------------#
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
 df.lag.struc <- data.frame()
 for(COL in struc.var){
   
