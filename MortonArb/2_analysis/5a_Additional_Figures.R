@@ -14,28 +14,43 @@ library(multcomp)
 #------------------------------------------------------------------------#
 path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
+path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
+
 runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv"))
 runs.yr$Management <- factor(runs.yr$Management, levels=c("None", "Under", "Shelter", "Gap"))
 runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='Low Emmissions'; 'rcp85'='High Emissions'")
 runs.yr$RCP.name <- factor(runs.yr$RCP.name, levels=c("Low Emmissions", "High Emissions"))
+runs.yr$loss.event.20 <- ifelse(runs.yr$agb.rel.diff<=-0.2, 1, 0)
 summary(runs.yr)
 
-# Getting summaries of # crashes by scenario by mid & end of century
-runs.yr$crash <- ifelse(runs.yr$agb.rel.diff.future<=-0.2, 1, 0)
+#Counting individual instances of a crash beginning
+for(i in 5:nrow(runs.yr)){
+  GCM <- runs.yr[i, "GCM"]
+  RCP <- runs.yr[i, "rcp"]
+  MNG <- runs.yr[i, "Management"]
+  YR <- runs.yr[i, "year"]
+  if(YR >= 2025){
+    prev.20 <- runs.yr[runs.yr$GCM == GCM & runs.yr$rcp == RCP & runs.yr$Management == MNG & runs.yr$year == YR-1 , "loss.event.20"]
+    runs.yr[i, "nonseq.loss.event.20"] <- ifelse((runs.yr[i, "loss.event.20"] == 1 & prev.20 ==F), 1, 0)
+  }
+}
 
+runs.yr$crash <- ifelse(runs.yr$nonseq.loss.event.20==T, 1, 0)
+
+runs.yr$density.tree.convert <- runs.yr$density.tree * 10000
 
 #-----------------------------------------------------------#
 # Creating summary tables for structural values
 #-----------------------------------------------------------#
 #Management table
 checks <- c("2050", "2099")
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+struc.var <- c("agb", "density.tree.convert", "tree.dbh.mean", "tree.dbh.sd")
 mng.list <- list()
 for(MNG in unique(runs.yr$Management)){
   for(YR in checks){
     for(VAR in struc.var){
-      value.m <- round(mean(runs.yr[runs.yr$Management == MNG & runs.yr$year == YR, VAR]), 4)
-      value.sd <- round(sd(runs.yr[runs.yr$Management == MNG & runs.yr$year == YR, VAR]), 4)
+      value.m <- round(mean(runs.yr[runs.yr$Management == MNG & runs.yr$year == YR, VAR]), 2)
+      value.sd <- round(sd(runs.yr[runs.yr$Management == MNG & runs.yr$year == YR, VAR]), 2)
       value.char <- paste0(value.m, " (", value.sd, ")")
       mng.list[[paste(MNG, YR, VAR, sep="-")]]$MNG <- as.factor(MNG)
       mng.list[[paste(MNG, YR, VAR, sep="-")]]$YEAR <- as.factor(YR)
@@ -52,13 +67,13 @@ write.csv(mng.wide, "../data/MNG_struc_values.csv")
 
 #Emissions scenario table
 checks <- c("2050", "2099")
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+struc.var <- c("agb", "density.tree.convert", "tree.dbh.mean", "tree.dbh.sd")
 rcp.list <- list()
 for(RCP in unique(runs.yr$rcp)){
   for(YR in checks){
     for(VAR in struc.var){
-      value.m <- round(mean(runs.yr[runs.yr$rcp == RCP & runs.yr$year == YR, VAR]), 4)
-      value.sd <- round(sd(runs.yr[runs.yr$rcp == RCP & runs.yr$year == YR, VAR]), 4)
+      value.m <- round(mean(runs.yr[runs.yr$rcp == RCP & runs.yr$year == YR, VAR]), 2)
+      value.sd <- round(sd(runs.yr[runs.yr$rcp == RCP & runs.yr$year == YR, VAR]), 2)
       value.char <- paste0(value.m, " (", value.sd, ")")
       rcp.list[[paste(RCP, YR, VAR, sep="-")]]$RCP <- as.factor(RCP)
       rcp.list[[paste(RCP, YR, VAR, sep="-")]]$YEAR <- as.factor(YR)
@@ -181,7 +196,7 @@ mng.struc.agg.mid[, c("density.tree.sd", "dbh.mean.sd", "dbh.sd.sd")] <- aggrega
 # -----------------------------------------------------------
 # Looking at the effect of harvest on structural variables
 # -----------------------------------------------------------
-vars.plot <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+vars.plot <- c("agb", "density.tree.convert", "tree.dbh.mean", "tree.dbh.sd")
 
 dat.harvest.pre <- stack(runs.yr[runs.yr$year==2019, vars.plot])
 dat.harvest.pre$time <- "pre-harvest"
@@ -212,16 +227,63 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
                        plot.margin = unit(c(1, 1, 1, 1), "lines"),
                        plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
                        legend.key = element_rect(fill=NA))
-var.labs <- c("AGB (kgC/m2)", "Tree density (trees/m2)", "Mean DBH (cm)", "SD of DBH (cm)")
-names(var.labs) <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+var.labs <- c("AGB (kgC/m2)", "Tree density (trees/hectare)", "Mean DBH (cm)", "SD of DBH (cm)")
+names(var.labs) <- c("agb", "density.tree.convert", "tree.dbh.mean", "tree.dbh.sd")
+
+path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/"
+
+theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
+                       axis.title = element_text(size=rel(2), face="bold"),
+                       panel.background = element_rect(fill=NA, color="black"),
+                       panel.grid=element_blank(),
+                       # panel.spacing.x = unit(1, "lines"),
+                       strip.text.x = element_text(size=rel(1), face="bold"),
+                       strip.text.y = element_text(size=rel(1),angle=0, face="bold"),
+                       strip.background = element_rect(fill=NA),
+                       strip.placement = "outside",
+                       plot.margin = unit(c(1, 1, 1, 1), "lines"),
+                       plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
+                       axis.title.y = element_blank())
+
+#--------------------------------------#
+# Figure S1
+#--------------------------------------#
+#Supplemental figure of pre and post harvest
+dat.harvest$time <-factor(dat.harvest$time, c("pre-harvest", "post-harvest", "mid-century", "end-century"))
+png(paste0(path.figures, "HarvestStructure_Pre-Post.png"), width=12, height=8, units="in", res=220)
+ggplot(data=dat.harvest[dat.harvest$time == "pre-harvest" | dat.harvest$time == "post-harvest",]) +
+  facet_grid(ind~time, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
+  geom_boxplot(aes(x=as.factor(rcp), y=values, fill=Management)) +
+  scale_x_discrete(name="") +
+  scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
+  theme.clean+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  theme(strip.text.y.left = element_text(angle = 60))
+dev.off()
+
+#--------------------------------------#
+# Figure 2
+#--------------------------------------#
+#Figure for paper that use mid and end of century
+png(paste0(path.figures, "HarvestStructure_Mid-End.png"), width=12, height=8, units="in", res=220)
+ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == "end-century",]) +
+  facet_grid(ind~time, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
+  geom_boxplot(aes(x=as.factor(rcp), y=values, fill=Management)) +
+  scale_x_discrete(name="") +
+  scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
+  theme.clean+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  theme(strip.text.y.left = element_text(angle = 60))
+dev.off()
 
 
+#Multiple comparision
 runs.late <- runs.yr[runs.yr$year >= 2025, ]
 #lme anova analysis of our structural variables and Tukey multiple comparison analysis
 mult.df.25 <- data.frame()
 mult.df.50 <- data.frame()
 mult.df.99 <- data.frame()
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")
+struc.var <- c("agb", "density.tree.convert", "tree.dbh.mean", "tree.dbh.sd")
 for(RCP in unique(runs.late$rcp)){
   for(COL in struc.var){
     lm.test.25 <- lme(eval(substitute(j ~ Management, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2025 & runs.late$rcp == RCP,], method = "ML")
@@ -231,11 +293,11 @@ for(RCP in unique(runs.late$rcp)){
     mult.list.25 <- list()
     post.hoc <- glht(lm.test.25, linfct = mcp(Management = 'Tukey'))
     output <- summary(post.hoc)
-    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,3), "*"), round(output$test$pvalues,3))
     mult.list.25[[paste(COL)]]$Var <- COL
     mult.list.25[[paste(COL)]]$rcp <- RCP
     mult.list.25[[paste(COL)]]$Comp <- names(output$test$coefficients)
-    mult.list.25[[paste(COL)]]$pvalue <- output$test$pvalues
+    mult.list.25[[paste(COL)]]$estimate <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$coefficients,2), "(",round(output$test$sigma,2) ,")", "*"), paste0(round(output$test$coefficients,2),"(",round(output$test$sigma,2) ,")"))
     dat.mult.25 <- dplyr::bind_rows(mult.list.25)
     mult.df.25 <- rbind(mult.df.25, dat.mult.25)
     
@@ -247,11 +309,11 @@ for(RCP in unique(runs.late$rcp)){
     #Doing a multiple comparison across the different management types
     post.hoc <- glht(lm.test.50, linfct = mcp(Management = 'Tukey'))
     output <- summary(post.hoc)
-    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,3), "*"), round(output$test$pvalues,3))
     mult.list.50[[paste(COL)]]$Var <- COL
     mult.list.50[[paste(COL)]]$rcp <- RCP
     mult.list.50[[paste(COL)]]$Comp <- names(output$test$coefficients)
-    mult.list.50[[paste(COL)]]$pvalue <- output$test$pvalues
+    mult.list.50[[paste(COL)]]$estimate <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$coefficients,2), "(",round(output$test$sigma,2) ,")", "*"), paste0(round(output$test$coefficients,2),"(",round(output$test$sigma,2) ,")"))
     dat.mult.50 <- dplyr::bind_rows(mult.list.50)
     mult.df.50 <- rbind(mult.df.50, dat.mult.50)
     
@@ -263,11 +325,11 @@ for(RCP in unique(runs.late$rcp)){
     #Doing a multiple comparison across the different management types
     post.hoc <- glht(lm.test.99, linfct = mcp(Management = 'Tukey'))
     output <- summary(post.hoc)
-    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,5), "*"), round(output$test$pvalues,5))
+    output$test$pvalues <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$pvalues,3), "*"), round(output$test$pvalues,3))
     mult.list.99[[paste(COL)]]$Var <- COL
     mult.list.99[[paste(COL)]]$rcp <- RCP
     mult.list.99[[paste(COL)]]$Comp <- names(output$test$coefficients)
-    mult.list.99[[paste(COL)]]$pvalue <- output$test$pvalues
+    mult.list.99[[paste(COL)]]$estimate <- ifelse(output$test$pvalues<=.05, paste0(round(output$test$coefficients,2), "(",round(output$test$sigma,2) ,")", "*"), paste0(round(output$test$coefficients,2),"(",round(output$test$sigma,2) ,")"))
     dat.mult.99 <- dplyr::bind_rows(mult.list.99)
     mult.df.99 <- rbind(mult.df.99, dat.mult.99)
   }
@@ -276,39 +338,40 @@ for(RCP in unique(runs.late$rcp)){
 rcp45.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp45",], Comp ~ Var)
 rcp45.25.df$Scenario <- "Low Emmissions"
 rcp45.25.df$year <- "2025"
-rcp45.25.df <- rcp45.25.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp45.25.df <- rcp45.25.df[,c(6,7,1,2,3,4,5)]
 rcp85.25.df <- reshape2::dcast(mult.df.25[mult.df.25$rcp=="rcp85",], Comp ~ Var)
 rcp85.25.df$Scenario <- "High Emmissions"
 rcp85.25.df$year <- "2025"
-rcp85.25.df <- rcp85.25.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp85.25.df <- rcp85.25.df[,c(6,7,1,2,3,4,5)]
 
 rcp45.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp45",], Comp ~ Var)
 rcp45.50.df$Scenario <- "Low Emmissions"
 rcp45.50.df$year <- "2050"
-rcp45.50.df <- rcp45.50.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp45.50.df <- rcp45.50.df[,c(6,7,1,2,3,4,5)]
 rcp85.50.df <- reshape2::dcast(mult.df.50[mult.df.50$rcp=="rcp85",], Comp ~ Var)
 rcp85.50.df$Scenario <- "High Emmissions"
 rcp85.50.df$year <- "2050"
-rcp85.50.df <- rcp85.50.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp85.50.df <- rcp85.50.df[,c(6,7,1,2,3,4,5)]
 
 rcp45.99.df <- reshape2::dcast(mult.df.99[mult.df.99$rcp=="rcp45",], Comp ~ Var)
 rcp45.99.df$Scenario <- "Low Emmissions"
 rcp45.99.df$year <- "2099"
-rcp45.99.df <- rcp45.99.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp45.99.df <- rcp45.99.df[,c(6,7,1,2,3,4,5)]
 rcp85.99.df <- reshape2::dcast(mult.df.99[mult.df.99$rcp=="rcp85",], Comp ~ Var)
 rcp85.99.df$Scenario <- "High Emmissions"
 rcp85.99.df$year <- "2099"
-rcp85.99.df <- rcp85.99.df[,c(8,9,1,2,3,4,5,6,7)]
+rcp85.99.df <- rcp85.99.df[,c(6,7,1,2,3,4,5)]
 
 struc.comp <- rbind(rcp45.25.df,rcp45.50.df, rcp45.99.df, rcp85.25.df, rcp85.50.df, rcp85.99.df)
 write.csv(struc.comp, "../data/Struc_val_comp.csv")
+
 
 runs.late <- runs.yr[runs.yr$year >= 2025, ]
 #lme anova analysis of our structural variables
 mult.df.25 <- data.frame()
 mult.df.50 <- data.frame()
 mult.df.99 <- data.frame()
-struc.var <- c("agb", "density.tree", "tree.dbh.mean", "tree.dbh.sd")
+struc.var <- c("agb", "density.tree.convert", "tree.dbh.mean", "tree.dbh.sd")
 for(COL in struc.var){
   lm.test.25 <- lme(eval(substitute(j ~ Management*rcp, list(j = as.name(COL)))), random=list(GCM =~1), data = runs.late[runs.late$year == 2025,], method = "ML")
   print(paste(COL, "25"))
@@ -367,52 +430,6 @@ struc.sig <- reshape2::dcast(struc.comp, Time + Var ~ Comp, value.var = "fvalue"
 struc.sig <- struc.sig[,c("Time", "Var", "Management", "rcp", "Management:rcp")]
 
 write.csv(struc.sig, "../data/Struc_fvalues.csv")
-
-path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/"
-
-theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
-                       axis.title = element_text(size=rel(2), face="bold"),
-                       panel.background = element_rect(fill=NA, color="black"),
-                       panel.grid=element_blank(),
-                       # panel.spacing.x = unit(1, "lines"),
-                       strip.text.x = element_text(size=rel(1), face="bold"),
-                       strip.text.y = element_text(size=rel(1),angle=0, face="bold"),
-                       strip.background = element_rect(fill=NA),
-                       strip.placement = "outside",
-                       plot.margin = unit(c(1, 1, 1, 1), "lines"),
-                       plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
-                       axis.title.y = element_blank())
-
-#--------------------------------------#
-# Figure S1
-#--------------------------------------#
-#Supplemental figure of pre and post harvest
-dat.harvest$time <-factor(dat.harvest$time, c("pre-harvest", "post-harvest", "mid-century", "end-century"))
-png(paste0(path.figures, "HarvestStructure_Pre-Post.png"), width=12, height=8, units="in", res=220)
-ggplot(data=dat.harvest[dat.harvest$time == "pre-harvest" | dat.harvest$time == "post-harvest",]) +
-  facet_grid(ind~time, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
-  geom_boxplot(aes(x=as.factor(rcp), y=values, fill=Management)) +
-  scale_x_discrete(name="") +
-  scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
-  theme.clean+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
-  theme(strip.text.y.left = element_text(angle = 60))
-dev.off()
-
-#--------------------------------------#
-# Figure 2
-#--------------------------------------#
-#Figure for paper that use mid and end of century
-png(paste0(path.figures, "HarvestStructure_Mid-End.png"), width=12, height=8, units="in", res=220)
-ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == "end-century",]) +
-  facet_grid(ind~time, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
-  geom_boxplot(aes(x=as.factor(rcp), y=values, fill=Management)) +
-  scale_x_discrete(name="") +
-  scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
-  theme.clean+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
-  theme(strip.text.y.left = element_text(angle = 60))
-dev.off()
 
 
 #--------------------------------------#
