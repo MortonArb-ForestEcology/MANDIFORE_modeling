@@ -264,13 +264,28 @@ dev.off()
 #--------------------------------------#
 # Figure 2
 #--------------------------------------#
-#Figure for paper that use mid and end of century
-png(paste0(path.figures, "HarvestStructure_Mid-End.png"), width=12, height=8, units="in", res=220)
-ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == "end-century",]) +
-  facet_grid(ind~time, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
-  geom_boxplot(aes(x=as.factor(rcp), y=values, fill=Management)) +
+#Figure for paper that looks at management for initial, mid, and end of century
+png(paste0(path.figures, "HarvestStructure_Management.png"), width=12, height=8, units="in", res=220)
+ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == "end-century" | dat.harvest$time == "post-harvest",]) +
+  facet_wrap(~ind, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
+  geom_boxplot(aes(x=as.factor(time), y=values, fill=Management)) +
   scale_x_discrete(name="") +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
+  theme.clean+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  theme(strip.text.y.left = element_text(angle = 60))
+dev.off()
+
+#--------------------------------------#
+# Figure 3
+#--------------------------------------#
+#Figure for paper that looks at emisisons scenario for initial, mid, and end of century
+png(paste0(path.figures, "HarvestStructure_Emissions.png"), width=12, height=8, units="in", res=220)
+ggplot(data=dat.harvest[dat.harvest$time == "mid-century" | dat.harvest$time == "end-century" | dat.harvest$time == "post-harvest",]) +
+  facet_wrap(~ind, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
+  geom_boxplot(aes(x=as.factor(time), y=values, fill=rcp)) +
+  scale_x_discrete(name="") +
+  #scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))+
   theme(strip.text.y.left = element_text(angle = 60))
