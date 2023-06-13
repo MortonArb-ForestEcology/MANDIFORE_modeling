@@ -11,9 +11,9 @@ library(nlme)
 library(multcomp)
 library(dplyr)
 #------------------------------------------------------------------------#
-#path.google <- "~/Library/CloudStorage/GoogleDrive-crollinson@mortonarb.org/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "~/Google Drive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
-path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+# path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
 path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
 
@@ -23,20 +23,23 @@ runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='Low Emmissions'; 'rcp85'=
 runs.yr$RCP.name <- factor(runs.yr$RCP.name, levels=c("Low Emmissions", "High Emissions"))
 runs.yr$loss.event.20 <- ifelse(runs.yr$agb.rel.diff<=-0.2, 1, 0)
 summary(runs.yr)
+head(runs.yr)
 
 #Counting individual instances of a crash beginning
-for(i in 5:nrow(runs.yr)){
+# CR Note: this was a hard-coded 5:nrow(), but I don't htink that was necessary nor functional since it only skipped the first entries for 1 GCM/RCP combo
+for(i in 1:nrow(runs.yr)){ 
   GCM <- runs.yr[i, "GCM"]
   RCP <- runs.yr[i, "rcp"]
   MNG <- runs.yr[i, "Management"]
   YR <- runs.yr[i, "year"]
-  if(YR >= 2025){
+  if(YR > 2025){ # Need to skip 2025 because this code would reference 2025 off of 2024, which was a management year; this would mess with our analyses
     prev.20 <- runs.yr[runs.yr$GCM == GCM & runs.yr$rcp == RCP & runs.yr$Management == MNG & runs.yr$year == YR-1 , "loss.event.20"]
     runs.yr[i, "nonseq.loss.event.20"] <- ifelse((runs.yr[i, "loss.event.20"] == 1 & prev.20 ==F), 1, 0)
   }
 }
 
 runs.yr$crash <- ifelse(runs.yr$nonseq.loss.event.20==T, 1, 0)
+summary(runs.yr)
 #runs.yr <- runs.yr[runs.yr$year>=2025,]
 
 #---------------------------------------------------#
@@ -51,8 +54,11 @@ runs.yr$crash <- ifelse(runs.yr$nonseq.loss.event.20==T, 1, 0)
 dups.df <- data.frame()
 for(RCP in unique(runs.yr$rcp)){
   for(GCM in unique(runs.yr$GCM)){
+    # Setting up some dummy columns
     runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "group.crash.lag"] <- NA
     runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "group.crash.lag.check"] <- "N"
+    
+    # For each RCP/GCM, checking for crash in each managment
     for(MNG in unique(runs.yr$Management)){
       runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG, "ind.crash.lag"] <- NA
       crash.event <- unique(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$Management == MNG & runs.yr$crash==1, "year"])
@@ -142,6 +148,7 @@ for(RCP in unique(runs.yr$rcp)){
     }
   }
 }
+summary(dups.df)
 runs.yr <- runs.yr[runs.yr$year>=2025,]
 
 #Adding the duplicate values back into the data frame
@@ -224,8 +231,11 @@ View(df.ano.relmetxind)
 df.lag.rel <- data.frame()
 for(COL in relmet.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "crash")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
-
+  # Updating this to be compared to year 5; then need to add the value to the others to get the absolute magnitudes down the road
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  # mod.lag2 <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "crash")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  # output2 <- summary(mod.lag2)
+  
   output <- summary(mod.lag)
   lag.list.rel <- list()
   lag.list.rel[[paste(COL)]]$VAR <- COL
@@ -235,7 +245,7 @@ for(COL in relmet.var){
   lag.list.rel[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
   lag.list.rel[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
   temp.lag.rel <- dplyr::bind_rows(lag.list.rel)
-  temp.lag.rel$lag <- c("crash", -1, -2, -3, -4, -5)
+  temp.lag.rel$lag <- c("-5", -1, -2, -3, -4, "crash")
   
   df.lag.rel <- rbind(df.lag.rel, temp.lag.rel)
   
@@ -244,10 +254,10 @@ output <- summary(mod.lag)
 
 summary(df.lag.rel)
 
-plot.rel <- ggplot(data=df.lag.rel ) +
+plot.rel <- ggplot(data=df.lag.rel[df.lag.rel$lag!="-5",] ) +
   facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.rel, aes(x=as.factor(lag), y=estimate), stat="identity") +
-  geom_errorbar(data=df.lag.rel, aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
+  geom_bar(data=df.lag.rel[df.lag.rel$lag!="-5",], aes(x=as.factor(lag), y=estimate), stat="identity") +
+  geom_errorbar(data=df.lag.rel[df.lag.rel$lag!="-5",], aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))+
@@ -301,7 +311,12 @@ df.ano.strucxind$`p-value` <- round(df.ano.strucxind$`p-value`, 5)
 df.lag.struc <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-1")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag != "crash",], na.action = na.omit)
+  # This one will get statistical difference relative to the start
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag != "crash",], na.action = na.omit)
+  
+  # # This one will show means etc. & get assess stat sig as difference from 0, which isn't inherently meaningful because everything should be non-0; the way to show this would be breakign down by the anovas above
+  # mod.lag2 <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag != "crash",], na.action = na.omit)
+  # output2 <- summary(mod.lag2)
   
   output <- summary(mod.lag)
   lag.list.struc <- list()
@@ -312,19 +327,19 @@ for(COL in struc.var){
   lag.list.struc[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
   lag.list.struc[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
   temp.lag.struc <- dplyr::bind_rows(lag.list.struc)
-  temp.lag.struc$lag <- c(-1, -2, -3, -4, -5)
+  temp.lag.struc$lag <- c("-5", -1, -2, -3, -4)
   
   df.lag.struc <- rbind(df.lag.struc, temp.lag.struc)
   
 }
-output <- summary(mod.lag)
+# output <- summary(mod.lag)
 
 summary(df.lag.struc)
 
-plot.struc <- ggplot(data=df.lag.struc ) +
+plot.struc <- ggplot(data=df.lag.struc[df.lag.struc$lag!="-5",] ) +
   facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.struc, aes(x=as.factor(lag), y=estimate), stat="identity") +
-  geom_errorbar(data=df.lag.struc, aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
+  geom_bar(data=df.lag.struc[df.lag.struc$lag!="-5",], aes(x=as.factor(lag), y=estimate), stat="identity") +
+  geom_errorbar(data=df.lag.struc[df.lag.struc$lag!="-5",], aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
   theme(panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))+
