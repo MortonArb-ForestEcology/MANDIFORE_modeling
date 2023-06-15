@@ -198,10 +198,10 @@ df.lag.relmetxind <- data.frame()
 df.ano.relmetxind <- data.frame()
 for(COL in relmet.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "crash")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
   anova(mod.lag)
   
-  df.ano <- anova(mod.lag)
+  df.ano <- data.frame(anova(mod.lag))
   output <- summary(mod.lag)
   df.ano$comp <- rownames(df.ano)
   df.ano$VAR <- COL
@@ -212,61 +212,70 @@ for(COL in relmet.var){
   
 }
 
-summary(df.ano.relmetxind)
-summary(df.lag.relmetxind)
+df.ano.relmetxind
+# summary(df.lag.relmetxind)
 
-df.ano.relmetxind <- df.ano.relmetxind[,c(6,5,1,2,3,4)]
-df.ano.relmetxind$comp <- gsub("ind.crash.lag", "Time", df.ano.relmetxind$comp)
+# df.ano.relmetxind <- df.ano.relmetxind[,c(6,5,1,2,3,4)]
+df.ano.relmetxind <- df.ano.relmetxind[,c("VAR", "comp", "numDF", "denDF", "F.value", "p.value")]
 df.ano.relmetxind$comp <- gsub("relevel", "", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub('"', "", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub('[(]', "", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub('[)]', "", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub("as.factorind.crash.lag, -5", "Time", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub("Management, None", "Harvest Scenario", df.ano.relmetxind$comp)
 #IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
-df.ano.relmetxind$`p-value` <- round(df.ano.relmetxind$`p-value`, 5)
-View(df.ano.relmetxind)
+df.ano.relmetxind$p.value <- round(df.ano.relmetxind$p.value, 3)
+# View(df.ano.relmetxind)
+df.ano.relmetxind
 
-#-----------------------------------------------------#
-# Looking at relative weather before a crash to make a figure
-# ind.crash.lag = time lag for individual management which crashed
-# We include the crash year for this evaluation because we are working with temperature
-# This is just to create a figure so we can investigate the directionality of our variables
-#-----------------------------------------------------#
-df.lag.rel <- data.frame()
-for(COL in relmet.var){
-  
-  # Updating this to be compared to year 5; then need to add the value to the others to get the absolute magnitudes down the road
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
-  # mod.lag2 <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "crash")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
-  # output2 <- summary(mod.lag2)
-  
-  output <- summary(mod.lag)
-  lag.list.rel <- list()
-  lag.list.rel[[paste(COL)]]$VAR <- COL
-  lag.list.rel[[paste(COL)]]$Comp <- rownames(output$tTable)
-  lag.list.rel[[paste(COL)]]$estimate <- output$tTable[,"Value"]
-  lag.list.rel[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
-  lag.list.rel[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
-  lag.list.rel[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
-  temp.lag.rel <- dplyr::bind_rows(lag.list.rel)
-  temp.lag.rel$lag <- c("-5", -1, -2, -3, -4, "crash")
-  
-  df.lag.rel <- rbind(df.lag.rel, temp.lag.rel)
-  
-}
-output <- summary(mod.lag)
+write.csv(df.ano.relmetxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_RelMet_TimeMgmt.csv"), row.names = F)
 
-summary(df.lag.rel)
 
-plot.rel <- ggplot(data=df.lag.rel[df.lag.rel$lag!="-5",] ) +
-  facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.rel[df.lag.rel$lag!="-5",], aes(x=as.factor(lag), y=estimate), stat="identity") +
-  geom_errorbar(data=df.lag.rel[df.lag.rel$lag!="-5",], aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
-  theme(panel.spacing = unit(0, "lines"),
-        panel.grid = element_blank(),
-        panel.background=element_rect(fill=NA, color="black"))+
-  scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1, "crash")))+
-  ggtitle("Relative weather before crashes")
-
-png(paste0(path.figures, "RelWeather_before_crash_hist.png"), width=12, height=8, units="in", res=220)
-  plot.rel
-dev.off()
+# #-----------------------------------------------------#
+# # Looking at relative weather before a crash to make a figure
+# # ind.crash.lag = time lag for individual management which crashed
+# # We include the crash year for this evaluation because we are working with temperature
+# # This is just to create a figure so we can investigate the directionality of our variables
+# #-----------------------------------------------------#
+# df.lag.rel <- data.frame()
+# for(COL in relmet.var){
+#   
+#   # Updating this to be compared to year 5; then need to add the value to the others to get the absolute magnitudes down the road
+#   mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+#   # mod.lag2 <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "crash")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+#   # output2 <- summary(mod.lag2)
+#   
+#   output <- summary(mod.lag)
+#   lag.list.rel <- list()
+#   lag.list.rel[[paste(COL)]]$VAR <- COL
+#   lag.list.rel[[paste(COL)]]$Comp <- rownames(output$tTable)
+#   lag.list.rel[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+#   lag.list.rel[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+#   lag.list.rel[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+#   lag.list.rel[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+#   temp.lag.rel <- dplyr::bind_rows(lag.list.rel)
+#   temp.lag.rel$lag <- c("-5", -1, -2, -3, -4, "crash")
+#   
+#   df.lag.rel <- rbind(df.lag.rel, temp.lag.rel)
+#   
+# }
+# output <- summary(mod.lag)
+# 
+# summary(df.lag.rel)
+# 
+# plot.rel <- ggplot(data=df.lag.rel[df.lag.rel$lag!="-5",] ) +
+#   facet_wrap(~VAR, scales = "free_y") +
+#   geom_bar(data=df.lag.rel[df.lag.rel$lag!="-5",], aes(x=as.factor(lag), y=estimate), stat="identity") +
+#   geom_errorbar(data=df.lag.rel[df.lag.rel$lag!="-5",], aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
+#   theme(panel.spacing = unit(0, "lines"),
+#         panel.grid = element_blank(),
+#         panel.background=element_rect(fill=NA, color="black"))+
+#   scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1, "crash")))+
+#   ggtitle("Relative weather before crashes")
+# 
+# png(paste0(path.figures, "RelWeather_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+#   plot.rel
+# dev.off()
 
 #-----------------------------------------------------#
 # Looking at structure before a crash
@@ -278,10 +287,10 @@ df.lag.strucxind <- data.frame()
 df.ano.strucxind <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-1")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag!="crash",], na.action = na.omit)
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag!="crash",], na.action = na.omit)
   anova(mod.lag)
   
-  df.ano <- anova(mod.lag)
+  df.ano <- data.frame(anova(mod.lag))
   output <- summary(mod.lag)
   df.ano$comp <- rownames(df.ano)
   df.ano$VAR <- COL
@@ -291,165 +300,169 @@ for(COL in struc.var){
   
 }
 
-summary(df.ano.strucxind)
-df.ano.strucxind <- df.ano.strucxind[,c(6,5,1,2,3,4)]
-df.ano.strucxind$comp <- gsub("ind.crash.lag", "Time", df.ano.strucxind$comp)
-df.ano.strucxind$comp <- gsub("-1", "", df.ano.strucxind$comp)
-df.ano.strucxind$comp <- gsub("None", "", df.ano.strucxind$comp)
+df.ano.strucxind
+df.ano.strucxind <- df.ano.strucxind[,c("VAR", "comp", "numDF", "denDF", "F.value", "p.value")]
 df.ano.strucxind$comp <- gsub("relevel", "", df.ano.strucxind$comp)
+df.ano.strucxind$comp <- gsub('"', "", df.ano.strucxind$comp)
+df.ano.strucxind$comp <- gsub('[(]', "", df.ano.strucxind$comp)
+df.ano.strucxind$comp <- gsub('[)]', "", df.ano.strucxind$comp)
+df.ano.strucxind$comp <- gsub("as.factorind.crash.lag, -5", "Time", df.ano.strucxind$comp)
+df.ano.strucxind$comp <- gsub("Management, None", "Harvest Scenario", df.ano.strucxind$comp)
 #IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
-df.ano.strucxind$`p-value` <- round(df.ano.strucxind$`p-value`, 5)
-
+df.ano.strucxind$p.value <- round(df.ano.strucxind$p.value, 3)
+df.ano.strucxind
 #df.ano.strucx <- df.ano.strucxind[df.ano.strucxind$VAR== "tree.dbh.sd",]
+write.csv(df.ano.strucxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_Structure_TimeMgmt.csv"), row.names = F)
 
-#-----------------------------------------------------#
-# Looking at Structure before a crash to make a figure
-# ind.crash.lag = time lag for individual management which crashed
-# We include the crash year for this evaluation because we are working with temperature
-# This is just to create a figure so we can investigate the directionality of our variables
-#-----------------------------------------------------#
-df.lag.struc <- data.frame()
-for(COL in struc.var){
-  
-  # This one will get statistical difference relative to the start
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag != "crash",], na.action = na.omit)
-  
-  # # This one will show means etc. & get assess stat sig as difference from 0, which isn't inherently meaningful because everything should be non-0; the way to show this would be breakign down by the anovas above
-  # mod.lag2 <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag != "crash",], na.action = na.omit)
-  # output2 <- summary(mod.lag2)
-  
-  output <- summary(mod.lag)
-  lag.list.struc <- list()
-  lag.list.struc[[paste(COL)]]$VAR <- COL
-  lag.list.struc[[paste(COL)]]$Comp <- rownames(output$tTable)
-  lag.list.struc[[paste(COL)]]$estimate <- output$tTable[,"Value"]
-  lag.list.struc[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
-  lag.list.struc[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
-  lag.list.struc[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
-  temp.lag.struc <- dplyr::bind_rows(lag.list.struc)
-  temp.lag.struc$lag <- c("-5", -1, -2, -3, -4)
-  
-  df.lag.struc <- rbind(df.lag.struc, temp.lag.struc)
-  
-}
-# output <- summary(mod.lag)
-
-summary(df.lag.struc)
-
-plot.struc <- ggplot(data=df.lag.struc[df.lag.struc$lag!="-5",] ) +
-  facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.struc[df.lag.struc$lag!="-5",], aes(x=as.factor(lag), y=estimate), stat="identity") +
-  geom_errorbar(data=df.lag.struc[df.lag.struc$lag!="-5",], aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
-  theme(panel.spacing = unit(0, "lines"),
-        panel.grid = element_blank(),
-        panel.background=element_rect(fill=NA, color="black"))+
-  scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1)))+
-  ggtitle("Structure before crashes")
-
-png(paste0(path.figures, "Structure_before_crash_hist.png"), width=12, height=8, units="in", res=220)
-  plot.struc
-dev.off()
-
-#-----------------------------------------------------#
-# Looking for structural differences between the conditions that crashed and those that didn't by Management
-# Looking if those differences vary by Management
-# group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing
-# group.crash.lag.check --> Y/N indicating which set actually crashed
-#-----------------------------------------------------#
-df.lag.strucxcrashxmng <- data.frame()
-df.ano.strucxcrashxmng <- data.frame()
-for(COL in struc.var){
-  
-  # Checkign to see if there's anything if we move MGMT to FIXED
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(group.crash.lag), "-1")*relevel(as.factor(group.crash.lag.check), "N")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!="crash",], na.action = na.omit)
-  anova(mod.lag)
-  
-  df.ano <- anova(mod.lag)
-  output <- summary(mod.lag)
-  df.ano$comp <- rownames(df.ano)
-  df.ano$VAR <- COL
-  rownames(df.ano) <- NULL
-  
-  lag.list.strucxcrashxmng <- list()
-  lag.list.strucxcrashxmng[[paste(COL)]]$VAR <- COL
-  lag.list.strucxcrashxmng[[paste(COL)]]$Comp <- rownames(output$tTable)
-  lag.list.strucxcrashxmng[[paste(COL)]]$estimate <- output$tTable[,"Value"]
-  lag.list.strucxcrashxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
-  lag.list.strucxcrashxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
-  lag.list.strucxcrashxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
-  temp.lag.strucxcrashxmng <- dplyr::bind_rows(lag.list.strucxcrashxmng)
-  temp.lag.strucxcrashxmng$lag <- c(NA, -2,-3,-4,-5, NA, NA, NA, NA, rep(unique(-2:-5), times = 4), NA, NA, NA, rep(unique(-2:-5), times = 3))
-  temp.lag.strucxcrashxmng$crash <- c(NA, NA, NA, NA, NA, "Y", NA, NA, NA, "Y", "Y", "Y", "Y", rep(c(NA), each = 12), rep(c("Y"), each = 15))
-  temp.lag.strucxcrashxmng$Management <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", NA, NA, NA, NA, rep(c("Under", "Shelter", "Gap"), each = 4), "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 4))
-  
-  df.lag.strucxcrashxmng <- rbind(df.lag.strucxcrashxmng, temp.lag.strucxcrashxmng)
-  df.ano.strucxcrashxmng <- rbind(df.ano.strucxcrashxmng, df.ano)
-  
-}
-summary(df.ano.strucxcrashxmng)
-df.ano.strucxcrashxmng <- df.ano.strucxcrashxmng[,c(6,5,1,2,3,4)]
-
-df.ano.strucxcrashxmng$comp <- gsub("(group.crash.lag)", "Time", df.ano.strucxcrashxmng$comp)
-df.ano.strucxcrashxmng$comp <- gsub("Time.check", "CrashY/N", df.ano.strucxcrashxmng$comp)
-df.ano.strucxcrashxmng$comp <- gsub("-1", "", df.ano.strucxcrashxmng$comp)
-df.ano.strucxcrashxmng$comp <- gsub("None", "", df.ano.strucxcrashxmng$comp)
-df.ano.strucxcrashxmng$comp <- gsub("relevel", "", df.ano.strucxcrashxmng$comp)
-
-#IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
-df.ano.strucxcrashxmng$`p-value` <- round(df.ano.strucxcrashxmng$`p-value`, 5)
-
-#df.ano.strucx <- df.ano.strucxcrashxmng[df.ano.strucxcrashxmng$VAR== "density.tree",]
-
-write.csv(df.ano.strucxcrashxmng, file.path(path.google, "processed_data/strucxcrashxmng_anova.csv"), row.names = F)
-
-plot.strucxmng <- ggplot(data=df.lag.strucxcrashxmng ) +
-  facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.struc, aes(x=as.factor(lag), y=estimate), stat="identity") +
-  geom_errorbar(data=df.lag.struc, aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
-  theme(panel.spacing = unit(0, "lines"),
-        panel.grid = element_blank(),
-        panel.background=element_rect(fill=NA, color="black"))+
-  scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1)))+
-  ggtitle("Structure before crashes")
-
-plot.mngxcrash <- ggplot(data=runs.fill) +
-  facet_wrap(~VAR, scales = "free_y") +
-  geom_bar(data=df.lag.struc, aes(x=as.factor(lag), y=estimate), stat="identity") +
-  geom_errorbar(data=df.lag.struc, aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
-  theme(panel.spacing = unit(0, "lines"),
-        panel.grid = element_blank(),
-        panel.background=element_rect(fill=NA, color="black"))+
-  scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1)))+
-  ggtitle("Structure before crashes")
-
-dat.strucxmng <- runs.fill[!is.na(runs.fill$group.crash.lag), c("year", "Management", "GCM", "rcp", struc.var, "group.crash.lag", "ind.crash.lag", "group.crash.lag.check")]
-#Just to make "lag" a common name for merging purposes
-colnames(dat.strucxmng) <- c("year", "Management", "GCM", "rcp", struc.var, "lag", "ind.crash.lag", "group.crash.lag.check")
-summary(dat.strucxmng)
-
-#Making the format wide so that we can facet our different relative weather variables
-dat.strucxmng <- tidyr::gather(dat.strucxmng, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
-
-#Merging the frames and marking significance
-dat.strucxmng <- merge(dat.strucxmng, df.lag.strucxcrashxmng, all.x=T,)
-dat.strucxmng$sig[!is.na(dat.strucxmng$p.val)] <- ifelse(dat.strucxmng$p.val[!is.na(dat.strucxmng$p.val)]<0.05, "sig", "n.s.")
-dat.strucxmng$sig <- as.factor(dat.strucxmng$sig)
-summary(dat.strucxmng)
-
-dat.strucxmng$VAR <- car::recode(dat.strucxmng$VAR, "'agb'='AGB'; 'density.tree'='Tree Density'; 
-                             'tree.dbh.mean'='Mean DBH'; 'tree.dbh.sd'='SD of DBH'")
-
-plot.strucxmng <- ggplot(data=dat.strucxmng[!is.na(dat.strucxmng$lag),]) +
-  facet_grid(VAR~Management, scales="free_y") +
-  geom_boxplot(aes(x=as.factor(lag), y=value, fill =group.crash.lag.check, color = group.crash.lag.check)) +
-  scale_x_discrete(name="Loss event Lag") +
-  scale_y_continuous(name="Difference") +
-  theme(legend.position = "top",
-        legend.key = element_rect(fill=NA),
-        panel.spacing = unit(0, "lines"),
-        panel.grid = element_blank(),
-        panel.background=element_rect(fill=NA, color="black"))
-
-png(paste0(path.figures, "StrucxMNG_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
-  plot.strucxmng
-dev.off()
+# 
+# #-----------------------------------------------------#
+# # Looking at Structure before a crash to make a figure
+# # ind.crash.lag = time lag for individual management which crashed
+# # We include the crash year for this evaluation because we are working with temperature
+# # This is just to create a figure so we can investigate the directionality of our variables
+# #-----------------------------------------------------#
+# df.lag.struc <- data.frame()
+# for(COL in struc.var){
+#   
+#   # This one will get statistical difference relative to the start
+#   mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag != "crash",], na.action = na.omit)
+#   
+#   # # This one will show means etc. & get assess stat sig as difference from 0, which isn't inherently meaningful because everything should be non-0; the way to show this would be breakign down by the anovas above
+#   # mod.lag2 <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag != "crash",], na.action = na.omit)
+#   # output2 <- summary(mod.lag2)
+#   
+#   output <- summary(mod.lag)
+#   lag.list.struc <- list()
+#   lag.list.struc[[paste(COL)]]$VAR <- COL
+#   lag.list.struc[[paste(COL)]]$Comp <- rownames(output$tTable)
+#   lag.list.struc[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+#   lag.list.struc[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+#   lag.list.struc[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+#   lag.list.struc[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+#   temp.lag.struc <- dplyr::bind_rows(lag.list.struc)
+#   temp.lag.struc$lag <- c("-5", -1, -2, -3, -4)
+#   
+#   df.lag.struc <- rbind(df.lag.struc, temp.lag.struc)
+#   
+# }
+# # output <- summary(mod.lag)
+# 
+# summary(df.lag.struc)
+# 
+# plot.struc <- ggplot(data=df.lag.struc[df.lag.struc$lag!="-5",] ) +
+#   facet_wrap(~VAR, scales = "free_y") +
+#   geom_bar(data=df.lag.struc[df.lag.struc$lag!="-5",], aes(x=as.factor(lag), y=estimate), stat="identity") +
+#   geom_errorbar(data=df.lag.struc[df.lag.struc$lag!="-5",], aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
+#   theme(panel.spacing = unit(0, "lines"),
+#         panel.grid = element_blank(),
+#         panel.background=element_rect(fill=NA, color="black"))+
+#   scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1)))+
+#   ggtitle("Structure before crashes")
+# 
+# png(paste0(path.figures, "Structure_before_crash_hist.png"), width=12, height=8, units="in", res=220)
+#   plot.struc
+# dev.off()
+# 
+# #-----------------------------------------------------#
+# # Looking for structural differences between the conditions that crashed and those that didn't by Management
+# # Looking if those differences vary by Management
+# # group.crash.lag = time lag for GROUP of conditions with at least ONE RUN crashing
+# # group.crash.lag.check --> Y/N indicating which set actually crashed
+# #-----------------------------------------------------#
+# df.lag.strucxcrashxmng <- data.frame()
+# df.ano.strucxcrashxmng <- data.frame()
+# for(COL in struc.var){
+#   
+#   # Checkign to see if there's anything if we move MGMT to FIXED
+#   mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(group.crash.lag), "-1")*relevel(as.factor(group.crash.lag.check), "N")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$group.crash.lag) & runs.fill$group.crash.lag!="crash",], na.action = na.omit)
+#   anova(mod.lag)
+#   
+#   df.ano <- anova(mod.lag)
+#   output <- summary(mod.lag)
+#   df.ano$comp <- rownames(df.ano)
+#   df.ano$VAR <- COL
+#   rownames(df.ano) <- NULL
+#   
+#   lag.list.strucxcrashxmng <- list()
+#   lag.list.strucxcrashxmng[[paste(COL)]]$VAR <- COL
+#   lag.list.strucxcrashxmng[[paste(COL)]]$Comp <- rownames(output$tTable)
+#   lag.list.strucxcrashxmng[[paste(COL)]]$estimate <- output$tTable[,"Value"]
+#   lag.list.strucxcrashxmng[[paste(COL)]]$std.err <- output$tTable[,"Std.Error"]
+#   lag.list.strucxcrashxmng[[paste(COL)]]$t.stat <- output$tTable[,"t-value"]
+#   lag.list.strucxcrashxmng[[paste(COL)]]$p.val <- output$tTable[,"p-value"]
+#   temp.lag.strucxcrashxmng <- dplyr::bind_rows(lag.list.strucxcrashxmng)
+#   temp.lag.strucxcrashxmng$lag <- c(NA, -2,-3,-4,-5, NA, NA, NA, NA, rep(unique(-2:-5), times = 4), NA, NA, NA, rep(unique(-2:-5), times = 3))
+#   temp.lag.strucxcrashxmng$crash <- c(NA, NA, NA, NA, NA, "Y", NA, NA, NA, "Y", "Y", "Y", "Y", rep(c(NA), each = 12), rep(c("Y"), each = 15))
+#   temp.lag.strucxcrashxmng$Management <- c(NA, NA, NA, NA, NA, NA, "Under", "Shelter", "Gap", NA, NA, NA, NA, rep(c("Under", "Shelter", "Gap"), each = 4), "Under", "Shelter", "Gap", rep(c("Under", "Shelter", "Gap"), each = 4))
+#   
+#   df.lag.strucxcrashxmng <- rbind(df.lag.strucxcrashxmng, temp.lag.strucxcrashxmng)
+#   df.ano.strucxcrashxmng <- rbind(df.ano.strucxcrashxmng, df.ano)
+#   
+# }
+# summary(df.ano.strucxcrashxmng)
+# df.ano.strucxcrashxmng <- df.ano.strucxcrashxmng[,c(6,5,1,2,3,4)]
+# 
+# df.ano.strucxcrashxmng$comp <- gsub("(group.crash.lag)", "Time", df.ano.strucxcrashxmng$comp)
+# df.ano.strucxcrashxmng$comp <- gsub("Time.check", "CrashY/N", df.ano.strucxcrashxmng$comp)
+# df.ano.strucxcrashxmng$comp <- gsub("-1", "", df.ano.strucxcrashxmng$comp)
+# df.ano.strucxcrashxmng$comp <- gsub("None", "", df.ano.strucxcrashxmng$comp)
+# df.ano.strucxcrashxmng$comp <- gsub("relevel", "", df.ano.strucxcrashxmng$comp)
+# 
+# #IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
+# df.ano.strucxcrashxmng$`p-value` <- round(df.ano.strucxcrashxmng$`p-value`, 5)
+# 
+# #df.ano.strucx <- df.ano.strucxcrashxmng[df.ano.strucxcrashxmng$VAR== "density.tree",]
+# 
+# write.csv(df.ano.strucxcrashxmng, file.path(path.google, "processed_data/strucxcrashxmng_anova.csv"), row.names = F)
+# 
+# plot.strucxmng <- ggplot(data=df.lag.strucxcrashxmng ) +
+#   facet_wrap(~VAR, scales = "free_y") +
+#   geom_bar(data=df.lag.struc, aes(x=as.factor(lag), y=estimate), stat="identity") +
+#   geom_errorbar(data=df.lag.struc, aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
+#   theme(panel.spacing = unit(0, "lines"),
+#         panel.grid = element_blank(),
+#         panel.background=element_rect(fill=NA, color="black"))+
+#   scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1)))+
+#   ggtitle("Structure before crashes")
+# 
+# plot.mngxcrash <- ggplot(data=runs.fill) +
+#   facet_wrap(~VAR, scales = "free_y") +
+#   geom_bar(data=df.lag.struc, aes(x=as.factor(lag), y=estimate), stat="identity") +
+#   geom_errorbar(data=df.lag.struc, aes(as.factor(lag), ymin = estimate - std.err, ymax = estimate + std.err))+
+#   theme(panel.spacing = unit(0, "lines"),
+#         panel.grid = element_blank(),
+#         panel.background=element_rect(fill=NA, color="black"))+
+#   scale_x_discrete(limits = factor(c(-5, -4, -3, -2, -1)))+
+#   ggtitle("Structure before crashes")
+# 
+# dat.strucxmng <- runs.fill[!is.na(runs.fill$group.crash.lag), c("year", "Management", "GCM", "rcp", struc.var, "group.crash.lag", "ind.crash.lag", "group.crash.lag.check")]
+# #Just to make "lag" a common name for merging purposes
+# colnames(dat.strucxmng) <- c("year", "Management", "GCM", "rcp", struc.var, "lag", "ind.crash.lag", "group.crash.lag.check")
+# summary(dat.strucxmng)
+# 
+# #Making the format wide so that we can facet our different relative weather variables
+# dat.strucxmng <- tidyr::gather(dat.strucxmng, VAR, value, agb:tree.dbh.sd, factor_key=TRUE)
+# 
+# #Merging the frames and marking significance
+# dat.strucxmng <- merge(dat.strucxmng, df.lag.strucxcrashxmng, all.x=T,)
+# dat.strucxmng$sig[!is.na(dat.strucxmng$p.val)] <- ifelse(dat.strucxmng$p.val[!is.na(dat.strucxmng$p.val)]<0.05, "sig", "n.s.")
+# dat.strucxmng$sig <- as.factor(dat.strucxmng$sig)
+# summary(dat.strucxmng)
+# 
+# dat.strucxmng$VAR <- car::recode(dat.strucxmng$VAR, "'agb'='AGB'; 'density.tree'='Tree Density'; 
+#                              'tree.dbh.mean'='Mean DBH'; 'tree.dbh.sd'='SD of DBH'")
+# 
+# plot.strucxmng <- ggplot(data=dat.strucxmng[!is.na(dat.strucxmng$lag),]) +
+#   facet_grid(VAR~Management, scales="free_y") +
+#   geom_boxplot(aes(x=as.factor(lag), y=value, fill =group.crash.lag.check, color = group.crash.lag.check)) +
+#   scale_x_discrete(name="Loss event Lag") +
+#   scale_y_continuous(name="Difference") +
+#   theme(legend.position = "top",
+#         legend.key = element_rect(fill=NA),
+#         panel.spacing = unit(0, "lines"),
+#         panel.grid = element_blank(),
+#         panel.background=element_rect(fill=NA, color="black"))
+# 
+# png(paste0(path.figures, "StrucxMNG_before_crash_boxplot.png"), width=12, height=8, units="in", res=220)
+#   plot.strucxmng
+# dev.off()
