@@ -229,9 +229,11 @@ dev.off()
 
 
 #-----------------------------------------------------------#
-# Structural variables #
+# Structural variables including those that didn't crash
 #-----------------------------------------------------------#
-
+#------#
+# Just looking at the difference between those that did and didn't crash
+#------#
 raw.struc.agb <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=agb, group=group.crash.lag.check), position=dodge) +
   geom_errorbar(aes(color=group.crash.lag.check), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
   geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
@@ -268,9 +270,107 @@ raw.struc.sddbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], ae
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
   ylab("SD of DBH (cm)")
 
-png(file.path(path.figures, "SEA_Structure_TimeMgmt_RawDat.png"), width=12, height=8, units="in", res=220)
+
+#png(file.path(path.figures, "SEA_Structure_TimeMgmt_RawDat.png"), width=12, height=8, units="in", res=220)
   cowplot::plot_grid(raw.struc.agb, raw.struc.density, raw.struc.meandbh, raw.struc.sddbh, ncol=2)
-dev.off()
+#dev.off()
+
+  #---------------------------------#
+  # Adding Management as a facet wrapped value
+  #---------------------------------#
+  
+  raw.struc.agb <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=agb, group=group.crash.lag.check), position=dodge) +
+    facet_wrap(~Management)+
+    geom_errorbar(aes(color=group.crash.lag.check), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
+    geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
+    geom_point(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=2) +
+    #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+    scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+    theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+    ylab("AGB (kgC/m2)")
+  
+  raw.struc.density <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=density.tree.convert, group=group.crash.lag.check), position=dodge) +
+    facet_wrap(~Management)+
+    geom_errorbar(aes(color=group.crash.lag.check), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
+    geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
+    geom_point(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=2) +
+    #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+    scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+    theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+    ylab("Density (trees/ha)")
+  
+  raw.struc.meandbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=tree.dbh.mean, group=group.crash.lag.check), position=dodge) +
+    facet_wrap(~Management)+
+    geom_errorbar(aes(color=group.crash.lag.check), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
+    geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
+    geom_point(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=2) +
+    #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+    scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+    theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+    ylab("Mean DBH (cm)")
+  
+  raw.struc.sddbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=tree.dbh.sd, group=group.crash.lag.check), position=dodge) +
+    facet_wrap(~Management)+
+    geom_errorbar(aes(color=group.crash.lag.check), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
+    geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
+    geom_point(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=2) +
+    #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+    scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+    theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+    ylab("SD of DBH (cm)")
+  
+  
+  #png(file.path(path.figures, "SEA_Structure_TimeMgmt_RawDat.png"), width=12, height=8, units="in", res=220)
+  cowplot::plot_grid(raw.struc.agb, raw.struc.density, raw.struc.meandbh, raw.struc.sddbh, ncol=2)
+  #dev.off()  
+  
+#------#
+# Looking at Management trends only for those who crashed
+#------#
+
+raw.struc.agb.ind <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=agb, group=Management), position=dodge) +
+  geom_errorbar(aes(color=Management), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
+  geom_line(aes(color=Management), stat="summary", fun="mean", size=1.5) +
+  geom_point(aes(color=Management), stat="summary", fun="mean", size=2) +
+  scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+  #scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+  theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  ylab("AGB (kgC/m2)")
+
+raw.struc.density.ind <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=density.tree.convert, group=Management), position=dodge) +
+  geom_errorbar(aes(color=Management), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
+  geom_line(aes(color=Management), stat="summary", fun="mean", size=1.5) +
+  geom_point(aes(color=Management), stat="summary", fun="mean", size=2) +
+  scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+  #scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+  theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  ylab("Density (trees/ha)")
+
+raw.struc.meandbh.ind <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=tree.dbh.mean, group=Management), position=dodge) +
+  geom_errorbar(aes(color=Management), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
+  geom_line(aes(color=Management), stat="summary", fun="mean", size=1.5) +
+  geom_point(aes(color=Management), stat="summary", fun="mean", size=2) +
+  scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+  #scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+  theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  ylab("Mean DBH (cm)")
+
+raw.struc.sddbh.ind <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=tree.dbh.sd, group=Management), position=dodge) +
+  geom_errorbar(aes(color=Management), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
+  geom_line(aes(color=Management), stat="summary", fun="mean", size=1.5) +
+  geom_point(aes(color=Management), stat="summary", fun="mean", size=2) +
+  scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+  #scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+  theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  ylab("SD of DBH (cm)")
+
+#png(file.path(path.figures, "SEA_Structure_TimeMgmt_RawDat.png"), width=12, height=8, units="in", res=220)
+  cowplot::plot_grid(raw.struc.agb.ind, raw.struc.density.ind, raw.struc.meandbh.ind, raw.struc.sddbh.ind, ncol=2)
+#dev.off()
+
+
+
+
 
 relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.relmetxind <- data.frame()
