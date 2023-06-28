@@ -11,9 +11,9 @@ library(nlme)
 library(multcomp)
 library(dplyr)
 #------------------------------------------------------------------------#
-#path.google <- "~/Google Drive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "~/Google Drive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
-path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+# path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
 path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
 
@@ -228,13 +228,116 @@ png(file.path(path.figures, "SEA_RelWeather_TimeMgmt_RawDat.png"), width=12, hei
 dev.off()
 
 
+
+relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
+df.lag.relmetxind <- data.frame()
+df.ano.relmetxind <- data.frame()
+df.time.relmetxind <- data.frame()
+df.mgmt.relmetxind <- data.frame()
+df.plot.relmetxind <- data.frame()
+for(COL in relmet.var){
+  
+  mod.lag <- lm(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None"), list(j = as.name(COL)))), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  # summary(mod.lag)$tTable
+  
+  df.ano <- data.frame(anova(mod.lag))
+  # output <- summary(mod.lag)
+  df.ano$comp <- rownames(df.ano)
+  df.ano$VAR <- COL
+  rownames(df.ano) <- NULL
+  
+  df.ano.relmetxind <- rbind(df.ano.relmetxind, df.ano)
+  # 
+  # # This permutation of the analysis will let us get the random effects adjusted means & SEs for each time/mgmt group to make a clean figure; do NOT interpret the p-values as they'll just indicate difference from 0
+  # # NOTE: The random effects make HUGE differences on the directionality of means (e.g. w/o R.E. SHelter has *higher* has diff.tair, but when including R.E. it's *lower*)
+  # # --> this means that it's important to be showing the mixed model estiamtes, BUT the SE associated with each point are similar and very large and make it really hard to tease out the stat sig that we describe
+  # mod.plot <- nlme::lme(eval(substitute(j ~ relevel(ind.crash.lag, "-5")*relevel(Management, "None")- relevel(ind.crash.lag, "-5") - relevel(Management, "None") -1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  # 
+  # 
+  # df.plot <- data.frame(summary(mod.plot)$tTable)
+  # df.plot$time <- c("-5", "-4", "-3", "-2", "-1", "loss")
+  # df.plot$Management <- rep(c("None", "Under", "Shelter", "Group"), each=6)
+  # df.plot$VAR <- COL
+  # rownames(df.plot) <- NULL
+  # 
+  # df.plot.relmetxind <- rbind(df.plot.relmetxind, df.plot)
+  # 
+  
+  # Doing the univariate analysis & saving output
+  # time to crash
+  mod.time <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5"), list(j = as.name(COL)))), random=list(Management=~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  
+  df.time <- data.frame(summary(mod.time)$tTable)
+  df.time$comp <- c("-5", "-4", "-3", "-2", "-1", "loss")
+  df.time$VAR <- COL
+  rownames(df.time) <- NULL
+  
+  df.time.relmetxind <- rbind(df.time.relmetxind, df.time)
+  
+  # management
+  mod.mgmt <- nlme::lme(eval(substitute(j ~ relevel(Management, "None"), list(j = as.name(COL)))), random=list(ind.crash.lag=~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  
+  
+  df.mgmt <- data.frame(summary(mod.mgmt)$tTable)
+  df.mgmt$comp <- c("None", "Under", "Shelter", "Group")
+  df.mgmt$VAR <- COL
+  rownames(df.mgmt) <- NULL
+  
+  df.mgmt.relmetxind <- rbind(df.mgmt.relmetxind, df.mgmt)
+  
+  # eff.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
+  # mod.lag.eff <- summary(mod.lag)$tTable
+}
+
+df.ano.relmetxind
+# summary(df.lag.relmetxind)
+
+# df.ano.relmetxind <- df.ano.relmetxind[,c(6,5,1,2,3,4)]
+df.ano.relmetxind <- df.ano.relmetxind[,c("VAR", "comp", "numDF", "denDF", "F.value", "p.value")]
+df.ano.relmetxind$comp <- gsub("relevel", "", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub('"', "", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub('[(]', "", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub('[)]', "", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub("as.factorind.crash.lag, -5", "Time", df.ano.relmetxind$comp)
+df.ano.relmetxind$comp <- gsub("Management, None", "Harvest Scenario", df.ano.relmetxind$comp)
+#IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
+df.ano.relmetxind$p.value <- round(df.ano.relmetxind$p.value, 3)
+# View(df.ano.relmetxind)
+df.ano.relmetxind
+
+df.time.relmetxind$p.value <- round(df.time.relmetxind$p.value, 3)
+df.time.relmetxind
+
+df.mgmt.relmetxind$p.value <- round(df.mgmt.relmetxind$p.value, 3)
+df.mgmt.relmetxind
+
+write.csv(df.ano.relmetxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_RelMet_TimeMgmt.csv"), row.names = F)
+write.csv(df.time.relmetxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_RelMet_Time.csv"), row.names = F)
+write.csv(df.mgmt.relmetxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_RelMet_Mgmt.csv"), row.names = F)
+
+
+
+df.plot.relmetxind$time <- factor(df.plot.relmetxind$time, levels=c("-5", "-4", "-3", "-2", "-1", "loss"))
+ggplot(data=df.plot.relmetxind, aes(x=time, y=Value, group=Management, color=Management)) +
+  facet_wrap(~VAR, scales="free_y", ncol=2) +
+  geom_line(size=1.5) + 
+  geom_point(size=2) +
+  geom_errorbar(aes(x=time, ymin=Value-Std.Error, ymax=Value+Std.Error, group=Management, color=Management), size=1.5, alpha=0.5) +
+  scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
+  theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))
+
+
+
+
+
+
 #-----------------------------------------------------------#
 # Structural variables including those that didn't crash
 #-----------------------------------------------------------#
 #------#
 # Just looking at the difference between those that did and didn't crash
 #------#
-raw.struc.agb <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=agb, group=group.crash.lag.check), position=dodge) +
+raw.struc.agb <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=agb, group=group.crash.lag.check), position=dodge) + 
   geom_errorbar(aes(color=group.crash.lag.check), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
   geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
   geom_point(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=2) +
@@ -285,7 +388,7 @@ raw.struc.sddbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], ae
     geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
     geom_point(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=2) +
     #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
-    scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orangered2", "N"="gold2")) +
+    scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="orange2", "N"="black")) +
     theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
     ylab("AGB (kgC/m2)")
   
@@ -372,105 +475,6 @@ raw.struc.sddbh.ind <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], 
 
 
 
-relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
-df.lag.relmetxind <- data.frame()
-df.ano.relmetxind <- data.frame()
-df.time.relmetxind <- data.frame()
-df.mgmt.relmetxind <- data.frame()
-df.plot.relmetxind <- data.frame()
-for(COL in relmet.var){
-  
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
-  anova(mod.lag)
-
-  df.ano <- data.frame(anova(mod.lag))
-  # output <- summary(mod.lag)
-  df.ano$comp <- rownames(df.ano)
-  df.ano$VAR <- COL
-  rownames(df.ano) <- NULL
-  
-  df.ano.relmetxind <- rbind(df.ano.relmetxind, df.ano)
-  
-  # This permutation of the analysis will let us get the random effects adjusted means & SEs for each time/mgmt group to make a clean figure; do NOT interpret the p-values as they'll just indicate difference from 0
-  # NOTE: The random effects make HUGE differences on the directionality of means (e.g. w/o R.E. SHelter has *higher* has diff.tair, but when including R.E. it's *lower*)
-  # --> this means that it's important to be showing the mixed model estiamtes, BUT the SE associated with each point are similar and very large and make it really hard to tease out the stat sig that we describe
-  mod.plot <- nlme::lme(eval(substitute(j ~ relevel(ind.crash.lag, "-5")*relevel(Management, "None")- relevel(ind.crash.lag, "-5") - relevel(Management, "None") -1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
-  
-
-  df.plot <- data.frame(summary(mod.plot)$tTable)
-  df.plot$time <- c("-5", "-4", "-3", "-2", "-1", "loss")
-  df.plot$Management <- rep(c("None", "Under", "Shelter", "Group"), each=6)
-  df.plot$VAR <- COL
-  rownames(df.plot) <- NULL
-  
-  df.plot.relmetxind <- rbind(df.plot.relmetxind, df.plot)
-  
-    
-  # Doing the univariate analysis & saving output
-  # time to crash
-  mod.time <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")-1, list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1, Management=~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
-  
-  df.time <- data.frame(summary(mod.time)$tTable)
-  df.time$comp <- c("-5", "-4", "-3", "-2", "-1", "loss")
-  df.time$VAR <- COL
-  rownames(df.time) <- NULL
-  
-  df.time.relmetxind <- rbind(df.time.relmetxind, df.time)
-  
-  # management
-  mod.mgmt <- nlme::lme(eval(substitute(j ~ relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
-  
-  
-  df.mgmt <- data.frame(summary(mod.mgmt)$tTable)
-  df.mgmt$comp <- c("None", "Under", "Shelter", "Group")
-  df.mgmt$VAR <- COL
-  rownames(df.mgmt) <- NULL
-  
-  df.mgmt.relmetxind <- rbind(df.mgmt.relmetxind, df.mgmt)
-  
-  # eff.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag),], na.action = na.omit)
-  # mod.lag.eff <- summary(mod.lag)$tTable
-}
-
-df.ano.relmetxind
-# summary(df.lag.relmetxind)
-
-# df.ano.relmetxind <- df.ano.relmetxind[,c(6,5,1,2,3,4)]
-df.ano.relmetxind <- df.ano.relmetxind[,c("VAR", "comp", "numDF", "denDF", "F.value", "p.value")]
-df.ano.relmetxind$comp <- gsub("relevel", "", df.ano.relmetxind$comp)
-df.ano.relmetxind$comp <- gsub('"', "", df.ano.relmetxind$comp)
-df.ano.relmetxind$comp <- gsub('[(]', "", df.ano.relmetxind$comp)
-df.ano.relmetxind$comp <- gsub('[)]', "", df.ano.relmetxind$comp)
-df.ano.relmetxind$comp <- gsub("as.factorind.crash.lag, -5", "Time", df.ano.relmetxind$comp)
-df.ano.relmetxind$comp <- gsub("Management, None", "Harvest Scenario", df.ano.relmetxind$comp)
-#IMPORTANT!!!!! Rounding for easy reading. This should not be how the values are reported in the end
-df.ano.relmetxind$p.value <- round(df.ano.relmetxind$p.value, 3)
-# View(df.ano.relmetxind)
-df.ano.relmetxind
-
-df.time.relmetxind$p.value <- round(df.time.relmetxind$p.value, 3)
-df.time.relmetxind
-
-df.mgmt.relmetxind$p.value <- round(df.mgmt.relmetxind$p.value, 3)
-df.mgmt.relmetxind
-
-write.csv(df.ano.relmetxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_RelMet_TimeMgmt.csv"), row.names = F)
-write.csv(df.time.relmetxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_RelMet_Time.csv"), row.names = F)
-write.csv(df.mgmt.relmetxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_RelMet_Mgmt.csv"), row.names = F)
-
-
-
-df.plot.relmetxind$time <- factor(df.plot.relmetxind$time, levels=c("-5", "-4", "-3", "-2", "-1", "loss"))
-ggplot(data=df.plot.relmetxind, aes(x=time, y=Value, group=Management, color=Management)) +
-  facet_wrap(~VAR, scales="free_y", ncol=2) +
-  geom_line(size=1.5) + 
-  geom_point(size=2) +
-  geom_errorbar(aes(x=time, ymin=Value-Std.Error, ymax=Value+Std.Error, group=Management, color=Management), size=1.5, alpha=0.5) +
-  scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
-  theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))
-
-
-
 
 # #-----------------------------------------------------#
 # # Looking at relative weather before a crash to make a figure
@@ -528,7 +532,10 @@ df.lag.strucxind <- data.frame()
 df.ano.strucxind <- data.frame()
 for(COL in struc.var){
   
-  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag!="loss",], na.action = na.omit)
+  # mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None"), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag!="loss",], na.action = na.omit)
+  # Changing to compare crash/nocrash
+  mod.lag <- nlme::lme(eval(substitute(j ~ relevel(as.factor(ind.crash.lag), "-5")*relevel(Management, "None")*as.factor(crash), list(j = as.name(COL)))), random=list(rcp = ~1, GCM =~1), data = runs.fill[!is.na(runs.fill$ind.crash.lag) & runs.fill$ind.crash.lag!="loss",], na.action = na.omit)
+  
   anova(mod.lag)
   
   df.ano <- data.frame(anova(mod.lag))
