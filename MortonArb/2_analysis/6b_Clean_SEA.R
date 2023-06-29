@@ -160,27 +160,38 @@ summary(runs.yr)
 
 runs.fill <- data.frame()
 runs.huh <- data.frame()
+double <- 0
 for(RCP in unique(runs.yr$rcp)){
   for(GCM in unique(runs.yr$GCM)){
-    runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "group.crash.lag"] <- NA
+    #runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM, "group.crash.lag"] <- NA
       crash.event <- unique(runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$crash==1, "year"])
       crash.event <- sort(crash.event)
       for(YR in crash.event){
-        #temp.df <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year >= (YR-5) & runs.yr$year <= (YR),]
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year >= (YR-5) & runs.yr$year <= (YR), "crash.year"] <- YR
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-5), "group.crash.lag"] <- -5
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-4), "group.crash.lag"] <- -4
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-3), "group.crash.lag"] <- -3
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-2), "group.crash.lag"] <- -2
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == (YR-1), "group.crash.lag"] <- -1
-        runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year == YR, "group.crash.lag"] <- "loss"
+        
+        temp.df <- runs.yr[runs.yr$rcp == RCP & runs.yr$GCM == GCM & runs.yr$year >= (YR-5) & runs.yr$year <= (YR),]
+        temp.df$ind.crash.lag <- ifelse((!is.na(temp.df$crash.year) & temp.df$crash.year != YR), NA, as.character(temp.df$ind.crash.lag))
+        temp.df$group.crash.lag.check <- ifelse((!is.na(temp.df$crash.year) & temp.df$crash.year != YR), "N", temp.df$group.crash.lag.check)
+        
+        if(nrow(temp.df[temp.df$group.crash.lag.check == "Y",]) > 6){
+          double <- double + 1
+        }
+        
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year >= (YR-5) & temp.df$year <= (YR), "crash.year"] <- YR
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-5), "group.crash.lag"] <- -5
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-4), "group.crash.lag"] <- -4
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-3), "group.crash.lag"] <- -3
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-2), "group.crash.lag"] <- -2
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == (YR-1), "group.crash.lag"] <- -1
+        temp.df[temp.df$rcp == RCP & temp.df$GCM == GCM & temp.df$year == YR, "group.crash.lag"] <- "loss"
+        
+        runs.fill <- rbind(runs.fill, temp.df)
     }
   }
 }
 
-runs.yr$ind.crash.lag <- factor(runs.yr$ind.crash.lag, levels=c("-5", "-4", "-3", "-2", "-1", "loss"))
-runs.yr$group.crash.lag <- factor(runs.yr$group.crash.lag, levels=c("-5", "-4", "-3", "-2", "-1", "loss"))
-summary(runs.yr)
+runs.fill$ind.crash.lag <- factor(runs.fill$ind.crash.lag, levels=c("-5", "-4", "-3", "-2", "-1", "loss"))
+runs.fill$group.crash.lag <- factor(runs.fill$group.crash.lag, levels=c("-5", "-4", "-3", "-2", "-1", "loss"))
+summary(runs.fill)
 
 time.weath.agg <- aggregate(cbind(diff.tair, rel.precip, rel.VPD)~ind.crash.lag, data = runs.fill[!is.na(runs.fill$ind.crash.lag),], FUN = mean, na.action = NULL)
 time.weath.agg[, c("diff.tair.sd", "rel.precip.sd", "rel.VPD.sd")] <- aggregate(cbind(diff.tair, rel.precip, rel.VPD)~ind.crash.lag, data = runs.fill[!is.na(runs.fill$ind.crash.lag),], FUN = sd, na.action = NULL)[, c("diff.tair", "rel.precip", "rel.VPD")]
@@ -225,8 +236,6 @@ raw.met.vpd <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=in
 png(file.path(path.figures, "SEA_RelWeather_TimeMgmt_RawDat.png"), width=12, height=8, units="in", res=220)
   cowplot::plot_grid(raw.met.tair, raw.met.precip, raw.met.vpd, ncol=2)
 dev.off()
-
-
 
 relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
 df.lag.relmetxind <- data.frame()
