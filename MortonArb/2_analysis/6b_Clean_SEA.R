@@ -159,7 +159,6 @@ runs.yr$ind.crash.lag <- factor(runs.yr$ind.crash.lag, levels=c("-5", "-4", "-3"
 summary(runs.yr)
 
 runs.fill <- data.frame()
-runs.huh <- data.frame()
 double <- 0
 for(RCP in unique(runs.yr$rcp)){
   for(GCM in unique(runs.yr$GCM)){
