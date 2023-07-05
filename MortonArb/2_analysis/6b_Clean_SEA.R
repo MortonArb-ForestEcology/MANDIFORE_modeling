@@ -13,7 +13,7 @@ library(dplyr)
 #------------------------------------------------------------------------#
 path.google <- "~/Google Drive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
-# path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
 path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
 
@@ -401,7 +401,7 @@ raw.struc.meandbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], 
 
 raw.struc.sddbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=tree.dbh.sd, group=group.crash.lag.check), position=dodge) +
   geom_rect(xmin=5.5, xmax=6.5, ymin=-Inf, ymax=Inf, fill="gray90", alpha=0.9, color=NA) + # I don't know why the alpha isn't working, but :shrug:
-  coord_cartesian(ylim=c(35.75, 39.5)) +
+  coord_cartesian(ylim=c(16.75, 19.25)) +
   geom_errorbar(aes(color=group.crash.lag.check), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
   geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
   geom_point(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=2) +
@@ -611,7 +611,7 @@ raw.struc.sddbh3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",], a
 
 
 png(file.path(path.figures, "SEA_Structure_CrashYN_RawDat-Boxplot.png"), width=12, height=8, units="in", res=220)
-cowplot::plot_grid(raw.struc.agb3, raw.struc.density3, raw.struc.meandbh3, raw.struc.sddbh3, ncol=2)
+  cowplot::plot_grid(raw.struc.agb3, raw.struc.density3, raw.struc.meandbh3, raw.struc.sddbh3, ncol=2)
 dev.off()
 
 ## Summarizing results
