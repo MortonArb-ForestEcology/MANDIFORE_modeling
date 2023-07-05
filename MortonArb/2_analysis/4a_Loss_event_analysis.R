@@ -15,16 +15,18 @@ library(ggplot2)
 library(ggpubr)
 library(multcomp)
 
-path.read <- "../data/"
+path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.figures <- file.path(path.google, "Drought and heat analysis/Figures/")
 
-runs.comb <- read.csv(paste0(path.read, "All_runs_yearly.csv"))
+runs.comb <- read.csv(paste0(path.google, "processed_data/All_runs_yearly.csv"))
 
-runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Gap", "Shelter", "Under"))
+runs.comb$Management <- car::recode(runs.comb$Management, "'None'='None'; 'Gap'='Group'; 'Shelter'='Shelter'; 'Under'='Under'")
+runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Group", "Shelter", "Under"))
 
 runs.comb$Driver.set <- paste0(runs.comb$GCM,"." ,runs.comb$rcp)
 
-runs.comb$RCP.name <- car::recode(runs.comb$rcp, "'rcp45'='Low Emmissions'; 'rcp85'='High Emissions'")
-runs.comb$RCP.name <- factor(runs.comb$RCP.name, levels=c("Low Emmissions", "High Emissions"))
+runs.comb$RCP.name <- car::recode(runs.comb$rcp, "'rcp45'='RCP 4.5'; 'rcp85'='RCP 8.5'")
+runs.comb$RCP.name <- factor(runs.comb$RCP.name, levels=c("RCP 4.5", "RCP 8.5"))
 
 runs.late <- runs.comb[runs.comb$year >= 2025,]
 
@@ -50,17 +52,20 @@ for(i in 5:nrow(runs.comb)){
 
 #Modified so that red dots are now looking at unique occurences of a crash instead of the total number of years crashing
 #--------------------------------------#
-# Figure 3
+# Figure 4
 #--------------------------------------#
-png("AGB_static_crashes.png", width=16, height=8, units="in", res=220)
+levels(runs.comb$Management) <- c("None", "Under", "Shelter", "Group")
+png(paste0(path.figures, "AGB_static_crashes.png"), width=16, height=8, units="in", res=220)
 ggplot(data=runs.comb)+
   facet_grid(Management ~ RCP.name) +
-  geom_rect(xmin=2020, xmax=2024, ymin=-Inf, ymax=Inf, fill="orange3", alpha=0.9) +
+  geom_rect(xmin=2020, xmax=2024, ymin=-Inf, ymax=Inf, fill="gray73", alpha=0.9) +
   geom_line(aes(x=year, y=agb, group=GCM)) +
-  geom_point(data=runs.comb[runs.comb$loss.event.20==T & runs.comb$year>2024 & !is.na(runs.comb$agb.rel.diff),], aes(x=year, y=agb, group=GCM), color="blue2", size=3) +
+  geom_vline(aes(xintercept=2050), linetype = "dashed")+
+  geom_vline(aes(xintercept=2099), linetype = "dashed")+
+  #geom_point(data=runs.comb[runs.comb$loss.event.20==T & runs.comb$year>2024 & !is.na(runs.comb$agb.rel.diff),], aes(x=year, y=agb, group=GCM), color="blue2", size=3) +
   geom_point(data=runs.comb[runs.comb$nonseq.loss.event.20==T & runs.comb$year>2024 & !is.na(runs.comb$agb.rel.diff),], aes(x=year, y=agb, group=GCM), color="red2", size=3) +
   labs(x="Year", y="Aboveground Biomass (kgC/m2)") +
-  geom_text(x=2025, y=25, label="Harvest Period: 2020-2024", color="orange3", hjust=0) +
+  #geom_text(x=2025, y=25, label="Harvest Period: 2020-2024", color="orange3", hjust=0) +
   theme(axis.text = element_text(size=rel(1.5), color="black"),
         axis.title = element_text(size=rel(2), face="bold"),
         panel.background = element_rect(fill=NA, color="black"),
@@ -87,10 +92,10 @@ summary(crash.end)
 anova(crash.end)
 
 t.test(crash.summary$crash.mid[crash.summary$Management=="None"], crash.summary$crash.mid[crash.summary$Management=="Shelter"], paired=T)
-t.test(crash.summary$crash.mid[crash.summary$Management=="Gap"], crash.summary$crash.mid[crash.summary$Management=="Shelter"], paired=T)
+t.test(crash.summary$crash.mid[crash.summary$Management=="Group"], crash.summary$crash.mid[crash.summary$Management=="Shelter"], paired=T)
 t.test(crash.summary$crash.mid[crash.summary$Management=="Under"], crash.summary$crash.mid[crash.summary$Management=="Shelter"], paired=T)
 
-# t.test(crash.summary$crash.mid[crash.summary$Management=="None"], crash.summary$crash.mid[crash.summary$Management=="Gap"], paired=T)
+# t.test(crash.summary$crash.mid[crash.summary$Management=="None"], crash.summary$crash.mid[crash.summary$Management=="Group"], paired=T)
 
 # TukeyHSD(crash.mid)
 # chisq.test(x=crash.summary$crash.mid[crash.summary$Management=="None"], y=crash.summary$crash.mid[crash.summary$Management=="Shelter"])
@@ -104,8 +109,8 @@ anova(crash.mid)
 
 crash.stack <- stack(crash.summary[,c("crash.mid", "crash.end")])
 crash.stack[,c("Management", "rcp", "GCM", "RCP.name")] <- crash.summary[,c("Management", "rcp", "GCM", "RCP.name")]
-crash.stack$TimePeriod <- car::recode(crash.stack$ind, "'crash.mid'='mid-century'; 'crash.end'='end-century'")
-crash.stack$TimePeriod <- factor(crash.stack$TimePeriod, levels=c("mid-century", "end-century"))
+crash.stack$TimePeriod <- car::recode(crash.stack$ind, "'crash.mid'='mid-century'; 'crash.end'='end-of-century'")
+crash.stack$TimePeriod <- factor(crash.stack$TimePeriod, levels=c("mid-century", "end-of-century"))
 
 crash.prop <- crash.stack
 crash.prop$values <- ifelse(crash.prop$values>=1, 1, 0)
@@ -125,32 +130,55 @@ stat.shape <- reshape(stat.shape,idvar ="Management", timevar = "TimePeriod",dir
 # ggplot(data=crash.stack) +
 # facet_grid(.~rcp) +
 # geom_boxplot(aes(x=ind, y=values, fill=Management))
-theme.clean <-   theme(axis.text = element_text(size=rel(1), color="black"),
+theme.clean <-   theme(axis.text = element_text(size=rel(1.5), color="black"),
                        axis.title = element_text(size=rel(2), face="bold"),
+                       legend.title=element_text(size=rel(1.5)),
+                       legend.text=element_text(size=rel(1.5)),
+                       legend.position = "top",
                        panel.background = element_rect(fill=NA, color="black"),
                        panel.grid=element_blank(),
-                       # panel.spacing.x = unit(1, "lines"),
+                       panel.spacing.x = unit(1, "lines"),
                        strip.text = element_text(size=rel(2), face="bold"),
                        strip.background = element_rect(fill=NA),
                        plot.margin = unit(c(1, 1, 1, 1), "lines"),
-                       plot.title = element_text(size=rel(2), face="bold", hjust=0.5),
-                       legend.key = element_rect(fill=NA))
+                       plot.title = element_text(size=rel(2), face="bold", hjust=0.5))
+  
 #--------------------------------------#
-# Figure 4
+# Figure 5
 #--------------------------------------#
+levels(crash.stack$Management) <- c("None", "Under", "Shelter", "Group")
 png("../figures/Crashes_Summary.png", width=10, height=8, units="in", res=220)
 ggplot(data=crash.stack) +
   facet_grid(TimePeriod~.) +
   geom_bar(aes(x=rcp, y=values, fill=Management), position="dodge", stat="summary", fun.y="mean") +
   geom_errorbar(aes(x=rcp, y=values, fill=Management), position="dodge", stat="summary", fun.y="sd") +
-  scale_y_continuous(name="# Unique Crashes", expand=c(0,0)) +
-  scale_x_discrete(labels=c("Low\nEmissions", "High\nEmmisions")) +
-  coord_cartesian(ylim=c(0,3.99)) +
-  scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
+  scale_y_continuous(name="Mean Number of Loss Events", expand=c(0,0)) +
+  scale_x_discrete(labels=c("RCP 4.5", "RCP 8.5")) +
+  coord_cartesian(ylim=c(0,2.1)) +
+  scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme.clean + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))
 dev.off()
 
+
+
+
+
+
+
+
+
+
+
+#---------------------------------------------------#
+# Supplemental analysis
+#---------------------------------------------------#
+
 runs.late$loss.event.20 <- ifelse(runs.late$agb.rel.diff <= -.20, T, F)
+
+sum.df <- aggregate(crash.stack, by = c("Management", "ind") ,FUN = mean)
+
+agg.sum <- aggregate(values~ind+Management, data = crash.stack, FUN = mean, na.rm = T)
+agg.sum[, "sd"] <- aggregate(values~ind+Management, data = crash.stack, FUN = sd, na.rm = T)[, "values"]
 
 #Counting the duration of the crash events
 runs.count <- data.frame()
