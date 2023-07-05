@@ -57,6 +57,8 @@ runs.comb <- merge(runs.year, dat.year, by.x = c("year", "GCM", "rcp"), by.y = c
 runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Gap", "Shelter", "Under"))
 runs.comb$harvest <- ifelse(runs.comb$year<2020, "pre-harvest", ifelse(runs.comb$year %in% 2020:2024, "harvest", "post-harvest")) 
 
+runs.comb$tair <- runs.comb$tair - 273.15
+
 #Calculating our agb metrics for evaluation
 runs.comb[,c("agb.diff", "agb.rel.diff", "agb.diff.future", "agb.rel.diff.future")] <- NA
 for(GCM in unique(runs.comb$GCM)){
@@ -77,6 +79,7 @@ for(GCM in unique(runs.comb$GCM)){
       runs.comb[run.rows, "diff.VPD"] <- runs.comb[run.rows, "VPD"] - mean.VPD
       runs.comb[run.rows, "rel.VPD"] <- (runs.comb[run.rows, "VPD"] - mean.VPD)/mean.VPD
       runs.comb[run.rows, "diff.tair"] <- runs.comb[run.rows, "tair"] - mean.tair
+      runs.comb[run.rows, "rel.tair"] <- (runs.comb[run.rows, "tair"] - mean.tair)/mean.tair
       
       # Calculating running change in AGB
       dat.run <- runs.comb[run.rows,]
