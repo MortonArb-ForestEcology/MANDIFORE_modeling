@@ -489,10 +489,11 @@ dev.off()
     theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
     ylab("SD of DBH (cm)")
   
-  png(file.path(path.figures, "SEA_Structure-DBHmean_TimeCrashYN_RawDat.png"), width=8, height=8, units="in", res=220)
+  png(file.path(path.figures, "SEA_Structure-DBHsd_TimeCrashYN_RawDat.png"), width=8, height=8, units="in", res=220)
   raw.struc.sddbh2
   dev.off()
   
+plot(runs.fill$tree.dbh.sd[!is.na(runs.fill$group.crash.lag)] ~ runs.fill$tree.dbh.mean[!is.na(runs.fill$group.crash.lag)])
 
 
 struct.var <- c("agb", "density.tree.convert", "tree.dbh.mean", "tree.dbh.sd")
