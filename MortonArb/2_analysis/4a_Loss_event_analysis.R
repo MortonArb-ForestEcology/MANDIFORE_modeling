@@ -147,7 +147,7 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1.5), color="black"),
 # Figure 5
 #--------------------------------------#
 levels(crash.stack$Management) <- c("None", "Under", "Shelter", "Group")
-png("../figures/Crashes_Summary.png", width=10, height=8, units="in", res=220)
+png(paste0(path.figures, "Crashes_Summary.png"), width=10, height=8, units="in", res=220)
 ggplot(data=crash.stack) +
   facet_grid(TimePeriod~.) +
   geom_bar(aes(x=rcp, y=values, fill=Management), position="dodge", stat="summary", fun.y="mean") +
