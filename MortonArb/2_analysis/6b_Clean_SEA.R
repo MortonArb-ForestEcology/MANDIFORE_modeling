@@ -214,7 +214,7 @@ raw.met.tair <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=i
   geom_point(aes(color=Management), stat="summary", fun="mean", size=2.5) +
   scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
-  ylab("Temperature (C)") +
+  ylab("Difference in Temperature (C)") +
   guides(color=F)
 
 raw.met.precip <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=rel.precip, group=Management), position=dodge) +
@@ -223,7 +223,7 @@ raw.met.precip <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x
   geom_point(aes(color=Management), stat="summary", fun="mean", size=2.5) +
   scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
-  ylab("Total precip (m)")
+  ylab("Relative Total Precip (m)")
 
 raw.met.vpd <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=rel.VPD, group=Management), position=dodge) +
   geom_errorbar(aes(color=Management), stat="summary", fun.y="sd", size=0.75, alpha=0.75) +
@@ -231,10 +231,11 @@ raw.met.vpd <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=in
   geom_point(aes(color=Management), stat="summary", fun="mean", size=2.5) +
   scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
-  ylab("VPD (kPa)") + guides(color=F)
+  ylab("Relative VPD (kPa)") + guides(color=F)
+
 
 png(file.path(path.figures, "SEA_RelWeather_TimeMgmt_RawDat.png"), width=12, height=8, units="in", res=220)
-  cowplot::plot_grid(raw.met.tair, raw.met.precip, raw.met.vpd, ncol=2, rel_widths = c(0.8, 1))
+  cowplot::plot_grid(raw.met.tair, raw.met.precip, raw.met.vpd, ncol=2, labels = c("A", "B", "") rel_widths = c(0.8, 1))
 dev.off()
 
 relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
@@ -479,7 +480,7 @@ dev.off()
   
   raw.struc.sddbh2 <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=tree.dbh.sd, group=group.crash.lag.check), position=dodge) +
     geom_rect(xmin=5.5, xmax=6.5, ymin=-Inf, ymax=Inf, fill="gray90", alpha=0.9, color=NA) + # I don't know why the alpha isn't working, but :shrug:
-    coord_cartesian(ylim=c(27.5, 44.2)) +
+    coord_cartesian(ylim=c(10, 22)) +
     facet_wrap(~Management)+
     geom_errorbar(aes(color=group.crash.lag.check), stat="summary", fun.y="sd", size=1.25, alpha=0.5) +
     geom_line(aes(color=group.crash.lag.check), stat="summary", fun="mean", size=1.5) +
@@ -611,7 +612,7 @@ raw.struc.sddbh3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",], a
 
 
 png(file.path(path.figures, "SEA_Structure_CrashYN_RawDat-Boxplot.png"), width=12, height=8, units="in", res=220)
-  cowplot::plot_grid(raw.struc.agb3, raw.struc.density3, raw.struc.meandbh3, raw.struc.sddbh3, ncol=2)
+  cowplot::plot_grid(raw.struc.agb3, raw.struc.density3, raw.struc.meandbh3, raw.struc.sddbh3, ncol=2, labels = c("A", "B", "C", "D"))
 dev.off()
 
 ## Summarizing results
