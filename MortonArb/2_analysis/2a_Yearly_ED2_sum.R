@@ -108,3 +108,13 @@ for(GCM in unique(runs.comb$GCM)){
 
 write.csv(runs.comb, paste0("../data/All_runs_yearly.csv"), row.names = F)
 write.csv(runs.comb, file.path(path.google, "processed_data/All_runs_yearly.csv"), row.names = F)
+
+#Testing the normality of our relative and difference based weather data
+qqnorm(runs.yr$diff.precip)
+hist(runs.yr$diff.precip)
+
+qqnorm(runs.yr$rel.VPD)
+hist(runs.yr$rel.VPD)
+
+qqnorm(runs.yr$rel.tair)
+hist(runs.yr$rel.tair)
