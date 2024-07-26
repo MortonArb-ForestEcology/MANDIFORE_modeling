@@ -15,7 +15,7 @@ library(ggplot2)
 library(ggpubr)
 library(multcomp)
 
-path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "G:/.shortcut-targets-by-id/1u-M0JCmrNhSLBGfV5TPZnk_ZU7vXgDIk/MANDIFORE_CaseStudy_MortonArb/"
 path.figures <- file.path(path.google, "Drought and heat analysis/Figures/")
 
 runs.comb <- read.csv(paste0(path.google, "processed_data/All_runs_yearly.csv"))
@@ -25,8 +25,8 @@ runs.comb$Management <- factor(runs.comb$Management, levels = c("None", "Group",
 
 runs.comb$Driver.set <- paste0(runs.comb$GCM,"." ,runs.comb$rcp)
 
-runs.comb$RCP.name <- car::recode(runs.comb$rcp, "'rcp45'='RCP 4.5'; 'rcp85'='RCP 8.5'")
-runs.comb$RCP.name <- factor(runs.comb$RCP.name, levels=c("RCP 4.5", "RCP 8.5"))
+runs.comb$RCP.name <- car::recode(runs.comb$rcp, "'rcp45'='RCP4.5'; 'rcp85'='RCP8.5'")
+runs.comb$RCP.name <- factor(runs.comb$RCP.name, levels=c("RCP4.5", "RCP8.5"))
 
 runs.late <- runs.comb[runs.comb$year >= 2025,]
 
@@ -153,7 +153,7 @@ ggplot(data=crash.stack) +
   geom_bar(aes(x=rcp, y=values, fill=Management), position="dodge", stat="summary", fun.y="mean") +
   geom_errorbar(aes(x=rcp, y=values, fill=Management), position="dodge", stat="summary", fun.y="sd") +
   scale_y_continuous(name="Mean Number of Loss Events", expand=c(0,0)) +
-  scale_x_discrete(labels=c("RCP 4.5", "RCP 8.5")) +
+  scale_x_discrete(labels=c("RCP4.5", "RCP8.5")) +
   coord_cartesian(ylim=c(0,2.1)) +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme.clean + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))
