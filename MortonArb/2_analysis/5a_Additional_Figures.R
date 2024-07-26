@@ -13,13 +13,13 @@ library(dplyr)
 #------------------------------------------------------------------------#
 # FIGURES SECTION
 #------------------------------------------------------------------------#
-path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "G:/.shortcut-targets-by-id/1u-M0JCmrNhSLBGfV5TPZnk_ZU7vXgDIk/MANDIFORE_CaseStudy_MortonArb/"
 
 path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
 
 runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv"))
-runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='RCP 4.5'; 'rcp85'='RCP 8.5'")
-runs.yr$RCP.name <- factor(runs.yr$RCP.name, levels=c("RCP 4.5", "RCP 8.5"))
+runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='RCP4.5'; 'rcp85'='RCP8.5'")
+runs.yr$RCP.name <- factor(runs.yr$RCP.name, levels=c("RCP4.5", "RCP8.5"))
 
 runs.yr$loss.event.20 <- ifelse(runs.yr$agb.rel.diff<=-0.2, 1, 0)
 summary(runs.yr)
@@ -115,6 +115,32 @@ rcp.df <- dplyr::bind_rows(rcp.list)
 rcp.wide <- tidyr::spread(rcp.df, VAR, value)
 
 write.csv(rcp.wide, "../data/RCP_absmet_values.csv")
+
+#--------------------------------------#
+vars.plot <- c("tair", "precip.total", "VPD")
+
+dat.weather <- stack(runs.yr[, vars.plot])
+dat.weather[dat.weather$ind=="precip.total","values"] <- dat.weather[dat.weather$ind=="precip.total","values"]/1000
+dat.weather[dat.weather$ind=="VPD","values"] <- dat.weather[dat.weather$ind=="VPD","values"]/1000
+dat.weather[,c("GCM", "rcp", "RCP.name", "Management", "year")] <- runs.yr[, c("GCM", "rcp", "RCP.name", "Management", "year")]
+
+
+dat.wagg <- aggregate(values~ind+GCM+rcp+RCP.name+year, dat.weather, FUN = mean)
+
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "tair", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp45"& dat.wagg$ind== "tair", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "tair", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45"& dat.wagg$ind== "tair", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "tair", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "tair", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "tair", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "tair", "values"] , paired=T)
+
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "precip.total", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp45"& dat.wagg$ind== "precip.total", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "precip.total", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45"& dat.wagg$ind== "precip.total", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "precip.total", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "precip.total", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "precip.total", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "precip.total", "values"] , paired=T)
+
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "VPD", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp45"& dat.wagg$ind== "VPD", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "VPD", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45"& dat.wagg$ind== "VPD", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "VPD", "values"], dat.wagg[dat.wagg$year==2050 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "VPD", "values"] , paired=T)
+t.test(dat.wagg[dat.wagg$year==2025 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "VPD", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "VPD", "values"] , paired=T)
 
 
 #Emissions scenario table
@@ -309,7 +335,7 @@ png(paste0(path.figures, "HarvestStructure_Emissions.png"), width=14, height=8, 
 ggplot(data=dat.harvest[dat.harvest$time == "Mid-century" | dat.harvest$time == "End-of-century" | dat.harvest$time == "Post-harvest",]) +
   facet_wrap(~ind, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
   geom_boxplot(aes(x=as.factor(time), y=values, fill=RCP.name)) +
-  scale_fill_manual(name = "Emissions scenario", values=c("RCP 4.5"="gold2", "RCP 8.5"="orangered2"))+
+  scale_fill_manual(name = "Emissions scenario", values=c("RCP4.5"="gold2", "RCP8.5"="orangered2"))+
   #scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Gap"="#b2df8a")) +
   theme.clean+
   scale_y_continuous(name ="")+
@@ -418,7 +444,7 @@ for(COL in struc.var){
   print(paste(COL, "25"))
   output <- anova(lm.test.25)
   mult.list.25 <- list()
-  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,5), "*"), round(output$`p-value` ,5))
+  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,3), "*"), round(output$`p-value` ,3))
   mult.list.25[[paste(COL)]]$Var <- COL
   mult.list.25[[paste(COL)]]$Comp <- rownames(output)
   mult.list.25[[paste(COL)]]$pvalue <- output$`p-value` 
@@ -430,7 +456,7 @@ for(COL in struc.var){
   print(paste(COL, "50"))
   output <- anova(lm.test.50)
   mult.list.50 <- list()
-  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,5), "*"), round(output$`p-value` ,5))
+  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,3), "*"), round(output$`p-value` ,3))
   mult.list.50[[paste(COL)]]$Var <- COL
   mult.list.50[[paste(COL)]]$Comp <- rownames(output)
   mult.list.50[[paste(COL)]]$pvalue <- output$`p-value` 
@@ -442,7 +468,7 @@ for(COL in struc.var){
   print(paste(COL, "99"))
   output <- anova(lm.test.99)
   mult.list.99 <- list()
-  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,5), "*"), round(output$`p-value` ,5))
+  output$`p-value` <- ifelse(output$`p-value` <=.05, paste0(round(output$`p-value` ,3), "*"), round(output$`p-value` ,3))
   mult.list.99[[paste(COL)]]$Var <- COL
   mult.list.99[[paste(COL)]]$Comp <- rownames(output)
   mult.list.99[[paste(COL)]]$pvalue <- output$`p-value` 
@@ -462,9 +488,13 @@ mult.df.99$Time <- "End of century"
 #Creating different dataframes to look at specific windows. This information should evtually end up captured in a figure
 struc.comp <- rbind(mult.df.25, mult.df.50, mult.df.99)
 
-struc.comp$pvalue <- ifelse(grepl("*", struc.comp$pvalue, fixed = TRUE), "sig", "N.S.")
+#struc.comp$pvalue <- ifelse(grepl("*", struc.comp$pvalue, fixed = TRUE), "sig", "N.S.")
 
 struc.comp$Time <- factor(struc.comp$Time, levels=c("Post-harvest", "Mid-century", "End of century"))
+
+struc.comp$fvalue <- round(struc.comp$fvalue, 2)
+
+struc.comp$fvalue <- paste0(struc.comp$fvalue, " (", struc.comp$pvalue, ")")
 
 struc.sig <- reshape2::dcast(struc.comp, Time + Var ~ Comp, value.var = "fvalue")
 
@@ -494,12 +524,12 @@ names(met.labs) <- c("tair", "precip.total", "VPD")
 
 weath.time <- ggplot(data=dat.wagg)+
   facet_grid(ind~RCP.name, scales= "free_y", labeller = labeller(ind = met.labs), switch = "y") +
-  geom_line(aes(x=year, y=values, group=GCM)) +
-  geom_hline(data = dat.means, aes(yintercept=values), color="red2", linetype="dashed", size=1)+
   geom_vline(aes(xintercept=2025), linetype = "dashed")+
   geom_vline(aes(xintercept=2050), linetype = "dashed")+
   geom_vline(aes(xintercept=2099), linetype = "dashed")+
-  geom_rect(aes(xmin=2019, xmax=2024, ymin=-Inf, ymax =Inf), color = "lightpink3", fill = "lightpink3", alpha = 0.01)+
+  geom_rect(aes(xmin=2019, xmax=2024, ymin=-Inf, ymax =Inf), color = "grey", fill = "grey", alpha = 0.01)+
+  geom_line(aes(x=year, y=values, group=GCM)) +
+  geom_hline(data = dat.means, aes(yintercept=values), color="red2", linetype="dashed", size=1)+
   labs(x="", y="") +
   theme(axis.text = element_text(size=rel(1.5), color="black"),
         axis.title = element_text(size=rel(2), face="bold"),
@@ -519,7 +549,7 @@ weath.cent <- ggplot(data=dat.wagg[dat.wagg$year == 2025 | dat.wagg$year == 2050
   geom_boxplot(aes(x=as.character(year), y=values, fill = RCP.name)) +
   labs(x="", y="") +
   scale_x_discrete(name="", labels=c("Post" ,"Mid", "End")) +
-  scale_fill_manual(name = "Emissions\nscenario", values=c("RCP 4.5"="gold2", "RCP 8.5"="orangered2"))+
+  scale_fill_manual(name = "Emissions\nscenario", values=c("RCP4.5"="gold2", "RCP8.5"="orangered2"))+
   #ggpubr::stat_compare_means(aes(x=as.character(year), y=values, fill = rcp), method = "t.test")+
   theme(axis.text.y = element_text(size=rel(2), color="black"),
         axis.title.y = element_blank(),
