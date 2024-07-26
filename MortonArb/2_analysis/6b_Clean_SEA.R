@@ -13,7 +13,7 @@ library(dplyr)
 #------------------------------------------------------------------------#
 path.google <- "~/Google Drive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
-path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
+path.google <- "G:/.shortcut-targets-by-id/1u-M0JCmrNhSLBGfV5TPZnk_ZU7vXgDIk/MANDIFORE_CaseStudy_MortonArb/"
 
 path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
 
@@ -211,34 +211,42 @@ summary(runs.fill)
 raw.met.tair <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=diff.tair, group=Management), position=dodge) +
   geom_errorbar(aes(color=Management), stat="summary", fun.y="sd", size=0.75, alpha=0.75) +
   geom_line(aes(color=Management), stat="summary", fun="mean", size=2) +
-  geom_point(aes(color=Management), stat="summary", fun="mean", size=2.5) +
+  geom_point(aes(color=Management), stat="summary", fun="mean", size=4) +
   scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  theme(text=element_text(size=17))+
   ylab("Difference in Temperature (C)") +
   guides(color=F)
 
 raw.met.precip <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=rel.precip, group=Management), position=dodge) +
   geom_errorbar(aes(color=Management), stat="summary", fun.y="sd", size=0.75, alpha=0.75) +
   geom_line(aes(color=Management), stat="summary", fun="mean", size=2) +
-  geom_point(aes(color=Management), stat="summary", fun="mean", size=2.5) +
+  geom_point(aes(color=Management), stat="summary", fun="mean", size=4) +
   scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  theme(text=element_text(size=17))+
   ylab("Relative Total Precip (m)")
 
 raw.met.vpd <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=rel.VPD, group=Management), position=dodge) +
   geom_errorbar(aes(color=Management), stat="summary", fun.y="sd", size=0.75, alpha=0.75) +
   geom_line(aes(color=Management), stat="summary", fun="mean", size=2) +
-  geom_point(aes(color=Management), stat="summary", fun="mean", size=2.5) +
+  geom_point(aes(color=Management), stat="summary", fun="mean", size=4) +
   scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  theme(text=element_text(size=17))+
   ylab("Relative VPD (kPa)") + guides(color=F)
 
 
 png(file.path(path.figures, "SEA_RelWeather_TimeMgmt_RawDat.png"), width=12, height=8, units="in", res=220)
-  cowplot::plot_grid(raw.met.tair, raw.met.precip, raw.met.vpd, ncol=2, labels = c("A", "B", "") rel_widths = c(0.8, 1))
+  cowplot::plot_grid(raw.met.tair, raw.met.precip, raw.met.vpd, ncol=2, labels = c("A", "B", "C"), rel_widths = c(0.8, 1.2))
 dev.off()
 
-relmet.var <- c("rel.precip", "diff.tair", "rel.VPD")
+#Doing the Yeo-johnson transformation
+yj.stats <- yeojohnson(runs.fill$rel.VPD)
+
+runs.fill$rel.VPD.T <- yj.stats$x.t
+
+relmet.var <- c("rel.precip", "diff.tair", "rel.VPD.T")
 df.lag.relmetxind <- data.frame()
 df.ano.relmetxind <- data.frame()
 df.time.relmetxind <- data.frame()
@@ -376,7 +384,8 @@ raw.struc.agb <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(
   #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="black")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
-  ylab("AGB (kgC/m2)")
+  theme(text=element_text(size=21))+
+  ylab("AGB (kgC/m2)")+ guides(color=F)
 
 raw.struc.density <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=density.tree.convert, group=group.crash.lag.check), position=dodge) +
   geom_rect(xmin=5.5, xmax=6.5, ymin=-Inf, ymax=Inf, fill="gray90", alpha=0.9, color=NA) + # I don't know why the alpha isn't working, but :shrug:
@@ -387,6 +396,7 @@ raw.struc.density <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], 
   #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="black")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  theme(text=element_text(size=21))+
   ylab("Density (trees/ha)")
 
 raw.struc.meandbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=tree.dbh.mean, group=group.crash.lag.check), position=dodge) +
@@ -398,7 +408,8 @@ raw.struc.meandbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], 
   #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="black")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
-  ylab("Mean DBH (cm)")
+  theme(text=element_text(size=21))+
+  ylab("Mean DBH (cm)")+ guides(color=F)
 
 raw.struc.sddbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], aes(x=group.crash.lag, y=tree.dbh.sd, group=group.crash.lag.check), position=dodge) +
   geom_rect(xmin=5.5, xmax=6.5, ymin=-Inf, ymax=Inf, fill="gray90", alpha=0.9, color=NA) + # I don't know why the alpha isn't working, but :shrug:
@@ -409,11 +420,12 @@ raw.struc.sddbh <- ggplot(data=runs.fill[!is.na(runs.fill$group.crash.lag),], ae
   #scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   scale_color_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="black")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  theme(text=element_text(size=21))+
   ylab("SD of DBH (cm)")
 
 
 png(file.path(path.figures, "SEA_Structure_TimeCrashYN_RawDat.png"), width=12, height=8, units="in", res=220)
-  cowplot::plot_grid(raw.struc.agb, raw.struc.density, raw.struc.meandbh, raw.struc.sddbh, ncol=2)
+  cowplot::plot_grid(raw.struc.agb, raw.struc.density, raw.struc.meandbh, raw.struc.sddbh, ncol=2, rel_widths = c(1,1.5,1,1.5))
 dev.off()
 
   
@@ -584,35 +596,44 @@ df.mgmt.structxind
 write.csv(df.ano.structxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_Struct_TimeMgmt.csv"), row.names = F)
 write.csv(df.time.structxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_Struct_Time.csv"), row.names = F)
 write.csv(df.mgmt.structxind, file.path(path.google, "Drought and heat analysis", "Mixed effects models results/SEA_ANOVA_Struct_Mgmt.csv"), row.names = F)
-  
+ 
+#-------------------------------------#
+# Figure 7
+#-------------------------------------#
 
 raw.struc.agb3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",], aes(x=Management, fill=group.crash.lag.check, y=agb), position=dodge) + 
   geom_boxplot(alpha=0.7) +
-  scale_fill_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="black")) +
+  scale_fill_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="gray")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
-  ylab("AGB (kgC/m2)")
+  theme(text=element_text(size=21))+
+  ylab("AGB (kgC/m2)")+
+  guides(fill=F)
 
 raw.struc.density3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",], aes(x=Management, fill=group.crash.lag.check, y=density.tree.convert), position=dodge) + 
   geom_boxplot(alpha=0.7) +
-  scale_fill_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="black")) +
+  scale_fill_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="gray")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  theme(text=element_text(size=21))+
   ylab("Density (trees/ha)")
 
 raw.struc.meandbh3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",], aes(x=Management, fill=group.crash.lag.check, y=tree.dbh.mean), position=dodge) + 
   geom_boxplot(alpha=0.7) +
-  scale_fill_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="black")) +
+  scale_fill_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="gray")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+  
-  ylab("Mean DBH (cm)")
+  theme(text=element_text(size=21))+
+  ylab("Mean DBH (cm)")+
+  guides(fill=F)
 
 raw.struc.sddbh3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",], aes(x=Management, fill=group.crash.lag.check, y=tree.dbh.sd), position=dodge) + 
   geom_boxplot(alpha=0.7) +
-  scale_fill_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="black")) +
+  scale_fill_manual(name = "Loss Event\nOccurence", values=c("Y"="red3", "N"="gray")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+    
+  theme(text=element_text(size=21))+
   ylab("SD of DBH (cm)")
 
 
 png(file.path(path.figures, "SEA_Structure_CrashYN_RawDat-Boxplot.png"), width=12, height=8, units="in", res=220)
-  cowplot::plot_grid(raw.struc.agb3, raw.struc.density3, raw.struc.meandbh3, raw.struc.sddbh3, ncol=2, labels = c("A", "B", "C", "D"))
+  cowplot::plot_grid(raw.struc.agb3, raw.struc.density3, raw.struc.meandbh3, raw.struc.sddbh3, ncol=2, labels = c("A", "B", "C", "D"), rel_widths = c(0.8,1.2,0.8,1.2))
 dev.off()
 
 ## Summarizing results
