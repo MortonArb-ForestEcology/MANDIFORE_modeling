@@ -11,6 +11,362 @@ library(nlme)
 library(multcomp)
 #------------------------------------------------------------------------#
 
+#-----------------------------------------------------------------------#
+#FROM SCRIPT 4a_Loss_event_analysis.R
+#-----------------------------------------------------------------------#
+#Organizing data into long form for easier graphing. Only using the year immediately post harvest
+agg.harv <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.late[runs.late$year == 2025,], FUN = mean, na.action = NULL)
+
+plot.harv <- stack(agg.harv[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.harv) <- c("values", "var")
+plot.harv[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.harv[,c("GCM", "rcp", "Driver.set", "Management")]
+
+path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Loss_Event_Figures"
+
+#Making a box plot of the variables immediately post-harvest
+png(width= 750, filename= file.path(path.figures, paste0('Immediate_post-harvest_Structure_by_Management.png')))
+ggplot(plot.harv)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables immediately post-harvest (2025) by Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Organizing data into long form for easier graphing. Only using the year immediately post harvest
+agg.end <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.comb[runs.comb$year == 2099,], FUN = mean, na.action = NULL)
+
+plot.end <- stack(agg.end[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.end) <- c("values", "var")
+plot.end[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.end[,c("GCM", "rcp", "Driver.set", "Management")]
+
+#Making a box plot of the variables immediately post-harvest
+png(width= 750, filename= file.path(path.figures, paste0('End_of_Run_Structure_by_Management.png')))
+ggplot(plot.end)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables at run end (2099) by Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Organizing data into long form for easier graphing. Only using the year immediately post harvest
+agg.mid <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.comb[runs.comb$year == 2050,], FUN = mean, na.action = NULL)
+
+plot.mid <- stack(agg.mid[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.mid) <- c("values", "var")
+plot.mid[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.mid[,c("GCM", "rcp", "Driver.set", "Management")]
+
+#Making a box plot of the variables immediately post-harvest
+png(width= 750, filename= file.path(path.figures, paste0('Midcentury_Structure_by_Management.png')))
+ggplot(plot.mid)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables at mid century (2050) by Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+
+#--------------------------------------------------#
+# Looking at Structure after crash
+#--------------------------------------------------#
+runs.MNG.comp <- data.frame()
+for(i in 1:nrow(runs.late)){
+  if(runs.late[i, "nonseq.loss.event.20"] == T){
+    temp.lead <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == runs.late[i, "year"], ]
+    #Now pulling the year before the crash
+    temp.lag <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == (runs.late[i, "year"]-1), ]
+    #Flagging the Management that ha the loss event
+    temp.lag$nonseq.loss.event.20 <- temp.lead$nonseq.loss.event.20
+    runs.MNG.comp <- rbind(runs.MNG.comp, temp.lag)
+  }
+}
+
+#Creating a figure that shows the structure of all the management styles before at least one of them crashed. 
+agg.crash <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~rcp+Driver.set+Management+nonseq.loss.event.20, data = runs.MNG.comp, FUN = mean, na.action = NULL)
+
+plot.crash <- stack(agg.crash[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.crash) <- c("values", "var")
+plot.crash[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")] <- agg.crash[,c("rcp", "Driver.set", "Management", "nonseq.loss.event.20")]
+
+#We can now compare the year before a crash across management styles experiencing the same weather conditions
+png(width= 750, filename= file.path(path.figures, paste0('Pre-crash_Structure_by_whether_crash_occured.png')))
+ggplot(plot.crash)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=nonseq.loss.event.20, y=values, color = rcp))+
+  ggtitle("Structural variables immediately pre-crash by whether they crashed")+
+  xlab("Was there a major loss event")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+
+library(data.table)
+#Creating a figure that shows the structure of all the management styles before at least one of them crashed. 
+runs.before <- data.frame()
+for(i in 1:nrow(runs.late)){
+  if(runs.late[i, "nonseq.loss.event.20"] == T){
+    temp.lead <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == runs.late[i, "year"], ]
+    #Now pulling the year before the crash
+    temp.lag <- runs.late[runs.late$Driver.set == runs.late[i, "Driver.set"] & runs.late$year == runs.late[i-1, "year"], ]
+    #Flagging the Management that ha the loss event
+    temp.lag$nonseq.loss.event.20 <- temp.lead$nonseq.loss.event.20
+    runs.before <- rbind(runs.before, temp.lag)
+  }
+}
+
+
+agg.stack <- aggregate(cbind(agb, density.tree, tree.dbh.mean, tree.height.mean, tree.dbh.sd, tree.height.sd)~GCM+rcp+Driver.set+Management, data = runs.before, FUN = mean, na.action = NULL)
+
+plot.stack <- stack(agg.stack[,c("agb", "density.tree", "tree.dbh.mean", "tree.height.mean", "tree.dbh.sd", "tree.height.sd")])
+names(plot.stack) <- c("values", "var")
+plot.stack[,c("GCM", "rcp", "Driver.set", "Management")] <- agg.stack[,c("GCM", "rcp", "Driver.set", "Management")]
+
+#We can now compare the year before a crash across management styles experiencing the same weather conditions
+png(width= 750, filename= file.path(path.figures, paste0('Pre-crash_Structure_by_Management.png')))
+ggplot(plot.stack)+
+  facet_wrap(~var, scales = "free")+
+  geom_boxplot(aes(x=Management, y=values, color = Management), show.legend = FALSE)+
+  ggtitle("Structural variables immediately pre-crash by Management")+
+  xlab("Management")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+#T test on the structural metrics
+t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "agb"], runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == F, "agb"])
+t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "density.tree"], runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == F, "density.tree"])
+t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "tree.dbh.mean"], runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == F, "tree.dbh.mean"])
+t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "tree.height.mean"], runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == F, "tree.height.mean"])
+t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "tree.dbh.sd"], runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == F, "tree.dbh.sd"])
+t.test(runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == T, "tree.height.sd"], runs.MNG.comp[runs.MNG.comp$nonseq.loss.event.20 == F, "tree.height.sd"])
+
+
+
+
+#-----------------------------------------------------------------------#
+#FROM SCRIPT 5a_Additional_Figures.R
+#-----------------------------------------------------------------------#
+
+path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/Outline Figures"
+
+library(ggplot2)
+cbPalette  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+                "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+#Proportional agb change vs VPD by management
+png(width= 750, filename= file.path(path.figures, paste0('Proportional_Agb_Change_to_VPD_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Proportional Change in above ground biomass (AGB) to VPD increases by Management")+
+  facet_wrap(~Management)+
+  geom_point(aes(x=VPD, y = agb.rel.diff, color = rcp))+
+  ylab("Proportional change in AGB")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Proportional agb change vs agb by management
+png(width= 750, filename= file.path(path.figures, paste0('Proportional_Agb_Change_to_AGB_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Proportional Change in above ground biomass (AGB) to current AGB increases by Management")+
+  facet_wrap(~Management)+
+  geom_point(aes(x=agb, y = agb.rel.diff, color = rcp))+
+  ylab("Proportional change in AGB")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+#Proportional agb change vs time by management
+png(width= 750, filename= file.path(path.figures, paste0('Proportional_Agb_Change_Over_Time_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Proportional Change in above ground biomass (AGB) over time by Management")+
+  facet_wrap(~Management)+
+  geom_line(aes(x=year, y = agb.rel.diff, group = Driver.set, color = rcp))+
+  ylab("Proportional change in AGB")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+#AGB over time by management
+png(width= 750, filename= file.path(path.figures, paste0('AGB_Over_Time_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Above ground biomass (AGB) over time by Management")+
+  facet_wrap(~Management)+
+  geom_line(aes(x=year, y = agb, group = Driver.set, color = rcp))+
+  ylab("AGB")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Example using a single GCM
+png(width= 750, filename= file.path(path.figures, paste0('Sinlge_GCM_AGB_Over_Time_by_Management.png')))
+ggplot(data=runs.late[runs.late$Driver.set == "BNU-ESM.rcp45",])+
+  ggtitle("Example: Above ground biomass (AGB) over time by Management for BNU-ESM.rcp45")+
+  #facet_wrap(~Management)+
+  geom_line(aes(x=year, y = agb, color = Management))+
+  ylab("AGB")+
+  theme(plot.title = element_text(size = 10, face = "bold"))
+dev.off()
+
+
+pdf(file= file.path(path.figures, paste0('AGB_Over_Time_Individual_GCM.pdf')))
+for(DRIVE in unique(runs.late$Driver.set)){
+  temp.fig <- ggplot(data=runs.late[runs.late$Driver.set == DRIVE,])+
+    ggtitle(paste0(DRIVE,": Above ground biomass (AGB) over time by Management"))+
+    #facet_wrap(~Management)+
+    geom_line(aes(x=year, y = agb, color = Management))+
+    ylab("AGB")+
+    theme(plot.title = element_text(size = 10, face = "bold"))
+  print(temp.fig)
+}
+dev.off()
+
+runs.late$total.precip <- runs.late$sum
+runs.late$air.temp <- runs.late$tair
+runs.long <- tidyr::gather(runs.late, var, values, air.temp, total.precip, VPD, factor_key=TRUE)
+
+#VPD increasing over time
+png(width= 750, filename= file.path(path.figures, paste0('Weather_Changing.png')))
+ggplot(data=runs.long)+
+  ggtitle("CMIP5 models weather metrics across two different emisisons scenarios")+
+  facet_grid(var~rcp, scales = "free")+
+  geom_point(aes(x = year, y= values, color = GCM))+
+  geom_smooth(aes(x = year, y= values, color = GCM))+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#AGB over height sd by management
+png(width= 750, filename= file.path(path.figures, paste0('AGB_vs_Height_sd_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Above ground biomass (AGB) vs. standard deviaiton of tree height by management")+
+  facet_wrap(~Management)+
+  geom_point(aes(x=height.sd, y = agb, color = harvest, shape = rcp))+
+  geom_point(data = runs.comb[runs.comb$harvest == "Pre-harvest" | runs.comb$harvest == "Harvest",], aes(x=height.sd, y=agb, color = harvest))+
+  scale_colour_manual(values=cbPalette)+
+  ylab("AGB")+
+  xlab("SD of tree height")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+#Proportional AGB over height sd by management
+png(width= 800, filename= file.path(path.figures, paste0('Proportional_change_in_AGB_vs_Height_sd_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Proportional change in above ground biomass (AGB) vs. standard deviaiton of tree height by management")+
+  facet_wrap(~Management)+
+  geom_point(aes(x=height.sd, y = agb.rel.diff, color = harvest, shape = rcp))+
+  geom_point(data = runs.comb[runs.comb$harvest == "Pre-harvest" | runs.comb$harvest == "Harvest",], aes(x=height.sd, y=agb.rel.diff, color = harvest))+
+  scale_colour_manual(values=cbPalette)+
+  ylab("Proportional change in AGB")+
+  xlab("SD of tree height")+
+  theme(plot.title = element_text(size = 14, face = "bold"))
+dev.off()
+
+
+#Proportional AGB over AGB by management
+png(width= 800, filename= file.path(path.figures, paste0('Proportional_change_in_AGB_vs_AGB_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Proportional change in above ground biomass (AGB) vs. AGB by management")+
+  facet_wrap(~Management)+
+  geom_point(aes(x=agb, y = agb.rel.diff, color = harvest, shape = rcp))+
+  geom_point(data = runs.comb[runs.comb$harvest == "Pre-harvest" | runs.comb$harvest == "Harvest",], aes(x=agb, y=agb.rel.diff, color = harvest))+
+  scale_colour_manual(values=cbPalette)+
+  ylab("Proportional change in AGB")+
+  xlab("SD of tree height")+
+  theme(plot.title = element_text(size = 14, face = "bold"))
+dev.off()
+
+
+
+#height sd vs VPD by Management
+png(width= 750, filename= file.path(path.figures, paste0('Height_sd_vs_VPD_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Standard Deviation of Height vs. Vapor Pressure Deficit by Management")+
+  facet_wrap(~Management)+
+  geom_point(aes(x=VPD, y = height.sd, color = rcp))+
+  ylab("SD of tree height")+
+  xlab("VPD")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+#height sd over time by Management
+png(width= 750, filename= file.path(path.figures, paste0('Height_sd_vs_time_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Standard Deviation of Height over time by Management")+
+  facet_wrap(~Management)+
+  geom_line(aes(x=year, y = height.sd, group= Driver.set, color = rcp))+
+  ylab("SD of tree height")+
+  xlab("year")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+
+#Distribution of height.sd
+png(width= 750, filename= file.path(path.figures, paste0('Dist_of_Height_sd_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Distribution of Standard Deviation of Height by Management")+
+  facet_wrap(~Management)+
+  geom_histogram(aes(x =height.sd))+
+  ylab("Frequency")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Distribution of proportional change in agb
+png(width= 750, filename= file.path(path.figures, paste0('Proportional_change_in_Agb_by_Management.png')))
+ggplot(data=runs.late)+
+  ggtitle("Proportional change in agb by Management")+
+  facet_wrap(~Management)+
+  geom_histogram(aes(x =agb.rel.diff))+
+  xlab("Proportional change in agb")+
+  ylab("Frequency")+
+  theme(plot.title = element_text(size = 16, face = "bold"))
+dev.off()
+
+#Boxplot section
+runs.comb$Driver.set <- paste0(runs.comb$GCM,"." ,runs.comb$rcp)
+
+box.df <- data.frame()
+for(DRIVE in unique(runs.comb$Driver.set)){
+  for(MNG in unique(runs.comb$Management)){
+    temp <- runs.comb[runs.comb$Driver.set == DRIVE & runs.comb$Management == MNG, ]
+    temp$height.sd.diff <- mean(temp[temp$year >= 2089, "height.sd"]) - mean(temp[temp$year <= 2017, "height.sd"])
+    temp$dbh.sd.diff <-  mean(temp[temp$year >= 2089, "dbh.sd"]) - mean(temp[temp$year <= 2017, "dbh.sd"])
+    temp$agb.change <-  mean(temp[temp$year >= 2089, "agb"]) - mean(temp[temp$year <= 2017, "agb"])
+    out.df <- data.frame(unique(temp$Driver.set),unique(temp$Management), unique(temp$height.sd.diff), unique(temp$dbh.sd.diff), unique(temp$agb.change))
+    colnames(out.df) <- c("Driver.set","Management" ,"height.sd.diff", "dbh.sd.diff", "agb.change")
+    box.df <- rbind(box.df, out.df)
+  }
+}
+
+png(width= 750, filename= file.path(path.figures, paste0('Boxplot_of_height_sd_change.png')))
+ggplot(data = box.df)+
+  ggtitle("Change in SD of tree height from first 10 years to last 10 years")+
+  geom_boxplot(aes(x=Management, y=height.sd.diff))+
+  ylab("SD of tree height")+
+  xlab("Management")
+dev.off()
+
+png(width= 750, filename= file.path(path.figures, paste0('Boxplot_of_dbh_sd_change.png')))
+ggplot(data = box.df)+
+  ggtitle("Change in SD of DBH from first 10 years to last 10 years")+
+  geom_boxplot(aes(x=Management, y=dbh.sd.diff))+
+  ylab("SD of DBH")+
+  xlab("Management")
+dev.off()
+
+png(width= 750, filename= file.path(path.figures, paste0('Boxplot_of_AGB_change.png')))
+ggplot(data = box.df)+
+  ggtitle("Change in AGB from first 10 years to last 10 years")+
+  geom_boxplot(aes(x=Management, y=agb.change))+
+  ylab("Aboveground biomass")+
+  xlab("Management")
+dev.off()
+
+
+
+
+
+#-----------------------------------------------------------------------#
+#FROM FORMER SCRIPT 6a_SEA_Analysis.R
+#-----------------------------------------------------------------------#
 #path.google <- "~/Library/CloudStorage/GoogleDrive-crollinson@mortonarb.org/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
 
 path.google <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/"
