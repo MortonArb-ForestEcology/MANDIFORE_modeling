@@ -15,7 +15,7 @@ path.google <- "~/Google Drive/My Drive/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/
 
 path.google <- "G:/.shortcut-targets-by-id/1u-M0JCmrNhSLBGfV5TPZnk_ZU7vXgDIk/MANDIFORE_CaseStudy_MortonArb/"
 
-path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
+path.figures <- file.path(path.google, "Drought and heat analysis/Figures/")
 
 runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv"))
 runs.yr$Management <- car::recode(runs.yr$Management, "'None'='None'; 'Gap'='Group'; 'Shelter'='Shelter'; 'Under'='Under'")
@@ -206,6 +206,10 @@ write.csv(time.weath.agg, file.path(path.google, "processed_data/Time_by_relweat
 # ind.crash.lag = time lag for individual management which crashed
 # We include the crash year for this evaluation because we are working with temperature
 #-----------------------------------------------------#
+
+#--------------------------------------#
+# Figure 6
+#--------------------------------------#
 summary(runs.fill)
 
 raw.met.tair <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=ind.crash.lag, y=diff.tair, group=Management), position=dodge) +
@@ -234,12 +238,14 @@ raw.met.vpd <- ggplot(data=runs.fill[!is.na(runs.fill$ind.crash.lag),], aes(x=in
   scale_color_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
   theme(text=element_text(size=17))+
-  ylab("Relative VPD (kPa)") + guides(color=F)
+  ylab("Relative VPD (kPa)") + guides(color=F)+  
+  labs(caption="Figure 6") + 
+  theme(plot.caption = element_text(hjust=0.01, size=rel(0.5)))
 
 
-png(file.path(path.figures, "SEA_RelWeather_TimeMgmt_RawDat.png"), width=12, height=8, units="in", res=220)
-  cowplot::plot_grid(raw.met.tair, raw.met.precip, raw.met.vpd, ncol=2, labels = c("A", "B", "C"), rel_widths = c(0.8, 1.2))
-dev.off()
+fig.6 <- cowplot::plot_grid(raw.met.tair, raw.met.precip, raw.met.vpd, ncol=2, labels = c("A", "B", "C"), rel_widths = c(0.8, 1.2))
+
+ggsave(filename = "Figure_6.pdf", plot=fig.6, device = "pdf", path =path.figures, width=12, height=8, units="in", dpi =600)
 
 #Doing the Yeo-johnson transformation
 yj.stats <- yeojohnson(runs.fill$rel.VPD)
@@ -622,7 +628,9 @@ raw.struc.meandbh3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",],
   theme_bw() + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+  
   theme(text=element_text(size=21))+
   ylab("Mean DBH (cm)")+
-  guides(fill=F)
+  guides(fill=F)+
+  labs(caption="Figure 7") + 
+  theme(plot.caption = element_text(hjust=0.01, size=rel(0.4)))
 
 raw.struc.sddbh3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",], aes(x=Management, fill=group.crash.lag.check, y=tree.dbh.sd), position=dodge) + 
   geom_boxplot(alpha=0.7) +
@@ -631,10 +639,9 @@ raw.struc.sddbh3 <- ggplot(data=runs.fill[runs.fill$group.crash.lag!="loss",], a
   theme(text=element_text(size=21))+
   ylab("SD of DBH (cm)")
 
+fig.7 <- cowplot::plot_grid(raw.struc.agb3, raw.struc.density3, raw.struc.meandbh3, raw.struc.sddbh3, ncol=2, labels = c("A", "B", "C", "D"), rel_widths = c(0.8,1.2,0.8,1.2))
 
-png(file.path(path.figures, "SEA_Structure_CrashYN_RawDat-Boxplot.png"), width=12, height=8, units="in", res=220)
-  cowplot::plot_grid(raw.struc.agb3, raw.struc.density3, raw.struc.meandbh3, raw.struc.sddbh3, ncol=2, labels = c("A", "B", "C", "D"), rel_widths = c(0.8,1.2,0.8,1.2))
-dev.off()
+ggsave(filename = "Figure_7.pdf", plot=fig.7, device = "pdf", path =path.figures, width=12, height=8, units="in", dpi =600)
 
 ## Summarizing results
 df.mgmt.structxind[order(df.mgmt.structxind$mgmt),]

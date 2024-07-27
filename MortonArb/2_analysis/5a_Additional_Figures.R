@@ -15,7 +15,7 @@ library(dplyr)
 #------------------------------------------------------------------------#
 path.google <- "G:/.shortcut-targets-by-id/1u-M0JCmrNhSLBGfV5TPZnk_ZU7vXgDIk/MANDIFORE_CaseStudy_MortonArb/"
 
-path.figures <- file.path(path.google, "Drought and heat analysis/Figures/SEA figures/")
+path.figures <- file.path(path.google, "Drought and heat analysis/Figures//")
 
 runs.yr <- read.csv(file.path(path.google, "processed_data/All_runs_yearly.csv"))
 runs.yr$RCP.name <- car::recode(runs.yr$rcp, "'rcp45'='RCP4.5'; 'rcp85'='RCP8.5'")
@@ -295,7 +295,6 @@ dat.harvest <- rbind(dat.harvest.pre, dat.harvest.post, dat.harvest.mid, dat.har
 var.labs <- c("AGB (kgC/m2)", "Density (trees/ha)", "Mean DBH (cm)", "SD of DBH (cm)")
 names(var.labs) <- c("agb", "density.tree.convert", "tree.dbh.mean", "tree.dbh.sd")
 
-path.figures <- "G:/.shortcut-targets-by-id/0B_Fbr697pd36c1dvYXJ0VjNPVms/MANDIFORE/MANDIFORE_CaseStudy_MortonArb/Drought and heat analysis/Figures/"
 
 theme.clean <- theme(axis.text = element_text(size=rel(1.5), color="black"),
                                         axis.title = element_text(size=rel(2), face="bold"),
@@ -316,23 +315,24 @@ theme.clean <- theme(axis.text = element_text(size=rel(1.5), color="black"),
 #Figure for paper that looks at management for initial, mid, and end of century
 dat.harvest$time <-factor(dat.harvest$time, c("Pre-harvest", "Post-harvest", "Mid-century", "End-of-century"))
 levels(dat.harvest$Management) <- c("None", "Under", "Shelter", "Group")
-png(paste0(path.figures, "HarvestStructure_Management.png"), width=14, height=8, units="in", res=220)
-ggplot(data=dat.harvest[dat.harvest$time == "Mid-century" | dat.harvest$time == "End-of-century" | dat.harvest$time == "Post-harvest",]) +
+fig.2 <- ggplot(data=dat.harvest[dat.harvest$time == "Mid-century" | dat.harvest$time == "End-of-century" | dat.harvest$time == "Post-harvest",]) +
   facet_wrap(~ind, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
   geom_boxplot(aes(x=as.factor(time), y=values, fill=Management)) +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
   theme.clean+
   scale_y_continuous(name ="")+
   scale_x_discrete(name = "", labels=c("Post", "Mid", "End"))+
-  theme(strip.placement = "outside")
-dev.off()
+  theme(strip.placement = "outside")+
+  labs(caption="Figure 2") + 
+  theme(plot.caption = element_text(hjust=0.01, size=rel(1.2)))
+
+ggsave(filename = "Figure_2.pdf", plot=fig.2, device = "pdf", path =path.figures, width=12, height=8, units="in", dpi =600)
 
 #--------------------------------------#
 # Figure 3
 #--------------------------------------#
 #Figure for paper that looks at emisisons scenario for initial, mid, and end of century
-png(paste0(path.figures, "HarvestStructure_Emissions.png"), width=14, height=8, units="in", res=220)
-ggplot(data=dat.harvest[dat.harvest$time == "Mid-century" | dat.harvest$time == "End-of-century" | dat.harvest$time == "Post-harvest",]) +
+fig.3 <- ggplot(data=dat.harvest[dat.harvest$time == "Mid-century" | dat.harvest$time == "End-of-century" | dat.harvest$time == "Post-harvest",]) +
   facet_wrap(~ind, scales="free_y", labeller = labeller(ind = var.labs), switch = "y") +
   geom_boxplot(aes(x=as.factor(time), y=values, fill=RCP.name)) +
   scale_fill_manual(name = "Emissions scenario", values=c("RCP4.5"="gold2", "RCP8.5"="orangered2"))+
@@ -340,8 +340,12 @@ ggplot(data=dat.harvest[dat.harvest$time == "Mid-century" | dat.harvest$time == 
   theme.clean+
   scale_y_continuous(name ="")+
   scale_x_discrete(name = "", labels=c("Post", "Mid", "End"))+
-  theme(strip.placement = "outside")
-dev.off()
+  theme(strip.placement = "outside")+
+  labs(caption="Figure 3") + 
+  theme(plot.caption = element_text(hjust=0.01, size=rel(1.2)))
+
+ggsave(filename = "Figure_3.pdf", plot=fig.3, device = "pdf", path =path.figures, width=12, height=8, units="in", dpi =600)
+
 
 
 #Multiple comparision
@@ -541,7 +545,9 @@ weath.time <- ggplot(data=dat.wagg)+
         strip.background = element_rect(fill=NA),
         strip.placement = "outside",
         plot.margin = unit(c(1, 1, 1, 1), "lines"),
-        plot.title = element_text(size=rel(2), face="bold", hjust=0.5))
+        plot.title = element_text(size=rel(2), face="bold", hjust=0.5))+  
+        labs(caption="Figure 1") + 
+        theme(plot.caption = element_text(hjust=0.01, size=rel(1.2)))
 
 
 weath.cent <- ggplot(data=dat.wagg[dat.wagg$year == 2025 | dat.wagg$year == 2050 | dat.wagg$year == 2099,])+
@@ -576,8 +582,6 @@ t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "t
 t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "precip.total", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85" & dat.wagg$ind== "precip.total", "values"] , paired=T)
 t.test(dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp45" & dat.wagg$ind== "VPD", "values"], dat.wagg[dat.wagg$year==2099 & dat.wagg$rcp== "rcp85"& dat.wagg$ind== "VPD", "values"] , paired=T)
 
-plot_row <- cowplot::plot_grid(weath.time, weath.cent, labels = c("A", "B"), label_size = 15 ,rel_widths = c(2,1.5))
+fig.1 <- cowplot::plot_grid(weath.time, weath.cent, labels = c("A", "B"), label_size = 15 ,rel_widths = c(2,1.5))
 
-png(width= 1000, filename= file.path(path.figures, paste0('Climate_Change_Over_Time.png')))
-  plot_row
-dev.off()
+ggsave(filename = "Figure_1.pdf", plot=fig.1, device = "pdf", path =path.figures, width=12, height=8, units="in", dpi =600)

@@ -16,7 +16,7 @@ library(ggpubr)
 library(multcomp)
 
 path.google <- "G:/.shortcut-targets-by-id/1u-M0JCmrNhSLBGfV5TPZnk_ZU7vXgDIk/MANDIFORE_CaseStudy_MortonArb/"
-path.figures <- file.path(path.google, "Drought and heat analysis/Figures/")
+path.figures <- file.path(path.google, "Drought and heat analysis/Figures//")
 
 runs.comb <- read.csv(paste0(path.google, "processed_data/All_runs_yearly.csv"))
 
@@ -55,8 +55,7 @@ for(i in 5:nrow(runs.comb)){
 # Figure 4
 #--------------------------------------#
 levels(runs.comb$Management) <- c("None", "Under", "Shelter", "Group")
-png(paste0(path.figures, "AGB_static_crashes.png"), width=16, height=8, units="in", res=220)
-ggplot(data=runs.comb)+
+fig.4 <- ggplot(data=runs.comb)+
   facet_grid(Management ~ RCP.name) +
   geom_rect(xmin=2020, xmax=2024, ymin=-Inf, ymax=Inf, fill="gray73", alpha=0.9) +
   geom_line(aes(x=year, y=agb, group=GCM)) +
@@ -74,8 +73,12 @@ ggplot(data=runs.comb)+
         strip.text = element_text(size=rel(2), face="bold"),
         strip.background = element_rect(fill=NA),
         plot.margin = unit(c(1, 1, 1, 1), "lines"),
-        plot.title = element_text(size=rel(2), face="bold", hjust=0.5))
-dev.off()
+        plot.title = element_text(size=rel(2), face="bold", hjust=0.5))+
+        labs(caption="Figure 4") + 
+        theme(plot.caption = element_text(hjust=0.01, size=rel(1.2)))
+
+ggsave(filename = "Figure_4.pdf", plot=fig.4, device = "pdf", path =path.figures, width=12, height=8, units="in", dpi =600)
+
 
 # Getting summaries of # crashes by scenario by mid & end of century
 runs.comb$crash <- ifelse(runs.comb$nonseq.loss.event.20==T, 1, 0)
@@ -147,8 +150,7 @@ theme.clean <-   theme(axis.text = element_text(size=rel(1.5), color="black"),
 # Figure 5
 #--------------------------------------#
 levels(crash.stack$Management) <- c("None", "Under", "Shelter", "Group")
-png(paste0(path.figures, "Crashes_Summary.png"), width=10, height=8, units="in", res=220)
-ggplot(data=crash.stack) +
+fig.5 <- ggplot(data=crash.stack) +
   facet_grid(TimePeriod~.) +
   geom_bar(aes(x=rcp, y=values, fill=Management), position="dodge", stat="summary", fun.y="mean") +
   geom_errorbar(aes(x=rcp, y=values, fill=Management), position="dodge", stat="summary", fun.y="sd") +
@@ -156,9 +158,12 @@ ggplot(data=crash.stack) +
   scale_x_discrete(labels=c("RCP4.5", "RCP8.5")) +
   coord_cartesian(ylim=c(0,2.1)) +
   scale_fill_manual(values=c("None"="#1f78b4", "Under"="#a6cee3", "Shelter"="#33a02c", "Group"="#b2df8a")) +
-  theme.clean + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))
-dev.off()
+  theme.clean + theme(axis.title.x=element_blank(), panel.spacing.y = unit(2, "lines"))+
+  labs(caption="Figure 5") + 
+  theme(plot.caption = element_text(hjust=0.01, size=rel(1.2)))
 
+
+ggsave(filename = "Figure_5.pdf", plot=fig.5, device = "pdf", path =path.figures, width=12, height=8, units="in", dpi =600)
 
 
 
